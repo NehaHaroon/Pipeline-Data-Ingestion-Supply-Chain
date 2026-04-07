@@ -1,0 +1,83 @@
+2026-04-05T19:31:12 [INFO] run_all — 
+2026-04-05T19:31:12 [INFO] run_all —   PHASE 1+2: Control Plane — Entities & Contracts
+2026-04-05T19:31:12 [INFO] run_all —   Sources registered: 5
+2026-04-05T19:31:12 [INFO] run_all —     DataSource(id=src_warehouse_master, type=file, capture=full_snapshot, freq=daily)
+2026-04-05T19:31:12 [INFO] run_all —     DataSource(id=src_manufacturing_logs, type=file, capture=incremental, freq=daily)
+2026-04-05T19:31:12 [INFO] run_all —     DataSource(id=src_sales_history, type=file, capture=incremental, freq=daily)
+2026-04-05T19:31:12 [INFO] run_all —     DataSource(id=src_legacy_trends, type=file, capture=full_snapshot, freq=weekly)
+2026-04-05T19:31:12 [INFO] run_all —     DataSource(id=src_iot_rfid_stream, type=stream, capture=stream_event, freq=real_time)
+2026-04-05T19:31:12 [INFO] run_all —   Datasets registered: 5
+2026-04-05T19:31:12 [INFO] run_all —     Dataset(id=ds_warehouse_master, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-05T19:31:12 [INFO] run_all —     Dataset(id=ds_manufacturing_logs, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-05T19:31:12 [INFO] run_all —     Dataset(id=ds_sales_history, domain=supply_chain, version=v1, sensitivity=confidential)
+2026-04-05T19:31:12 [INFO] run_all —     Dataset(id=ds_legacy_trends, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-05T19:31:12 [INFO] run_all —     Dataset(id=ds_iot_rfid_stream, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-05T19:31:12 [INFO] run_all —   Contracts registered: 5
+2026-04-05T19:31:12 [INFO] run_all —     contract_warehouse_v1 | policy=quarantine | required_fields=['product_id', 'reorder_threshold', 'max_capacity', 'unit_cost']
+2026-04-05T19:31:12 [INFO] run_all —     contract_manufacturing_v1 | policy=auto_coerce | required_fields=['production_batch_id', 'product_id', 'mfg_timestamp', 'quantity_produced']
+2026-04-05T19:31:12 [INFO] run_all —     contract_sales_v1 | policy=quarantine | required_fields=['receipt_id', 'sale_timestamp']
+2026-04-05T19:31:12 [INFO] run_all —     contract_legacy_v1 | policy=auto_coerce | required_fields=['old_product_code', 'historical_period', 'total_monthly_sales']
+2026-04-05T19:31:12 [INFO] run_all —     contract_iot_v1 | policy=quarantine | required_fields=['event_id', 'timestamp', 'product_id', 'current_stock_on_shelf']
+2026-04-05T19:31:12 [INFO] run_all —   Contract smoke-test (good record): status=ok
+2026-04-05T19:31:12 [INFO] run_all —   Contract smoke-test (bad record):  status=quarantine | violations=["Required field 'product_id' is missing or null.", "Required field 'reorder_threshold' is missing or null.", "Field 'product_id' is NULL but not nullable.", "Field 'reorder_threshold' is NULL but not nullable.", "Field 'unit_cost' value -5.0 below min 0.0."]
+2026-04-05T19:31:12 [INFO] run_all — 
+2026-04-05T19:31:12 [INFO] run_all —   PHASE 3: Data Generators — Distribution Profiling + Synthetic Generation
+2026-04-05T19:31:12 [INFO] run_all —   [WarehouseMaster] Generated 5 synthetic records. Sample[0] keys: ['product_id', 'article_id', 'product_name', 'color', 'size', 'reorder_threshold', 'max_capacity', 'unit_cost']
+2026-04-05T19:31:12 [INFO] run_all —   [ManufacturingLogs] Generated 5 synthetic records. Sample[0] keys: ['production_batch_id', 'product_id', 'mfg_timestamp', 'quantity_produced', 'defect_count']
+2026-04-05T19:31:12 [INFO] run_all —   [SalesHistory] Generated 5 synthetic records. Sample[0] keys: ['receipt_id', 'product_id', 'sale_timestamp', 'units_sold', 'store_id']
+2026-04-05T19:31:12 [INFO] run_all —   [LegacyTrends] Generated 5 synthetic records. Sample[0] keys: ['product_id', 'historical_period', 'total_monthly_sales', 'market_region']
+2026-04-05T19:31:12 [INFO] run_all —   [IoTStream] Generated 5 synthetic records. Sample[0] keys: ['event_id', 'timestamp', 'product_id', 'shelf_location', 'current_stock_on_shelf', 'battery_level']
+2026-04-05T19:31:12 [INFO] run_all —   Phase 3 complete. All generators profiled and verified.
+2026-04-05T19:31:12 [INFO] run_all — 
+2026-04-05T19:31:12 [INFO] run_all —   PHASE 4: Ingestion — Batch Initial Load + Micro-Batch + IoT Stream
+2026-04-05T19:31:12 [INFO] run_all — 
+2026-04-05T19:31:59 [INFO] run_all — 
+2026-04-05T19:32:00 [INFO] run_all — 
+2026-04-05T19:32:02 [INFO] run_all — 
+2026-04-05T19:32:02 [INFO] run_all — 
+2026-04-05T19:32:02 [INFO] run_all —   PHASE 5: CDC Trigger — INSERT / UPDATE / DELETE (Steady + Burst)
+2026-04-05T19:32:20 [INFO] run_all — 
+2026-04-05T19:32:20 [INFO] run_all —   PHASE 6: CDC Strategies — Log-Based, Trigger-Based, Timestamp-Based
+2026-04-05T19:32:20 [INFO] run_all — 
+2026-04-05T19:32:20 [INFO] run_all —   PHASE 7: Observability — Pipeline Summary & Storage Audit
+2026-04-05T19:32:20 [INFO] run_all —   Ingested (Parquet)               18 files    7554.0 KB
+2026-04-05T19:32:20 [INFO] run_all —   Quarantine                        0 files       0.0 KB
+2026-04-05T19:32:20 [INFO] run_all —   CDC Log                           2 files     621.3 KB
+2026-04-05T19:32:20 [INFO] run_all —   Micro-Batch                       6 files     212.7 KB
+2026-04-05T19:32:20 [INFO] run_all —   Stream Buffer                    12 files     306.3 KB
+2026-04-05T19:32:20 [INFO] run_all —   Checkpoints                       4 files       0.3 KB
+2026-04-05T19:32:20 [INFO] run_all —   Detail Logs (JSONL)              10 files    2383.2 KB
+2026-04-05T19:32:20 [INFO] run_all —   TOTAL                            52 files   11077.9 KB
+2026-04-05T19:32:20 [INFO] run_all — 
+2026-04-05T19:32:20 [INFO] run_all —   src_legacy_trends.parquet                                 6298 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_manufacturing_logs.parquet                           10000 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_manufacturing_logs_log_cdc_burst.parquet              5000 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_manufacturing_logs_ts_cdc_burst.parquet               5000 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_sales_history.parquet                                10000 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_sales_history_log_cdc_steady.parquet                   100 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_sales_history_ts_cdc_steady.parquet                    100 rows
+2026-04-05T19:32:20 [INFO] run_all —   src_warehouse_master.parquet                             10000 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_manufacturing_logs_burst_cdc.parquet                  5000 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_sales_history_steady_cdc.parquet                       100 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_manufacturing_logs_microbatch_001.parquet              200 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_manufacturing_logs_microbatch_002.parquet              200 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_manufacturing_logs_microbatch_003.parquet              200 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_sales_history_microbatch_001.parquet                   200 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_sales_history_microbatch_002.parquet                   200 rows
+2026-04-05T19:32:21 [INFO] run_all —   src_sales_history_microbatch_003.parquet                   200 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124554_batch001.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124554_batch002.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124554_batch003.parquet                 95 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124702_batch001.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124702_batch002.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T124702_batch003.parquet                 94 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T142908_batch001.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T142908_batch002.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T142908_batch003.parquet                 89 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T143202_batch001.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T143202_batch002.parquet                100 rows
+2026-04-05T19:32:21 [INFO] run_all —   iot_stream_20260405T143202_batch003.parquet                 89 rows
+2026-04-05T19:32:21 [INFO] run_all — 
+2026-04-05T19:32:21 [INFO] run_all —   ALL 7 PHASES COMPLETE
+2026-04-05T19:32:21 [INFO] run_all —   Total pipeline duration: 68.97s
+2026-04-05T19:32:21 [INFO] run_all —   Check storage/ for Parquet files, quarantine/, stream_buffer/, etc.
