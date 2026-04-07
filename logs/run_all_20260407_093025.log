@@ -1,0 +1,51 @@
+2026-04-07T09:30:26 [INFO] run_all — 
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================
+2026-04-07T09:30:26 [INFO] run_all —   PHASE 1+2: Control Plane — Entities & Contracts
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================
+2026-04-07T09:30:26 [INFO] run_all —   Sources registered: 6
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_warehouse_master, type=file, capture=full_snapshot, freq=daily)
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_manufacturing_logs, type=file, capture=incremental, freq=daily)
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_sales_history, type=file, capture=incremental, freq=daily)
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_legacy_trends, type=file, capture=full_snapshot, freq=weekly)
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_iot_rfid_stream, type=stream, capture=stream_event, freq=real_time)
+2026-04-07T09:30:26 [INFO] run_all —     DataSource(id=src_weather_api, type=api, capture=incremental, freq=hourly)
+2026-04-07T09:30:26 [INFO] run_all —   Datasets registered: 6
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_warehouse_master, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_manufacturing_logs, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_sales_history, domain=supply_chain, version=v1, sensitivity=confidential)
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_legacy_trends, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_iot_rfid_stream, domain=supply_chain, version=v1, sensitivity=internal)
+2026-04-07T09:30:26 [INFO] run_all —     Dataset(id=ds_weather_api, domain=external, version=v1, sensitivity=public)
+2026-04-07T09:30:26 [INFO] run_all —   Contracts registered: 6
+2026-04-07T09:30:26 [INFO] run_all —     contract_warehouse_v1 | policy=quarantine | required_fields=['product_id', 'reorder_threshold', 'max_capacity', 'unit_cost']
+2026-04-07T09:30:26 [INFO] run_all —     contract_manufacturing_v1 | policy=auto_coerce | required_fields=['production_batch_id', 'product_id', 'mfg_timestamp', 'quantity_produced']
+2026-04-07T09:30:26 [INFO] run_all —     contract_sales_v1 | policy=quarantine | required_fields=['receipt_id', 'sale_timestamp']
+2026-04-07T09:30:26 [INFO] run_all —     contract_legacy_v1 | policy=auto_coerce | required_fields=['old_product_code', 'historical_period', 'total_monthly_sales']
+2026-04-07T09:30:26 [INFO] run_all —     contract_iot_v1 | policy=quarantine | required_fields=['event_id', 'timestamp', 'product_id', 'current_stock_on_shelf']
+2026-04-07T09:30:26 [INFO] run_all —     contract_weather_v1 | policy=quarantine | required_fields=['city', 'temperature', 'humidity', 'weather_description', 'timestamp']
+2026-04-07T09:30:26 [WARNING] control_plane.contracts — [CONTRACT:contract_warehouse_v1] QUARANTINE — ["Required field 'product_id' is missing or null.", "Required field 'reorder_threshold' is missing or null.", "Field 'product_id' is NULL but not nullable.", "Field 'reorder_threshold' is NULL but not nullable.", "Field 'unit_cost' value -5.0 below min 0.0."]
+2026-04-07T09:30:26 [INFO] run_all —   Contract smoke-test (good record): status=ok
+2026-04-07T09:30:26 [INFO] run_all —   Contract smoke-test (bad record):  status=quarantine | violations=["Required field 'product_id' is missing or null.", "Required field 'reorder_threshold' is missing or null.", "Field 'product_id' is NULL but not nullable.", "Field 'reorder_threshold' is NULL but not nullable.", "Field 'unit_cost' value -5.0 below min 0.0."]
+2026-04-07T09:30:26 [INFO] run_all — 
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================
+2026-04-07T09:30:26 [INFO] run_all —   PHASE 3: Data Generators — Distribution Profiling + Synthetic Generation
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_warehouse_master] Profiling 10000 rows × 8 cols
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_warehouse_master] Profiling complete. Columns: [('product_id', 'categorical'), ('article_id', 'categorical'), ('product_name', 'categorical'), ('color', 'categorical'), ('size', 'categorical'), ('reorder_threshold', 'numeric'), ('max_capacity', 'categorical'), ('unit_cost', 'numeric')]
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_manufacturing_logs] Profiling 10000 rows × 5 cols
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_manufacturing_logs] Profiling complete. Columns: [('production_batch_id', 'categorical'), ('product_id', 'categorical'), ('mfg_timestamp', 'timestamp'), ('quantity_produced', 'numeric'), ('defect_count', 'categorical')]
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_sales_history] Profiling 10000 rows × 5 cols
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_sales_history] Profiling complete. Columns: [('receipt_id', 'categorical'), ('product_id', 'categorical'), ('sale_timestamp', 'timestamp'), ('units_sold', 'categorical'), ('store_id', 'categorical')]
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_legacy_trends] Profiling 10000 rows × 4 cols
+2026-04-07T09:30:26 [INFO] data_plane.generators.base_generator — [GENERATOR:src_legacy_trends] Profiling complete. Columns: [('product_id', 'categorical'), ('historical_period', 'timestamp'), ('total_monthly_sales', 'numeric'), ('market_region', 'categorical')]
+2026-04-07T09:30:26 [INFO] run_all —   [WarehouseMaster] Generated 5 synthetic records. Sample[0] keys: ['product_id', 'article_id', 'product_name', 'color', 'size', 'reorder_threshold', 'max_capacity', 'unit_cost']
+2026-04-07T09:30:26 [INFO] run_all —   [ManufacturingLogs] Generated 5 synthetic records. Sample[0] keys: ['production_batch_id', 'product_id', 'mfg_timestamp', 'quantity_produced', 'defect_count']
+2026-04-07T09:30:26 [INFO] run_all —   [SalesHistory] Generated 5 synthetic records. Sample[0] keys: ['receipt_id', 'product_id', 'sale_timestamp', 'units_sold', 'store_id']
+2026-04-07T09:30:26 [INFO] run_all —   [LegacyTrends] Generated 5 synthetic records. Sample[0] keys: ['product_id', 'historical_period', 'total_monthly_sales', 'market_region']
+2026-04-07T09:30:26 [INFO] run_all —   [IoTStream] Generated 5 synthetic records. Sample[0] keys: ['event_id', 'timestamp', 'product_id', 'shelf_location', 'current_stock_on_shelf', 'battery_level']
+2026-04-07T09:30:26 [INFO] run_all —   [WeatherAPI] Generated 5 synthetic records. Sample[0] keys: ['city', 'temperature', 'humidity', 'weather_description', 'timestamp']
+2026-04-07T09:30:26 [INFO] run_all —   Phase 3 complete. All generators profiled and verified.
+2026-04-07T09:30:26 [INFO] run_all — 
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================
+2026-04-07T09:30:26 [INFO] run_all —   PHASE 4: Ingestion — Batch Initial Load + Micro-Batch + IoT Stream
+2026-04-07T09:30:26 [INFO] run_all — ======================================================================

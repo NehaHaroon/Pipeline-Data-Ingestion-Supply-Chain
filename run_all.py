@@ -53,13 +53,13 @@ def banner(phase: str, title: str):
 def run_phase_1_2():
     banner("PHASE 1+2", "Control Plane — Entities & Contracts")
 
-    from supply_chain_ingestion.control_plane.entities import (
+    from control_plane.entities import (
         DataSource, Dataset, IngestionJob, EventEnvelope,
         SourceType, ExtractionMode, ChangeCaptureMode, IngestionFrequency,
         ClassificationLevel, ExecutionMode, OperationType,
         ALL_SOURCES, ALL_DATASETS
     )
-    from supply_chain_ingestion.control_plane.contracts import (
+    from control_plane.contracts import (
         CONTRACT_REGISTRY, ViolationPolicy
     )
 
@@ -99,9 +99,10 @@ def run_phase_3() -> list:
     """Returns list of real product_ids for use in later phases."""
     banner("PHASE 3", "Data Generators — Distribution Profiling + Synthetic Generation")
 
-    from supply_chain_ingestion.data_plane.generators.source_generators import (
+    from data_plane.generators.source_generators import (
         WarehouseMasterGenerator, ManufacturingLogsGenerator,
-        SalesHistoryGenerator, LegacyTrendsGenerator, IoTStreamGenerator
+        SalesHistoryGenerator, LegacyTrendsGenerator, IoTStreamGenerator,
+        WeatherAPIGenerator
     )
 
     wh_df  = pd.read_csv("storage/raw/warehouse_master.csv")
@@ -116,6 +117,7 @@ def run_phase_3() -> list:
         "SalesHistory":      SalesHistoryGenerator(sal_df, pids),
         "LegacyTrends":      LegacyTrendsGenerator(leg_df, pids),
         "IoTStream":         IoTStreamGenerator(pids),
+        "WeatherAPI":        WeatherAPIGenerator(),
     }
 
     for name, gen in generators.items():
@@ -136,10 +138,10 @@ def run_phase_3() -> list:
 def run_phase_4(product_ids: list):
     banner("PHASE 4", "Ingestion — Batch Initial Load + Micro-Batch + IoT Stream")
 
-    from supply_chain_ingestion.data_plane.ingestion.batch_ingest import (
+    from data_plane.ingestion.batch_ingest import (
         run_all_batch_ingestion, run_micro_batch_ingestion
     )
-    from supply_chain_ingestion.data_plane.ingestion.iot_stream_ingest import (
+    from data_plane.ingestion.iot_stream_ingest import (
         run_stream_simulation
     )
 
@@ -188,10 +190,10 @@ def run_phase_4(product_ids: list):
 def run_phase_5(product_ids: list):
     banner("PHASE 5", "CDC Trigger — INSERT / UPDATE / DELETE (Steady + Burst)")
 
-    from supply_chain_ingestion.data_plane.generators.source_generators import (
+    from data_plane.generators.source_generators import (
         SalesHistoryGenerator, ManufacturingLogsGenerator
     )
-    from supply_chain_ingestion.data_plane.cdc.cdc_trigger import (
+    from data_plane.cdc.cdc_trigger import (
         run_steady_stream, run_burst, load_existing_records
     )
 
@@ -232,7 +234,7 @@ def run_phase_5(product_ids: list):
 def run_phase_6():
     banner("PHASE 6", "CDC Strategies — Log-Based, Trigger-Based, Timestamp-Based")
 
-    from supply_chain_ingestion.data_plane.cdc.cdc_strategies import (
+    from data_plane.cdc.cdc_strategies import (
         run_log_based_cdc, run_trigger_based_cdc, run_timestamp_based_cdc
     )
 

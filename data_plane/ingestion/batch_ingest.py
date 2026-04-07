@@ -21,13 +21,13 @@ import requests
 # Resolve project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from supply_chain_ingestion.control_plane.entities import (
+from control_plane.entities import (
     OperationType, EventEnvelope,
     WAREHOUSE_SOURCE, MANUFACTURING_SOURCE, SALES_SOURCE, LEGACY_SOURCE,
     WAREHOUSE_DATASET, MANUFACTURING_DATASET, SALES_DATASET, LEGACY_DATASET
 )
-from supply_chain_ingestion.control_plane.contracts import CONTRACT_REGISTRY, ViolationPolicy
-from supply_chain_ingestion.observability_plane.telemetry import JobTelemetry, Heartbeat
+from control_plane.contracts import CONTRACT_REGISTRY, ViolationPolicy
+from observability_plane.telemetry import JobTelemetry, Heartbeat
 
 # ── Logging setup ──────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -220,112 +220,139 @@ def ingest_source(
             df = df_override
             log.info(f"  [LOAD] Micro-batch slice: {len(df)} rows provided via df_override")
         else:
-            df = pd.read_csv(raw_path)
-            log.info(f"  [LOAD] Loaded {len(df)} rows from {raw_path}")
-            log.info(f"  [SCHEMA] Columns: {list(df.columns)}")
+            try:
+                df = pd.read_csv(raw_path)
+                log.info(f"  [LOAD] Loaded {len(df)} rows from {raw_path}")
+                log.info(f"  [SCHEMA] Columns: {list(df.columns)}")
+            except FileNotFoundError:
+                log.error(f"  [LOAD] File not found: {raw_path}")
+                tel.record_fail()
+                return tel
+            except pd.errors.EmptyDataError:
+                log.error(f"  [LOAD] Empty CSV file: {raw_path}")
+                tel.record_fail()
+                return tel
+            except Exception as e:
+                log.error(f"  [LOAD] Error loading CSV: {e}")
+                tel.record_fail()
+                return tel
 
         for row_num, (_, row) in enumerate(df.iterrows(), start=1):
-            record      = row.where(pd.notna(row), None).to_dict()
-            record_key  = str(record.get(dedup_col, f"row_{row_num}")) if dedup_col else f"row_{row_num}"
+            try:
+                record      = row.where(pd.notna(row), None).to_dict()
+                record_key  = str(record.get(dedup_col, f"row_{row_num}")) if dedup_col else f"row_{row_num}"
 
-            # ── Step 1: Normalize ────────────────────────────────────────
-            record, norm_changes = normalize_record(record, source_id)
+                # ── Step 1: Normalize ────────────────────────────────────────
+                record, norm_changes = normalize_record(record, source_id)
 
-            # ── Step 2: Deduplicate ──────────────────────────────────────
-            if dedup_col:
-                dedup_val = record.get(dedup_col) or record.get("product_id")
-                if dedup_val and dedup_val in seen_ids:
-                    dup_count += 1
-                    _log_record_result(source_id, row_num, record_key,
-                                       "DUPLICATE", norm_changes, [], contract_id, policy)
-                    detail_log.append({"row": row_num, "key": record_key, "status": "DUPLICATE"})
-                    continue
-                if dedup_val:
-                    seen_ids.add(dedup_val)
+                # ── Step 2: Deduplicate ──────────────────────────────────────
+                if dedup_col:
+                    dedup_val = record.get(dedup_col) or record.get("product_id")
+                    if dedup_val and dedup_val in seen_ids:
+                        dup_count += 1
+                        _log_record_result(source_id, row_num, record_key,
+                                           "DUPLICATE", norm_changes, [], contract_id, policy)
+                        detail_log.append({"row": row_num, "key": record_key, "status": "DUPLICATE"})
+                        continue
+                    if dedup_val:
+                        seen_ids.add(dedup_val)
 
-            # ── Step 3: Contract enforcement ─────────────────────────────
-            if contract:
-                result     = contract.enforce(record)
-                status_raw = result["status"]
-                violations = result["violations"]
+                # ── Step 3: Contract enforcement ─────────────────────────────
+                if contract:
+                    result     = contract.enforce(record)
+                    status_raw = result["status"]
+                    violations = result["violations"]
 
-                if status_raw == "rejected":
-                    tel.record_fail()
-                    _log_record_result(source_id, row_num, record_key,
-                                       "REJECT", norm_changes, violations, contract_id, policy)
-                    detail_log.append({"row": row_num, "key": record_key,
-                                       "status": "REJECT", "violations": violations})
-                    continue
+                    if status_raw == "rejected":
+                        tel.record_fail()
+                        _log_record_result(source_id, row_num, record_key,
+                                           "REJECT", norm_changes, violations, contract_id, policy)
+                        detail_log.append({"row": row_num, "key": record_key,
+                                           "status": "REJECT", "violations": violations})
+                        continue
 
-                if status_raw == "quarantine":
-                    tel.record_quarantine()
-                    _log_record_result(source_id, row_num, record_key,
-                                       "QUARANTINE", norm_changes, violations, contract_id, policy)
-                    record["_violations"] = json.dumps(violations)
-                    record["_quarantine_reason"] = "; ".join(violations)
-                    quarantine_records.append(record)
-                    detail_log.append({"row": row_num, "key": record_key,
-                                       "status": "QUARANTINE", "violations": violations})
-                    continue
+                    elif status_raw == "quarantine":
+                        tel.record_quarantine()
+                        _log_record_result(source_id, row_num, record_key,
+                                           "QUARANTINE", norm_changes, violations, contract_id, policy)
+                        record["_violations"] = json.dumps(violations)
+                        record["_quarantine_reason"] = "; ".join(violations)
+                        quarantine_records.append(record)
+                        detail_log.append({"row": row_num, "key": record_key,
+                                           "status": "QUARANTINE", "violations": violations})
+                        continue
 
-                if status_raw == "coerced":
-                    tel.record_coerce()
-                    record = result["record"]
-                    _log_record_result(source_id, row_num, record_key,
-                                       "COERCED", norm_changes, violations, contract_id, policy)
-                    detail_log.append({"row": row_num, "key": record_key,
-                                       "status": "COERCED", "coercions": violations})
+                    elif status_raw == "coerced":
+                        tel.record_coerce()
+                        record = result["record"]
+                        _log_record_result(source_id, row_num, record_key,
+                                           "COERCED", norm_changes, violations, contract_id, policy)
+                        detail_log.append({"row": row_num, "key": record_key,
+                                           "status": "COERCED", "coercions": violations})
+                    else:
+                        _log_record_result(source_id, row_num, record_key,
+                                           "PASS", norm_changes, [], contract_id, policy)
+                        detail_log.append({"row": row_num, "key": record_key, "status": "PASS"})
                 else:
                     _log_record_result(source_id, row_num, record_key,
-                                       "PASS", norm_changes, [], contract_id, policy)
+                                       "PASS (no contract)", norm_changes, [], contract_id, policy)
                     detail_log.append({"row": row_num, "key": record_key, "status": "PASS"})
-            else:
-                _log_record_result(source_id, row_num, record_key,
-                                   "PASS (no contract)", norm_changes, [], contract_id, policy)
-                detail_log.append({"row": row_num, "key": record_key, "status": "PASS"})
 
-            # ── Step 4: Wrap in EventEnvelope ────────────────────────────
-            envelope = EventEnvelope(
-                payload         = record,
-                source_id       = source_id,
-                dataset_id      = dataset_id,
-                schema_version  = schema_version,
-                operation_type  = OperationType.SNAPSHOT,
-                event_timestamp = (
-                    record.get("mfg_timestamp") or
-                    record.get("sale_timestamp") or
-                    record.get("timestamp")
-                ),
-                source_timestamp = (
-                    record.get("mfg_timestamp") or
-                    record.get("sale_timestamp")
-                ),
-            )
-            good_records.append(envelope.to_dict())
-            tel.record_ok()
+                # ── Step 4: Wrap in EventEnvelope ────────────────────────────
+                envelope = EventEnvelope(
+                    payload         = record,
+                    source_id       = source_id,
+                    dataset_id      = dataset_id,
+                    schema_version  = schema_version,
+                    operation_type  = OperationType.SNAPSHOT,
+                    event_timestamp = (
+                        record.get("mfg_timestamp") or
+                        record.get("sale_timestamp") or
+                        record.get("timestamp")
+                    ),
+                    source_timestamp = (
+                        record.get("mfg_timestamp") or
+                        record.get("sale_timestamp")
+                    ),
+                )
+                good_records.append(envelope.to_dict())
+                tel.record_ok()
+            except Exception as e:
+                log.error(f"  [RECORD ERROR] Row {row_num}: {e}")
+                tel.record_fail()
 
         # ── Write outputs ────────────────────────────────────────────────
         suffix = f"_{output_suffix}" if output_suffix else ""
 
-        if good_records:
-            out_path = os.path.join(OUTPUT_DIR, f"{source_id}{suffix}.parquet")
-            pd.DataFrame(good_records).to_parquet(out_path, index=False)
-            tel.file_count_per_partition += 1
-            tel.snapshot_count += 1
-            log.info(f"  [WRITE] ✅ {len(good_records)} records → {out_path}")
+        try:
+            if good_records:
+                out_path = os.path.join(OUTPUT_DIR, f"{source_id}{suffix}.parquet")
+                pd.DataFrame(good_records).to_parquet(out_path, index=False)
+                tel.file_count_per_partition += 1
+                tel.snapshot_count += 1
+                log.info(f"  [WRITE] ✅ {len(good_records)} records → {out_path}")
+        except Exception as e:
+            log.error(f"  [WRITE] Failed to write good records: {e}")
+            tel.record_fail()
 
-        if quarantine_records:
-            q_path = os.path.join(QUARANTINE_DIR, f"{source_id}{suffix}_quarantine.parquet")
-            pd.DataFrame(quarantine_records).to_parquet(q_path, index=False)
-            log.warning(f"  [QUARANTINE] ⚠  {len(quarantine_records)} records → {q_path}")
+        try:
+            if quarantine_records:
+                q_path = os.path.join(QUARANTINE_DIR, f"{source_id}{suffix}_quarantine.parquet")
+                pd.DataFrame(quarantine_records).to_parquet(q_path, index=False)
+                log.warning(f"  [QUARANTINE] ⚠  {len(quarantine_records)} records → {q_path}")
+        except Exception as e:
+            log.error(f"  [QUARANTINE] Failed to write quarantine records: {e}")
 
-        # Write per-record detail log as JSON Lines
-        if detail_log:
-            dl_path = os.path.join(DETAIL_LOG_DIR, f"{source_id}{suffix}_record_log.jsonl")
-            with open(dl_path, "w") as f:
-                for entry in detail_log:
-                    f.write(json.dumps(entry) + "\n")
-            log.info(f"  [DETAIL LOG] {len(detail_log)} record entries → {dl_path}")
+        try:
+            # Write per-record detail log as JSON Lines
+            if detail_log:
+                dl_path = os.path.join(DETAIL_LOG_DIR, f"{source_id}{suffix}_record_log.jsonl")
+                with open(dl_path, "w") as f:
+                    for entry in detail_log:
+                        f.write(json.dumps(entry) + "\n")
+                log.info(f"  [DETAIL LOG] {len(detail_log)} record entries → {dl_path}")
+        except Exception as e:
+            log.error(f"  [DETAIL LOG] Failed to write detail log: {e}")
 
         if dup_count:
             log.info(f"  [DEDUP] Dropped {dup_count} duplicate rows (dedup_key={dedup_col})")
@@ -479,7 +506,7 @@ def run_api_ingestion(source_id: str, dataset_id: str) -> JobTelemetry:
     """Ingest from REST API (demonstrates extraction_mode: PULL)."""
     log.info(f"  ── API Ingestion for {source_id} ──")
 
-    from supply_chain_ingestion.control_plane.entities import WEATHER_API_SOURCE
+    from control_plane.entities import WEATHER_API_SOURCE
 
     source = WEATHER_API_SOURCE
 

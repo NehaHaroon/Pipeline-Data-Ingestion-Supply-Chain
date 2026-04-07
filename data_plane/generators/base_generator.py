@@ -152,7 +152,10 @@ class BaseGenerator(ABC):
         if ptype == "categorical":
             if profile["null_rate"] > 0 and np.random.random() < profile["null_rate"]:
                 return None
-            return np.random.choice(profile["values"], p=profile["probs"])
+            # Normalize probabilities to handle floating-point precision issues
+            probs = np.array(profile["probs"])
+            probs = probs / probs.sum()  # Ensure sum = 1.0
+            return np.random.choice(profile["values"], p=probs)
 
         if ptype == "numeric":
             if profile["null_rate"] > 0 and np.random.random() < profile["null_rate"]:

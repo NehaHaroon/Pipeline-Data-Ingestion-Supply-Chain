@@ -41,6 +41,60 @@ supply_chain_ingestion/
 
 ---
 
+## Production Deployment
+
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.11+
+- API Token (set `API_TOKEN` env var)
+- Optional: OpenWeatherMap API key for real weather data
+
+### Quick Start
+```bash
+# Clone and setup
+git clone <repo>
+cd supply_chain_ingestion
+
+# Set environment variables
+export API_TOKEN="your_secure_token_here"
+export WEATHER_API_KEY="your_openweather_key"  # Optional
+
+# Run with Docker Compose
+docker-compose up --build
+
+# API available at http://localhost:8000
+# Health check: http://localhost:8000/health
+# Metrics: http://localhost:8000/metrics
+```
+
+### API Endpoints
+- `GET /health` - Health check
+- `GET /sources` - List data sources
+- `POST /ingest/{source_id}` - Ingest data (requires Bearer token)
+- `GET /jobs/{job_id}` - Check job status
+- `GET /datasets/{dataset_id}` - Query ingested data
+- `GET /inventory/alerts` - Supply chain alerts (low stock)
+
+### Security
+- Bearer token authentication on protected endpoints
+- Rate limiting: 10 requests/minute per IP
+- Non-root Docker user
+- Input validation and sanitization
+
+### Monitoring
+- Health checks built into Docker
+- Basic metrics endpoint
+- Structured logging to files
+- Telemetry collection per job
+
+### Testing
+```bash
+pip install -r requirements.txt
+pytest tests/
+```
+
+---
+
 ## Data Sources
 
 | Source | File | Rows | Type | Contract Policy |

@@ -14,9 +14,9 @@ import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from supply_chain_ingestion.control_plane.entities import OperationType, EventEnvelope
-from supply_chain_ingestion.control_plane.contracts import IOT_CONTRACT
-from supply_chain_ingestion.observability_plane.telemetry import JobTelemetry
+from control_plane.entities import OperationType, EventEnvelope
+from control_plane.contracts import IOT_CONTRACT
+from observability_plane.telemetry import JobTelemetry
 from kafka_consumer import IoTConsumer
 
 log = logging.getLogger("real_time_iot_ingest")

@@ -4,6 +4,7 @@
 #   - calls profile() to learn real data distributions
 #   - adds source-specific IDs, dirty data injection, referential integrity rules
 
+import os
 import random
 import uuid
 import logging

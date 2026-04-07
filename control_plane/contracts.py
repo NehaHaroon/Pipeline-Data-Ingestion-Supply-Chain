@@ -268,14 +268,16 @@ IOT_CONTRACT = DataContract(
 WEATHER_CONTRACT = DataContract(
     contract_id="contract_weather_v1",
     source_id="src_weather_api",
-    required_fields={"city", "temperature", "humidity", "weather_description", "timestamp"},
+    version="v1",
+    required_fields=["city", "temperature", "humidity", "weather_description", "timestamp"],
+    nullable_fields=[],
     violation_policy=ViolationPolicy.QUARANTINE,
     field_constraints={
         "city":                 FieldConstraint("city",                 "str", nullable=False),
         "temperature":          FieldConstraint("temperature",          "float", nullable=False, min_value=-50, max_value=60, unit="Celsius"),
         "humidity":             FieldConstraint("humidity",             "int", nullable=False, min_value=0, max_value=100, unit="%"),
         "weather_description":  FieldConstraint("weather_description",  "str", nullable=False),
-        "timestamp":            FieldConstraint("timestamp",            "datetime", nullable=False),
+        "timestamp":            FieldConstraint("timestamp",            "str", nullable=False),
     }
 )
 
