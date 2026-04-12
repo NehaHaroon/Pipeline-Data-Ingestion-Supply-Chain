@@ -1,0 +1,527 @@
+2026-04-12T19:32:00 [INFO] run_production — 
+2026-04-12T19:32:00 [INFO] run_production — ======================================================================
+2026-04-12T19:32:00 [INFO] run_production —   PRODUCTION STARTUP: Live API + Dashboard + Batch Ingestion
+2026-04-12T19:32:00 [INFO] run_production — ======================================================================
+2026-04-12T19:32:00 [INFO] run_production — Starting Supply Chain Ingestion Pipeline (Production Mode)
+2026-04-12T19:32:00 [INFO] run_production — Registered sources: 6 | Starting production pipeline with live API and Kafka stream
+2026-04-12T19:32:00 [INFO] run_production — Production endpoints: http://localhost:8000/health, /telemetry, /storage-summary, /dashboard-plots
+2026-04-12T19:32:00 [INFO] run_production — 
+2026-04-12T19:32:00 [INFO] run_production — ======================================================================
+2026-04-12T19:32:00 [INFO] run_production —   PHASE: API SERVER: FastAPI startup
+2026-04-12T19:32:00 [INFO] run_production — ======================================================================
+2026-04-12T19:32:00 [INFO] run_production — Starting API server on http://0.0.0.0:8000
+2026-04-12T19:32:02 [INFO] run_production — 
+2026-04-12T19:32:02 [INFO] run_production — ======================================================================
+2026-04-12T19:32:02 [INFO] run_production —   PRODUCTION DASHBOARD: Status & Health Summary
+2026-04-12T19:32:02 [INFO] run_production — ======================================================================
+2026-04-12T19:32:02 [INFO] run_production — 
+2026-04-12T19:32:02 [INFO] run_production —   -- Storage Audit --
+2026-04-12T19:32:02 [INFO] run_production —   Ingested (Parquet)               20 files    7579.1 KB
+2026-04-12T19:32:02 [INFO] run_production —   Quarantine                        0 files       0.0 KB
+2026-04-12T19:32:02 [INFO] run_production —   CDC Log                           2 files     622.8 KB
+2026-04-12T19:32:02 [INFO] run_production —   Micro-Batch                       6 files     213.2 KB
+2026-04-12T19:32:02 [INFO] run_production —   Stream Buffer                    98 files    2637.4 KB
+2026-04-12T19:32:02 [INFO] run_production —   Checkpoints                       4 files       0.3 KB
+2026-04-12T19:32:02 [INFO] run_production —   Detail Logs (JSONL)              11 files    2383.2 KB
+2026-04-12T19:32:02 [INFO] run_production —   -------------------------------------------------------
+2026-04-12T19:32:02 [INFO] run_production —   TOTAL                           141 files   13436.1 KB
+2026-04-12T19:32:02 [INFO] run_production — 
+2026-04-12T19:32:02 [INFO] run_production —   -- Parquet Row Counts --
+2026-04-12T19:32:02 [INFO] run_production —   src_legacy_trends.parquet                                 6298 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs.parquet                           10000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_log_cdc_burst.parquet              5000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_ts_cdc_burst.parquet               5000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history.parquet                                10000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_log_cdc_steady.parquet                   100 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_ts_cdc_steady.parquet                    100 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_warehouse_master.parquet                             10000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_weather_api.parquet                                      1 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_burst_cdc.parquet                  5000 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_steady_cdc.parquet                       100 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_microbatch_001.parquet              200 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_microbatch_002.parquet              200 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_manufacturing_logs_microbatch_003.parquet              200 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_microbatch_001.parquet                   200 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_microbatch_002.parquet                   200 rows
+2026-04-12T19:32:02 [INFO] run_production —   src_sales_history_microbatch_003.parquet                   200 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T074558_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T074735_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T074911_batch003.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075048_batch004.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075226_batch005.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075404_batch006.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075539_batch007.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075714_batch008.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T075852_batch009.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T080031_batch010.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T080208_batch011.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T083519_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T083658_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T090156_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T090334_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T090511_batch003.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T090649_batch004.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T090829_batch005.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091004_batch006.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091142_batch007.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091319_batch008.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091457_batch009.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091633_batch010.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091813_batch011.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T091952_batch012.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T092128_batch013.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T092306_batch014.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T092442_batch015.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T095817_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T095957_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T100134_batch003.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T100310_batch004.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T100448_batch005.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T100626_batch006.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T100803_batch007.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T104056_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T104234_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T104410_batch003.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T104550_batch004.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T113418_batch001.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T113554_batch002.parquet              100 rows
+2026-04-12T19:32:02 [INFO] run_production —   iot_realtime_20260412T113731_batch003.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T113908_batch004.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114046_batch005.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114225_batch006.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114404_batch007.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114540_batch008.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114715_batch009.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T114850_batch010.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115024_batch011.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115202_batch012.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115342_batch013.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115520_batch014.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115653_batch015.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T115829_batch016.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T120008_batch017.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130118_batch001.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130255_batch002.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130432_batch003.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130608_batch004.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130746_batch005.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T130924_batch006.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T133713_batch001.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T133848_batch002.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134027_batch003.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134206_batch004.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134341_batch005.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134515_batch006.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134656_batch007.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T134832_batch008.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T135010_batch009.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T135150_batch010.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T135327_batch011.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T142544_batch001.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T142722_batch002.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T142858_batch003.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_realtime_20260412T143033_batch004.parquet              100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124554_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124554_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124554_batch003.parquet                 95 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124702_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124702_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T124702_batch003.parquet                 94 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T142908_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T142908_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T142908_batch003.parquet                 89 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T143202_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T143202_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T143202_batch003.parquet                 89 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T144321_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T144321_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260405T144321_batch003.parquet                 94 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260407T043850_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260407T043850_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260407T043850_batch003.parquet                 89 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260411T104740_batch001.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260411T104740_batch002.parquet                100 rows
+2026-04-12T19:32:03 [INFO] run_production —   iot_stream_20260411T104740_batch003.parquet                 84 rows
+2026-04-12T19:32:03 [INFO] run_production — 
+2026-04-12T19:32:03 [INFO] run_production —   -- Ingestion Status --
+2026-04-12T19:32:04 [INFO] run_production —   Streaming: 98 files, 9734 events ingested
+2026-04-12T19:32:04 [INFO] run_production — 
+2026-04-12T19:32:04 [INFO] run_production —   -- Telemetry Summary --
+2026-04-12T19:32:04 [INFO] run_production —   Persisted telemetry jobs: 34
+2026-04-12T19:32:04 [INFO] run_production —   Telemetry sources: ['src_sales_history', 'src_warehouse_master']
+2026-04-12T19:32:04 [INFO] run_production — 
+2026-04-12T19:32:04 [INFO] run_production —   -- Source Configuration & Next Ingestion --
+2026-04-12T19:32:04 [INFO] run_production —   src_warehouse_master      | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:32:04 [INFO] run_production —   src_manufacturing_logs    | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:32:04 [INFO] run_production —   src_sales_history         | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:32:04 [INFO] run_production —   src_legacy_trends         | file   | pull | weekly    | Next: 0d 9h
+2026-04-12T19:32:04 [INFO] run_production —   src_iot_rfid_stream       | stream | push | real_time | Next: Continuous
+2026-04-12T19:32:04 [INFO] run_production —   src_weather_api           | api    | pull | hourly    | Next: 0h 27m
+2026-04-12T19:32:04 [INFO] run_production — 
+2026-04-12T19:32:04 [INFO] run_production —   -- Log File Summary --
+2026-04-12T19:32:04 [INFO] run_production —   Log file: logs\run_production_20260412_193200.log
+2026-04-12T19:32:04 [INFO] run_production —   Total lines: 161
+2026-04-12T19:32:04 [INFO] run_production —   INFO: 161, WARNING: 0, ERROR: 0
+2026-04-12T19:32:04 [INFO] run_production —   Last 5 lines:
+2026-04-12T19:32:04 [INFO] run_production —     2026-04-12T19:32:04 [INFO] run_production —   src_legacy_trends         | file   | pull | weekly    | Next: 0d 9h
+2026-04-12T19:32:04 [INFO] run_production —     2026-04-12T19:32:04 [INFO] run_production —   src_iot_rfid_stream       | stream | push | real_time | Next: Continuous
+2026-04-12T19:32:04 [INFO] run_production —     2026-04-12T19:32:04 [INFO] run_production —   src_weather_api           | api    | pull | hourly    | Next: 0h 27m
+2026-04-12T19:32:04 [INFO] run_production —     2026-04-12T19:32:04 [INFO] run_production —
+2026-04-12T19:32:04 [INFO] run_production —     2026-04-12T19:32:04 [INFO] run_production —   -- Log File Summary --
+2026-04-12T19:32:04 [INFO] run_production — ======================================================================
+2026-04-12T19:32:04 [INFO] run_production — 
+2026-04-12T19:32:04 [INFO] run_production — ======================================================================
+2026-04-12T19:32:04 [INFO] run_production — 
+2026-04-12T19:32:04 [INFO] run_production — Production startup complete. API, batch ingestion, dashboard, and IoT consumer are running.
+2026-04-12T19:32:04 [INFO] run_production —   PHASE: BATCH INGESTION: Load raw sources via API
+2026-04-12T19:32:04 [INFO] run_production — ======================================================================
+2026-04-12T19:32:04 [INFO] run_production — ======================================================================
+2026-04-12T19:32:04 [INFO] run_production —   PHASE: IOT CONSUMER: Real-time IoT ingestion
+2026-04-12T19:32:04 [INFO] run_production — Preparing batch ingestion for 4 file-based source(s)
+2026-04-12T19:32:04 [INFO] run_production — ======================================================================
+2026-04-12T19:32:04 [INFO] run_production — Using local API endpoint for ingestion: http://127.0.0.1:8000
+2026-04-12T19:32:04 [INFO] run_production — Starting IoT consumer...
+2026-04-12T19:32:04 [INFO] run_production — API health check passed
+2026-04-12T19:32:04 [INFO] run_production — Loading data from storage/raw/warehouse_master.csv for src_warehouse_master
+2026-04-12T19:32:04 [INFO] run_production —   10000 rows loaded from raw file
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=c37dab66-b535-485b-a43c-a09729fa1632
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=84a482dd-f563-42ee-bdcd-e84c9e231384
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=24f451a9-b1a3-4420-b178-19bfddd239e0
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=32858a75-67fb-49bf-8526-9a1dba3dda77
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=85a2336d-dd30-4177-9a31-c4b43a353d88
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=dff76cf0-f0a7-4c8f-933f-405890060836
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=012a2329-0144-4dd0-968e-0bdda6f82e42
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=952f14de-a195-443f-8061-ed4c2c47212b
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=4500ff7f-6614-4672-ac7b-8b57de5e9fc4
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_warehouse_master (1000 records) -> job_id=bee955f4-59f7-4e0b-8a78-572b0722816c
+2026-04-12T19:32:04 [INFO] run_production — Completed batch submission for src_warehouse_master: 10 request(s)
+2026-04-12T19:32:04 [INFO] run_production — Loading data from storage/raw/manufacturing_logs.csv for src_manufacturing_logs
+2026-04-12T19:32:04 [INFO] run_production —   10000 rows loaded from raw file
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=cf6b1527-2553-40c8-aad5-e6b8995b50ce
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=b0405664-1102-4a5a-a8c4-c1d1cafd0943
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=f22da412-b7c4-4815-8010-d33936c8418c
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=4facf6cf-e98b-4152-ac0a-bf9d60ca28a5
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=779f59c6-3381-495e-b2db-763b59b56a07
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=bd89ed11-5ece-47f2-ad67-c92548a23128
+2026-04-12T19:32:04 [INFO] real_time_iot_ingest — 
+2026-04-12T19:32:04 [INFO] real_time_iot_ingest — ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
+2026-04-12T19:32:04 [INFO] real_time_iot_ingest —   REAL-TIME IOT INGESTION | job=job_iot_realtime_1776004324
+2026-04-12T19:32:04 [INFO] real_time_iot_ingest —   flush_every=100 events
+2026-04-12T19:32:04 [INFO] real_time_iot_ingest — ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶
+2026-04-12T19:32:04 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=2d89208b-d22d-4850-9355-077b24a7332d
+2026-04-12T19:32:04 [INFO] observability_plane.telemetry — [TELEMETRY][job_iot_realtime_1776004324] ▶  Job started at 2026-04-12T14:32:04.914703+00:00
+2026-04-12T19:32:04 [INFO] kafka_consumer — Attempting to connect to Kafka (attempt 1/15)...
+2026-04-12T19:32:04 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connecting> [IPv6 ('::1', 9092, 0, 0)]>: connecting to localhost:9092 [('::1', 9092, 0, 0) IPv6]
+2026-04-12T19:32:04 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <checking_api_versions_recv> [IPv6 ('::1', 9092, 0, 0)]>: Broker version identified as 2.6
+2026-04-12T19:32:04 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Connection complete.
+2026-04-12T19:32:04 [INFO] kafka.consumer.subscription_state — Updating subscribed topics to: ('supply_chain_inventory',)
+2026-04-12T19:32:04 [INFO] kafka_consumer — Successfully connected to Kafka
+2026-04-12T19:32:04 [INFO] observability_plane.telemetry — [TELEMETRY][streaming_job] ▶  Job started at 2026-04-12T14:32:04.966993+00:00
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=57b63acb-f940-4f10-9be1-063f13a7b132
+2026-04-12T19:32:05 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=8889a9b9-bd22-46eb-a128-8dfc0f721d87
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_manufacturing_logs (1000 records) -> job_id=9323a1d7-c14a-4deb-8192-7c6dcea2335f
+2026-04-12T19:32:05 [INFO] run_production — Completed batch submission for src_manufacturing_logs: 10 request(s)
+2026-04-12T19:32:05 [INFO] run_production — Loading data from storage/raw/sales_history.csv for src_sales_history
+2026-04-12T19:32:05 [INFO] run_production —   10000 rows loaded from raw file
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=19e8541b-37f1-4e7a-b76c-89cdadc5bf47
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=dd603467-aad5-4600-84d9-d3e6a9eb3950
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=2b40894e-a3ba-4b5f-9b45-767458b6c507
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=085bc9de-d497-4ba5-9f7b-1b1357f6d22e
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=303b300e-3bc9-4680-b5d1-de8f7e97b2ec
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=02a2af53-9231-4c6a-9e70-b4fc9edaf814
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=0fc756c5-81c1-418f-9d1d-6f9cd88af0ea
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=96bda939-c041-4e8d-bb7b-958945ff210f
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=90de8c16-104f-44fe-9176-e367e50c76bf
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_sales_history (1000 records) -> job_id=0e1d86e2-b112-4e60-b164-13f346ea9e16
+2026-04-12T19:32:05 [INFO] run_production — Completed batch submission for src_sales_history: 10 request(s)
+2026-04-12T19:32:05 [INFO] run_production — Loading data from storage/raw/legacy_trends.csv for src_legacy_trends
+2026-04-12T19:32:05 [INFO] run_production —   10000 rows loaded from raw file
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=d9283493-2622-48ad-89b5-92ac3d0a6ad4
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=abcabac2-2ecf-4123-a84b-6922ba2dde6e
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=7eb4c676-4dc5-4ac6-9b4e-8dbba9b11358
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=ba36cf38-c2ed-471c-90f3-be4258b477b1
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=a22c3270-6a9c-4a39-886f-e5b609a46cf2
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=2a166f60-6c8a-4349-bbb3-074c24549cb4
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=62263475-5618-4747-90dd-63675f172c60
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=87e0d877-df35-4ab5-be84-39d16a6ed9a2
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=2e5c9c3d-186a-4089-803b-ce051ddbe19a
+2026-04-12T19:32:05 [INFO] run_production —   Batch ingestion request sent for src_legacy_trends (1000 records) -> job_id=f24fa2b0-3c8c-4359-a33d-2831256e2376
+2026-04-12T19:32:05 [INFO] run_production — Completed batch submission for src_legacy_trends: 10 request(s)
+2026-04-12T19:32:05 [INFO] run_production — 
+2026-04-12T19:32:05 [INFO] run_production — ======================================================================
+2026-04-12T19:32:05 [INFO] run_production —   PHASE: WEATHER API INGESTION: Weather API source ingestion
+2026-04-12T19:32:05 [INFO] run_production — ======================================================================
+2026-04-12T19:32:05 [INFO] run_production — Starting weather API ingestion via internal batch path
+2026-04-12T19:32:05 [INFO] batch_ingest —   ── API Ingestion for src_weather_api ──
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_weather_api_1776004326] ▶  Job started at 2026-04-12T14:32:06.520747+00:00
+2026-04-12T19:32:06 [INFO] batch_ingest — 
+2026-04-12T19:32:06 [INFO] batch_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-12T19:32:06 [INFO] batch_ingest —   INGESTION START | source=src_weather_api | job=job_src_weather_api_1776004326
+2026-04-12T19:32:06 [INFO] batch_ingest —   contract=contract_weather_v1 | violation_policy=quarantine
+2026-04-12T19:32:06 [INFO] batch_ingest —   dedup_key=None | output_suffix=''
+2026-04-12T19:32:06 [INFO] batch_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-12T19:32:06 [INFO] batch_ingest —   [LOAD] Micro-batch slice: 1 rows provided via df_override
+2026-04-12T19:32:06 [INFO] batch_ingest — [PASS] source=src_weather_api | row=1 | key=row_1 | contract=contract_weather_v1 | policy=quarantine | norm_changes=0
+2026-04-12T19:32:06 [INFO] batch_ingest —   [WRITE] ✅ 1 records → storage/ingested\src_weather_api.parquet
+2026-04-12T19:32:06 [INFO] batch_ingest —   [DETAIL LOG] 1 record entries → storage/ingested/detail_logs\src_weather_api_record_log.jsonl
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_weather_api_1776004326] ⏹  Job ended at 2026-04-12T14:32:06.578546+00:00 | Duration: 0.06s
+2026-04-12T19:32:06 [INFO] batch_ingest — 
+2026-04-12T19:32:06 [INFO] batch_ingest —   [TIMER] source=src_weather_api | start=2026-04-12T14:32:06.521862+00:00 | end=2026-04-12T14:32:06.578804+00:00 | duration=0.0569s
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry — 
+============================================================
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   TELEMETRY REPORT — job_src_weather_api_1776004326
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry — ============================================================
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   job_id                              job_src_weather_api_1776004326
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   source_id                           src_weather_api
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   start_time                          2026-04-12T14:32:06.520746+00:00
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   end_time                            2026-04-12T14:32:06.578541+00:00
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   duration_seconds                    0.0578
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   records_ingested                    1
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   records_failed                      0
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   records_quarantined                 0
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   records_coerced                     0
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   throughput_rec_sec                  17.3
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   avg_ingestion_latency_sec           0.0
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   processing_lag_sec                  0.0578
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   storage_summary                     {'ingested': {'file_count': 1, 'bytes': 9143}, 'quarantine': {'file_count': 0, 'bytes': 0}, 'cdc_log': {'file_count': 0, 'bytes': 0}, 'micro_batch': {'file_count': 0, 'bytes': 0}, 'stream_buffer': {'file_count': 0, 'bytes': 0}, 'checkpoints': {'file_count': 0, 'bytes': 0}}
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   file_count_per_partition            1
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry —   snapshot_count                      1
+2026-04-12T19:32:06 [INFO] observability_plane.telemetry — ============================================================
+
+2026-04-12T19:32:06 [INFO] batch_ingest —   [API] Ingested 1 record from https://api.openweathermap.org/data/2.5/weather
+2026-04-12T19:32:06 [INFO] run_production —   Weather API ingestion completed: ingested=1 failed=0 quarantined=0 coerced=0
+2026-04-12T19:32:26 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:32:26 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:32:26 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:32:26 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:32:35 [INFO] kafka.client — Closing idle connection bootstrap-0, last active 30044 ms ago
+2026-04-12T19:32:35 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=bootstrap-0 host=localhost:9092 <connected> [IPv6 ('::1', 9092, 0, 0)]>: Closing connection. 
+2026-04-12T19:32:47 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:32:47 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:32:47 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:32:47 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:33:08 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:33:08 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:33:08 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:33:08 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:33:29 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:33:29 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:33:29 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:33:29 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:33:50 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:33:50 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:33:50 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:33:51 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:34:12 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:34:12 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:34:12 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:34:12 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:34:33 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:34:33 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:34:33 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:34:33 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:34:54 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:34:54 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:34:54 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:34:54 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:35:16 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:35:16 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:35:16 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:35:16 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:35:37 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:35:37 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:35:37 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:35:46 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:36:07 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:36:07 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:36:07 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:36:21 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:36:42 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:36:42 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:36:42 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:36:54 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:37:04 [INFO] run_production — 
+2026-04-12T19:37:04 [INFO] run_production — ======================================================================
+2026-04-12T19:37:04 [INFO] run_production —   PRODUCTION DASHBOARD: Status & Health Summary
+2026-04-12T19:37:04 [INFO] run_production — ======================================================================
+2026-04-12T19:37:04 [INFO] run_production — 
+2026-04-12T19:37:04 [INFO] run_production —   -- Storage Audit --
+2026-04-12T19:37:04 [INFO] run_production —   Ingested (Parquet)               20 files    7579.1 KB
+2026-04-12T19:37:04 [INFO] run_production —   Quarantine                        0 files       0.0 KB
+2026-04-12T19:37:04 [INFO] run_production —   CDC Log                           2 files     622.8 KB
+2026-04-12T19:37:04 [INFO] run_production —   Micro-Batch                       6 files     213.2 KB
+2026-04-12T19:37:04 [INFO] run_production —   Stream Buffer                   102 files    2746.4 KB
+2026-04-12T19:37:04 [INFO] run_production —   Checkpoints                       4 files       0.3 KB
+2026-04-12T19:37:04 [INFO] run_production —   Detail Logs (JSONL)              11 files    2383.2 KB
+2026-04-12T19:37:04 [INFO] run_production —   -------------------------------------------------------
+2026-04-12T19:37:04 [INFO] run_production —   TOTAL                           145 files   13545.1 KB
+2026-04-12T19:37:04 [INFO] run_production — 
+2026-04-12T19:37:04 [INFO] run_production —   -- Parquet Row Counts --
+2026-04-12T19:37:04 [INFO] run_production —   src_legacy_trends.parquet                                 6298 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs.parquet                           10000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_log_cdc_burst.parquet              5000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_ts_cdc_burst.parquet               5000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history.parquet                                10000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_log_cdc_steady.parquet                   100 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_ts_cdc_steady.parquet                    100 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_warehouse_master.parquet                             10000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_weather_api.parquet                                      1 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_burst_cdc.parquet                  5000 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_steady_cdc.parquet                       100 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_microbatch_001.parquet              200 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_microbatch_002.parquet              200 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_manufacturing_logs_microbatch_003.parquet              200 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_microbatch_001.parquet                   200 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_microbatch_002.parquet                   200 rows
+2026-04-12T19:37:04 [INFO] run_production —   src_sales_history_microbatch_003.parquet                   200 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T074558_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T074735_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T074911_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075048_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075226_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075404_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075539_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075714_batch008.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T075852_batch009.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T080031_batch010.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T080208_batch011.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T083519_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T083658_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T090156_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T090334_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T090511_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T090649_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T090829_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091004_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091142_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091319_batch008.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091457_batch009.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091633_batch010.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091813_batch011.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T091952_batch012.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T092128_batch013.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T092306_batch014.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T092442_batch015.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T095817_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T095957_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T100134_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T100310_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T100448_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T100626_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T100803_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T104056_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T104234_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T104410_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T104550_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T113418_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T113554_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T113731_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T113908_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114046_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114225_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114404_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114540_batch008.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114715_batch009.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T114850_batch010.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115024_batch011.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115202_batch012.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115342_batch013.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115520_batch014.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115653_batch015.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T115829_batch016.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T120008_batch017.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130118_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130255_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130432_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130608_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130746_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T130924_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T133713_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T133848_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134027_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134206_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134341_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134515_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134656_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T134832_batch008.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T135010_batch009.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T135150_batch010.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T135327_batch011.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T142544_batch001.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T142722_batch002.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T142858_batch003.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T143033_batch004.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T143212_batch005.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T143349_batch006.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T143526_batch007.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_realtime_20260412T143703_batch008.parquet              100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124554_batch001.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124554_batch002.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124554_batch003.parquet                 95 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124702_batch001.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124702_batch002.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T124702_batch003.parquet                 94 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T142908_batch001.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T142908_batch002.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T142908_batch003.parquet                 89 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T143202_batch001.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T143202_batch002.parquet                100 rows
+2026-04-12T19:37:04 [INFO] run_production —   iot_stream_20260405T143202_batch003.parquet                 89 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260405T144321_batch001.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260405T144321_batch002.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260405T144321_batch003.parquet                 94 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260407T043850_batch001.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260407T043850_batch002.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260407T043850_batch003.parquet                 89 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260411T104740_batch001.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260411T104740_batch002.parquet                100 rows
+2026-04-12T19:37:05 [INFO] run_production —   iot_stream_20260411T104740_batch003.parquet                 84 rows
+2026-04-12T19:37:05 [INFO] run_production — 
+2026-04-12T19:37:05 [INFO] run_production —   -- Ingestion Status --
+2026-04-12T19:37:05 [INFO] run_production —   Streaming: 102 files, 10134 events ingested
+2026-04-12T19:37:05 [INFO] run_production — 
+2026-04-12T19:37:05 [INFO] run_production —   -- Telemetry Summary --
+2026-04-12T19:37:05 [INFO] run_production —   Persisted telemetry jobs: 75
+2026-04-12T19:37:05 [INFO] run_production —   Telemetry sources: ['src_legacy_trends', 'src_manufacturing_logs', 'src_sales_history', 'src_warehouse_master', 'src_weather_api']
+2026-04-12T19:37:05 [INFO] run_production — 
+2026-04-12T19:37:05 [INFO] run_production —   -- Source Configuration & Next Ingestion --
+2026-04-12T19:37:05 [INFO] run_production —   src_warehouse_master      | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:37:05 [INFO] run_production —   src_manufacturing_logs    | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:37:05 [INFO] run_production —   src_sales_history         | file   | pull | daily     | Next: 0d 9h
+2026-04-12T19:37:05 [INFO] run_production —   src_legacy_trends         | file   | pull | weekly    | Next: 0d 9h
+2026-04-12T19:37:05 [INFO] run_production —   src_iot_rfid_stream       | stream | push | real_time | Next: Continuous
+2026-04-12T19:37:05 [INFO] run_production —   src_weather_api           | api    | pull | hourly    | Next: 0h 22m
+2026-04-12T19:37:05 [INFO] run_production — 
+2026-04-12T19:37:05 [INFO] run_production —   -- Log File Summary --
+2026-04-12T19:37:05 [INFO] run_production —   Log file: logs\run_production_20260412_193200.log
+2026-04-12T19:37:05 [INFO] run_production —   Total lines: 496
+2026-04-12T19:37:05 [INFO] run_production —   INFO: 458, WARNING: 12, ERROR: 24
+2026-04-12T19:37:05 [INFO] run_production —   Last 5 lines:
+2026-04-12T19:37:05 [INFO] run_production —     2026-04-12T19:37:05 [INFO] run_production —   src_legacy_trends         | file   | pull | weekly    | Next: 0d 9h
+2026-04-12T19:37:05 [INFO] run_production —     2026-04-12T19:37:05 [INFO] run_production —   src_iot_rfid_stream       | stream | push | real_time | Next: Continuous
+2026-04-12T19:37:05 [INFO] run_production —     2026-04-12T19:37:05 [INFO] run_production —   src_weather_api           | api    | pull | hourly    | Next: 0h 22m
+2026-04-12T19:37:05 [INFO] run_production —     2026-04-12T19:37:05 [INFO] run_production —
+2026-04-12T19:37:05 [INFO] run_production —     2026-04-12T19:37:05 [INFO] run_production —   -- Log File Summary --
+2026-04-12T19:37:05 [INFO] run_production — ======================================================================
+2026-04-12T19:37:15 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:37:15 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:37:15 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:37:19 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:37:40 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:37:40 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:37:40 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:37:46 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:38:07 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:38:07 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:38:07 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:38:18 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:38:39 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:38:39 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:38:39 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:38:52 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:39:13 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Connection attempt timed out
+2026-04-12T19:39:13 [ERROR] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: Closing connection. KafkaConnectionError: timeout
+2026-04-12T19:39:13 [WARNING] kafka.client — Node 1 connection failed -- refreshing metadata
+2026-04-12T19:39:19 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.0, node_id=1 host=kafka:9092 <connecting> [IPv4 ('20.119.84.212', 9092)]>: connecting to kafka:9092 [('20.119.84.212', 9092) IPv4]
+2026-04-12T19:39:23 [INFO] run_production — Shutting down production runner

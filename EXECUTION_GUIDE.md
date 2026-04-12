@@ -155,7 +155,7 @@ docker-compose --version  # Docker Compose 2.0+
 cat > .env << EOF
 API_TOKEN=token
 WEATHER_API_KEY=token 
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 EOF
 ```
 

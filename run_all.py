@@ -46,6 +46,22 @@ def banner(phase: str, title: str):
     log.info("=" * 70)
 
 
+def describe_generator(name: str, gen) -> None:
+    cols = len(gen._profiles)
+    types = {val: list(gen._col_types.values()).count(val) for val in set(gen._col_types.values())}
+    log.info(f"  [{name}] profile summary: columns={cols} type_counts={types}")
+    for col, profile in gen._profiles.items():
+        if profile["type"] == "categorical":
+            sample_values = list(zip(profile["values"][:3], profile["probs"][:3]))
+            log.info(f"    - {col}: categorical values={len(profile['values'])} sample={sample_values}")
+        elif profile["type"] == "numeric":
+            log.info(f"    - {col}: numeric mean={profile['mean']:.2f} std={profile['std']:.2f} min={profile['min']:.2f} max={profile['max']:.2f}")
+        elif profile["type"] == "timestamp":
+            log.info(f"    - {col}: timestamp range={datetime.fromtimestamp(profile['min'], timezone.utc).isoformat()} → {datetime.fromtimestamp(profile['max'], timezone.utc).isoformat()}")
+        else:
+            log.info(f"    - {col}: type={profile['type']}")
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # PHASE 1 + 2: Control Plane verification
 # ──────────────────────────────────────────────────────────────────────────────
@@ -126,8 +142,9 @@ def run_phase_3() -> list:
         else:
             samples = gen.generate(5)
         log.info(f"  [{name}] Generated 5 synthetic records. Sample[0] keys: {list(samples[0].keys())}")
+        describe_generator(name, gen)
 
-    log.info(f"  Phase 3 complete. All generators profiled and verified.")
+    log.info(f"  Phase 3 complete. All generators profiled, synthetic generation verified, and distribution fingerprints captured.")
     return pids
 
 
@@ -149,6 +166,12 @@ def run_phase_4(product_ids: list):
     log.info("")
     log.info("  ── 4a: Full Batch Initial Load ──")
     batch_tels = run_all_batch_ingestion()
+
+    total_ingested = sum(t.records_ingested for t in batch_tels)
+    total_failed   = sum(t.records_failed for t in batch_tels)
+    total_quar     = sum(t.records_quarantined for t in batch_tels)
+    total_coerce   = sum(t.records_coerced for t in batch_tels)
+    log.info(f"  [PHASE 4 SUMMARY] batch ingestion | ingested={total_ingested} failed={total_failed} quarantined={total_quar} coerced={total_coerce}")
 
     # ── 4b: Micro-batch demo on sales (most interesting) ────────────────
     log.info("")
@@ -333,6 +356,15 @@ def run_phase_7():
                 log.info(f"    {line.strip()}")
     else:
         log.warning("  No log file found")
+
+    from observability_plane.telemetry import JobTelemetry
+    reports = JobTelemetry.load_reports()
+    log.info("")
+    log.info("  ── Telemetry Audit ──")
+    log.info(f"  Telemetry reports written: {len(reports)}")
+    if reports:
+        sources = sorted({r.get('source_id') for r in reports})
+        log.info(f"  Sources covered by telemetry: {sources}")
 
     log.info("")
     log.info("  ── Ingestion Status ──")

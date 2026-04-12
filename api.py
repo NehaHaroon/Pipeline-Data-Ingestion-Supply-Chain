@@ -122,23 +122,31 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
         telemetry = JobTelemetry(job_id=job_id, source_id=source_id)
         telemetry.mark_start()
 
-        for record in records:
+        for idx, record in enumerate(records, start=1):
             # Enforce contract
             result = CONTRACT_REGISTRY[source_id].enforce(record)
-            if result["status"] in ["ok", "coerced"]:
+            status = result["status"]
+            if status in ["ok", "coerced"]:
                 if source_id not in datasets_db:
                     datasets_db[source_id] = []
                 datasets_db[source_id].append(result["record"])
                 telemetry.records_ingested += 1
-            elif result["status"] == "quarantine":
+            elif status == "quarantine":
                 telemetry.records_quarantined += 1
             else:
                 telemetry.records_failed += 1
 
+            log.info(
+                f"[API-INGEST] job={job_id} source={source_id} row={idx} status={status} "
+                f"records_ingested={telemetry.records_ingested} "
+                f"records_quarantined={telemetry.records_quarantined} "
+                f"records_failed={telemetry.records_failed}"
+            )
+
         telemetry.mark_end()
-        telemetry.save_report()
+        telemetry.log_report()
         jobs_db[job_id]["status"] = "completed"
-        jobs_db[job_id]["telemetry"] = telemetry.to_dict()
+        jobs_db[job_id]["telemetry"] = telemetry.report()
 
     except Exception as e:
         log.error(f"Ingestion failed for job {job_id}: {e}")
@@ -320,6 +328,10 @@ def dashboard():
     .status.running {{ background: #fff3cd; color: #856404; }}
     .status.completed {{ background: #d4edda; color: #155724; }}
     .status.failed {{ background: #f8d7da; color: #721c24; }}
+    .status.public {{ background: #d4edda; color: #155724; }}
+    .status.internal {{ background: #fff3cd; color: #856404; }}
+    .status.confidential {{ background: #f8d7da; color: #721c24; }}
+    .status.restricted {{ background: #e2e3e5; color: #383d41; }}
   </style>
 </head>
 <body>
@@ -358,6 +370,14 @@ def dashboard():
   <div class='card'>
     <h2>Storage Summary</h2>
     <div id='storage-summary'>Loading...</div>
+  </div>
+
+  <div class='card'>
+    <h2>Data Source Configurations & Classifications</h2>
+    <table id='sources-table'>
+      <thead><tr><th>Source ID</th><th>Name</th><th>Type</th><th>Classification</th><th>Domain</th><th>Frequency</th><th>Next Ingestion</th><th>Tags</th></tr></thead>
+      <tbody id='sources-tbody'><tr><td colspan='8'>Loading...</td></tr></tbody>
+    </table>
   </div>
 
   <div class='card'>
@@ -452,6 +472,27 @@ def dashboard():
         }});
         const datasetsText = await datasetsResponse.text();
         document.getElementById('dataset-samples').innerHTML = datasetsText;
+
+        // Update sources table
+        const sourcesResponse = await fetchAPI('/source-configurations');
+        const sourcesTbody = document.getElementById('sources-tbody');
+        sourcesTbody.innerHTML = '';
+        sourcesResponse.sources.forEach(source => {{
+          const tagsHtml = source.tags.map(tag => `<span class='status'>${{tag}}</span>`).join(' ');
+          const classificationClass = `status ${{source.classification_level.toLowerCase()}}`;
+          sourcesTbody.innerHTML += `
+            <tr>
+              <td>${{source.source_id}}</td>
+              <td>${{source.name}}</td>
+              <td>${{source.source_type}}</td>
+              <td><span class='${{classificationClass}}'>${{source.classification_level}}</span></td>
+              <td>${{source.domain}}</td>
+              <td>${{source.ingestion_frequency}}</td>
+              <td>${{source.next_ingestion}}</td>
+              <td>${{tagsHtml}}</td>
+            </tr>
+          `;
+        }});
 
       }} catch (error) {{
         console.error('Dashboard update error:', error);
@@ -548,6 +589,64 @@ def dashboard_json(token: str = Depends(verify_token)):
     }
 
     return {"jobs": job_list, "datasets": dataset_list, "storage_summary": storage_summary}
+
+
+@app.get("/source-configurations")
+def get_source_configurations(token: str = Depends(verify_token)):
+    """Get detailed source configurations with classifications and next ingestion times."""
+    from datetime import datetime, timezone, timedelta
+    import control_plane.entities as entities
+
+    now = datetime.now(timezone.utc)
+    source_configs = []
+
+    for source in entities.ALL_SOURCES:
+        # Calculate next ingestion time
+        freq = source.ingestion_frequency.value
+        if freq == "real_time":
+            next_time = "Continuous"
+            next_datetime = None
+        elif freq == "hourly":
+            next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            remaining = next_hour - now
+            next_time = f"{remaining.seconds // 3600}h {(remaining.seconds % 3600) // 60}m"
+            next_datetime = next_hour
+        elif freq == "daily":
+            next_day = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            remaining = next_day - now
+            next_time = f"{remaining.days}d {remaining.seconds // 3600}h"
+            next_datetime = next_day
+        elif freq == "weekly":
+            days_to_next = (7 - now.weekday()) % 7 or 7
+            next_week = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=days_to_next)
+            remaining = next_week - now
+            next_time = f"{remaining.days}d {remaining.seconds // 3600}h"
+            next_datetime = next_week
+        else:  # on_demand
+            next_time = "On Demand"
+            next_datetime = None
+
+        # Get corresponding dataset for classification
+        dataset = next((d for d in entities.ALL_DATASETS if d.dataset_id == f"ds_{source.source_id[4:]}"), None)
+
+        source_configs.append({
+            "source_id": source.source_id,
+            "name": source.name,
+            "source_type": source.source_type.value,
+            "extraction_mode": source.extraction_mode.value,
+            "change_capture_mode": source.change_capture_mode.value,
+            "ingestion_frequency": freq,
+            "next_ingestion": next_time,
+            "next_ingestion_datetime": next_datetime.isoformat() if next_datetime else None,
+            "tags": source.tags,
+            "domain": dataset.domain if dataset else "unknown",
+            "classification_level": dataset.classification_level.value if dataset else "unknown",
+            "retention_policy": dataset.retention_policy if dataset else "unknown",
+            "schema_version": dataset.schema_version if dataset else "unknown",
+            "expected_schema": source.expected_schema,
+        })
+
+    return {"sources": source_configs}
 
 
 @app.get("/inventory/alerts")

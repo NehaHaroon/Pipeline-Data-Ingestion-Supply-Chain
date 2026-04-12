@@ -10,7 +10,7 @@ from kafka.errors import NoBrokersAvailable
 
 def create_producer_with_retry(max_retries: int = 15):
     """Create KafkaProducer with exponential backoff retry logic."""
-    bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092').split(',')
+    bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092').split(',')
     for attempt in range(max_retries):
         try:
             print(f"🔗 Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})...")

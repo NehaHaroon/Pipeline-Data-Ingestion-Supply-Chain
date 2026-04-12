@@ -192,7 +192,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
     wh_df       = pd.read_csv("storage/raw/warehouse_master.csv")
     product_ids = wh_df["product_id"].tolist()

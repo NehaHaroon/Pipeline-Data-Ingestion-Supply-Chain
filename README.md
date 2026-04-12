@@ -1,6 +1,20 @@
 # Supply Chain Ingestion Pipeline
 
-A production-grade, 7-phase data ingestion pipeline for a multi-source supply chain system. Built entirely in Python with no external orchestration dependencies — runs end-to-end with `python run_all.py`.
+A complete 7-phase Python ingestion pipeline for supply chain sources with contract enforcement, CDC strategies, and observability. The repository implements the full control plane, synthetic data generators, batch + micro-batch ingestion, CDC trigger simulation, three CDC consumption patterns, and telemetry reporting.
+
+---
+
+## Latest Updates
+
+- Full 7-phase pipeline executed by `run_all.py`
+- Control plane metadata and contract enforcement in `control_plane/`
+- Synthetic generators with distribution profiling in `data_plane/generators/`
+- Batch, micro-batch, and IoT stream ingestion in `data_plane/ingestion/`
+- CDC trigger simulations for steady and burst workloads in `data_plane/cdc/cdc_trigger.py`
+- Log-based, trigger-based, and timestamp-based CDC strategies in `data_plane/cdc/cdc_strategies.py`
+- Job telemetry persisted to `storage/telemetry/` and runtime plots generated in `logs/`
+- FastAPI service with ingestion, metrics, and storage summary endpoints in `api.py`
+- Docker Compose support for optional Kafka usage
 
 ---
 
@@ -9,89 +23,44 @@ A production-grade, 7-phase data ingestion pipeline for a multi-source supply ch
 ```
 supply_chain_ingestion/
 ├── run_all.py                          # Master runner — executes all 7 phases
-│
+├── run_production.py                   # Start API + production-mode ingestion
+├── api.py                              # FastAPI management and ingestion service
+├── config.py                           # Environment and runtime configuration
+├── docker-compose.yml                  # Optional Kafka / service integration
+├── requirements.txt                    # Python dependencies
+├── ARCHITECTURE.md                     # Architecture overview and diagrams
+├── EXECUTION_GUIDE.md                  # Detailed execution instructions and outputs
+├── Data Engineering Project – Part 1.md # Project requirements and grading rubric
+├── README.md                           # This document
 ├── control_plane/
 │   ├── entities.py                     # Phase 1 — DataSource, Dataset, IngestionJob, EventEnvelope
-│   └── contracts.py                    # Phase 2 — DataContract + REJECT / QUARANTINE / AUTO_COERCE
-│
+│   └── contracts.py                    # Phase 2 — DataContract enforcement and policies
 ├── data_plane/
 │   ├── generators/
-│   │   ├── base_generator.py           # Phase 3 — Abstract base with distribution profiling
-│   │   └── source_generators.py        # Phase 3 — One generator per source (fitted distributions)
+│   │   ├── base_generator.py           # Phase 3 — Distribution profiling + synthetic generation
+│   │   └── source_generators.py        # Phase 3 — source-specific synthetic data producers
 │   ├── ingestion/
-│   │   ├── batch_ingest.py             # Phase 4 — Full batch load + micro-batch ingestion
-│   │   └── iot_stream_ingest.py        # Phase 4 — Simulated IoT RFID stream (no Kafka needed)
+│   │   ├── batch_ingest.py             # Phase 4 — batch + micro-batch ingestion
+│   │   └── iot_stream_ingest.py        # Phase 4 — IoT stream simulation
 │   └── cdc/
-│       ├── cdc_trigger.py              # Phase 5 — INSERT / UPDATE / DELETE, steady + burst
-│       └── cdc_strategies.py           # Phase 6 — Log-based, trigger-based, timestamp-based CDC
-│
+│       ├── cdc_trigger.py              # Phase 5 — CDC trigger generator (steady + burst)
+│       └── cdc_strategies.py           # Phase 6 — log/trigger/timestamp CDC strategies
 ├── observability_plane/
-│   └── telemetry.py                    # Phase 7 — JobTelemetry + Heartbeat (every 5s)
-│
+│   └── telemetry.py                    # Phase 7 — telemetry, metrics, and heartbeat logging
+├── tests/
+│   └── test_api.py                     # API unit tests
 └── storage/
-    ├── raw/                            # Source CSVs (copied from uploads)
-    ├── ingested/                       # Parquet outputs (good records)
-    │   └── detail_logs/               # Per-record JSONL audit logs
-    ├── quarantine/                     # Parquet outputs (violating records)
-    ├── cdc_log/                        # CDC event logs (steady + burst)
-    ├── micro_batch/                    # Micro-batch Parquet slices
-    ├── stream_buffer/                  # IoT stream flush buffers
-    └── checkpoints/                    # CDC strategy checkpoints (JSON)
+    ├── raw/                            # Input CSV sources
+    ├── ingested/                       # Validated Parquet outputs
+    ├── quarantine/                     # Quarantined invalid records
+    ├── cdc_log/                        # Raw CDC event logs
+    ├── micro_batch/                    # Micro-batch output slices
+    ├── stream_buffer/                  # IoT stream buffer outputs
+    ├── telemetry/                      # Persisted telemetry reports
+    └── checkpoints/                    # CDC checkpoint state
 ```
 
 ---
-
-## Production Deployment
-
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.11+
-- API Token (set `API_TOKEN` env var)
-- Optional: OpenWeatherMap API key for real weather data
-
-### Quick Start
-```bash
-# Clone and setup
-git clone <repo>
-cd supply_chain_ingestion
-
-# Set environment variables
-export API_TOKEN="token "
-export WEATHER_API_KEY="token "  # Optional
-
-# Run with Docker Compose
-docker-compose up --build
-
-# API available at http://localhost:8000
-# Health check: http://localhost:8000/health
-# Metrics: http://localhost:8000/metrics
-```
-
-### API Endpoints
-- `GET /health` - Health check
-- `GET /sources` - List data sources
-- `POST /ingest/{source_id}` - Ingest data (requires Bearer token)
-- `GET /jobs/{job_id}` - Check job status
-- `GET /datasets/{dataset_id}` - Query ingested data
-- `GET /inventory/alerts` - Supply chain alerts (low stock)
-
-### Security
-- Bearer token authentication on protected endpoints
-- Rate limiting: 10 requests/minute per IP
-- Non-root Docker user
-- Input validation and sanitization
-
-### Monitoring
-- Health checks built into Docker
-- Basic metrics endpoint
-- Structured logging to files
-- Telemetry collection per job
-
-### Testing
-```bash
-pip install -r requirements.txt
-pytest tests/
-```
 
 ---
 
@@ -128,45 +97,41 @@ python run_all.py
 ### Using Docker Compose (Recommended)
 
 ```bash
-# Build and run with Kafka
+# Build and run with optional Kafka support
 docker-compose up --build
 
 # API will be available at http://localhost:8000
-# Kafka at localhost:9092
 ```
 
 ### Manual Production Setup
 
-1. **Start Kafka:**
-   ```bash
-   # Using Docker
-   docker run -p 9092:9092 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 confluentinc/cp-kafka:7.4.0
-   ```
-
-2. **Run the API:**
+1. **Run the API:**
    ```bash
    uvicorn api:app --host 0.0.0.0 --port 8000
    ```
 
-3. **Run Production Mode:**
+2. **Run production ingestion/watch mode:**
    ```bash
    python run_production.py
-   # This starts the API and real-time IoT consumer
    ```
 
-4. **Send IoT Events:**
+3. **Optional Kafka producer:**
    ```bash
    python kafka_producer.py
    ```
 
 ### API Endpoints
 
-- `GET /` - Health check
-- `GET /sources` - List all data sources
-- `GET /datasets` - List all datasets
-- `POST /ingest/{source_id}` - Ingest records for a source
-- `GET /jobs/{job_id}` - Get job status
-- `GET /datasets/{dataset_id}` - Query dataset records
+- `GET /health` — Health check
+- `GET /metrics` — Runtime metrics
+- `GET /sources` — List registered sources
+- `GET /datasets` — List registered datasets
+- `POST /ingest/{source_id}` — Send ingestion records
+- `GET /jobs` — Job statuses and telemetry
+- `GET /telemetry` — Persisted telemetry records
+- `GET /dashboard-plots` — Generated plots list
+- `GET /storage-summary` — Storage audit HTML
+- `GET /dataset-samples` — Preview ingested dataset samples
 
 ---
 
@@ -233,31 +198,107 @@ Every record must pass a contract before being written to storage. Contracts are
 
 **`BaseGenerator`** (abstract):
 - `profile(df)` — learns the statistical fingerprint of a real CSV
-  - Categorical columns → frequency distribution → `np.random.choice`
-  - Numeric columns (high-cardinality) → Gaussian fit (mean, std, min, max clamp)
-  - Timestamp columns → uniform range sampling
-- `generate(n)` → list of n synthetic dicts matching the learned distribution
-- `upsample(n)` → alias for generate when n > original row count
+  - categorical columns → frequency distributions
+  - numeric columns → Gaussian mean/std sampling
+  - timestamp columns → range sampling
+- `generate(n)` → synthetic records matching the original data patterns
+- `upsample(n)` → generate more records than the original dataset size
 
 **Source-specific generators:**
 
-| Generator | Dirty data injected | Purpose |
-|-----------|---------------------|---------|
-| `WarehouseMasterGenerator` | None (clean dimension) | Generates new SKU variants with realistic codes |
-| `ManufacturingLogsGenerator` | 20% lowercase product_id, 5% null defect_count | Tests normalization + imputation policies |
-| `SalesHistoryGenerator` | 5% null product_id, 3% negative units_sold | Tests quarantine + return-event handling |
-| `LegacyTrendsGenerator` | Schema migration: old_product_code → product_id | Tests schema enforcement pipeline |
-| `IoTStreamGenerator` | 3% duplicate event_id (exact sensor re-pings) | Tests deduplication policy |
-
-All source generators implement the `BaseGenerator` ABC (`_get_raw_path()` + `_post_process()`).
+| Generator | Purpose |
+|-----------|---------|
+| `WarehouseMasterGenerator` | Generate SKU and inventory metadata records |
+| `ManufacturingLogsGenerator` | Generate production events with realistic batch patterns |
+| `SalesHistoryGenerator` | Generate sales history events with demand patterns |
+| `LegacyTrendsGenerator` | Generate legacy trend records with historical period metadata |
+| `IoTStreamGenerator` | Generate RFID stream events with duplicates and sensor behavior |
 
 ---
 
 ### Phase 4 — Ingestion (`ingestion/`)
 
-#### 4a: Full Batch Load (`batch_ingest.py → run_all_batch_ingestion()`)
+#### 4a: Full Batch Load (`batch_ingest.py`)
 
-Ingests all 4 CSV sources end-to-end. Per record, the pipeline:
+Loads batch CSV sources, normalizes rows, deduplicates, enforces contracts, wraps records in `EventEnvelope`, writes valid records to `storage/ingested/`, and quarantines invalid records.
+
+#### 4b: Micro-batch ingestion
+
+Splits batch sources into smaller slices and writes independent Parquet outputs to `storage/micro_batch/`.
+
+#### 4c: IoT stream simulation (`iot_stream_ingest.py`)
+
+Simulates RFID stream ingestion and flushes buffered events to `storage/stream_buffer/`.
+
+---
+
+### Phase 5 — CDC Trigger (`cdc/cdc_trigger.py`)
+
+Simulates CDC change events with INSERT / UPDATE / DELETE operations.
+
+**Scenarios:**
+- `Steady Stream`: 10 records/sec for 10 seconds
+- `Burst`: 5,000 records emitted in one second
+
+Outputs are written to `storage/cdc_log/`.
+
+---
+
+### Phase 6 — CDC Strategies (`cdc/cdc_strategies.py`)
+
+Implements three CDC ingestion patterns with exactly-once semantics:
+- log-based CDC with checkpointing
+- trigger-based CDC with event deduplication
+- timestamp-based CDC with watermarking
+
+Each strategy writes results to `storage/ingested/` and checkpoint state to `storage/checkpoints/`.
+
+---
+
+### Phase 7 — Observability (`observability_plane/telemetry.py`)
+
+`JobTelemetry` logs metrics for each job and persists them to `storage/telemetry/telemetry_records.jsonl`.
+
+Captured metrics include:
+- `records_ingested`
+- `records_failed`
+- `records_quarantined`
+- `records_coerced`
+- `throughput_rec_sec`
+- `avg_ingestion_latency_sec`
+- `processing_lag_sec`
+- `file_count_per_partition`
+- `snapshot_count`
+
+---
+
+## Storage Layout After a Full Run
+
+- `storage/raw/` — source CSV files
+- `storage/ingested/` — validated Parquet outputs
+- `storage/quarantine/` — invalid/quarantined records
+- `storage/cdc_log/` — raw CDC event logs
+- `storage/micro_batch/` — micro-batch outputs
+- `storage/stream_buffer/` — IoT stream flush outputs
+- `storage/telemetry/` — persisted telemetry reports
+- `storage/checkpoints/` — CDC checkpoint state
+
+---
+
+## Tests
+
+```bash
+pytest tests/test_api.py
+```
+
+---
+
+## Additional Documentation
+
+- `ARCHITECTURE.md` — architecture overview and plane separation
+- `EXECUTION_GUIDE.md` — detailed run instructions and output examples
+- `Data Engineering Project – Part 1.md` — project requirements and grading rubric
+
 
 1. **Load** — `pd.read_csv` of the source file
 2. **Normalize** — uppercase IDs, ISO-8601 timestamps, impute null defect_count → 0.0, migrate legacy schema

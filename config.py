@@ -46,7 +46,10 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 DB_TYPE = os.getenv("DB_TYPE", "parquet")  # parquet, postgres, etc.
 
 # Weather API key (for external API source)
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "your_api_key_here")
+WEATHER_API_KEY = os.getenv(
+    "WEATHER_API_KEY",
+    os.getenv("OPENWEATHER_API_KEY", "your_api_key_here")
+)
 
 # Batch settings
 BATCH_SIZE_DEFAULT = int(os.getenv("BATCH_SIZE_DEFAULT", "1000"))

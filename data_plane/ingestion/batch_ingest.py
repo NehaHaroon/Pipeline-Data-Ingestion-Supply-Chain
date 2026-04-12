@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import requests
+import config
 
 # Resolve project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
@@ -33,7 +34,7 @@ from observability_plane.telemetry import JobTelemetry, Heartbeat
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 log = logging.getLogger("batch_ingest")
 
@@ -511,26 +512,44 @@ def run_api_ingestion(source_id: str, dataset_id: str) -> JobTelemetry:
     source = WEATHER_API_SOURCE
 
     url = source.connection_info["url"]
+    params = source.connection_info["params"].copy()
 
-    params = source.connection_info["params"]
+    use_real_weather = (
+        config.WEATHER_API_KEY and config.WEATHER_API_KEY != "your_api_key_here"
+    )
+    if use_real_weather:
+        params["appid"] = config.WEATHER_API_KEY
+        params.setdefault("units", "metric")
+    else:
+        log.warning("WEATHER_API_KEY not configured or placeholder detected; using httpbin demo fallback for weather ingestion.")
 
-    # For demo, use httpbin.org to simulate API call (since OpenWeatherMap requires API key)
     try:
-        response = requests.get("https://httpbin.org/json", timeout=10)
+        if use_real_weather:
+            response = requests.get(url, params=params, timeout=10)
+        else:
+            response = requests.get("https://httpbin.org/json", timeout=10)
         response.raise_for_status()
         api_data = response.json()
     except requests.RequestException as e:
         log.error(f"API call failed: {e}")
         return JobTelemetry(source_id, dataset_id, 0, 0, 0, 0, 0, 0, 0)
 
-    # Transform API response to expected schema
-    record = {
-        "city": "Lahore",  # Mock city
-        "temperature": 25.0,  # Mock temp
-        "humidity": 60,  # Mock humidity
-        "weather_description": "clear sky",  # Mock desc
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    if use_real_weather:
+        record = {
+            "city": api_data.get("name", "unknown"),
+            "temperature": api_data.get("main", {}).get("temp", 0.0),
+            "humidity": api_data.get("main", {}).get("humidity", 0),
+            "weather_description": api_data.get("weather", [{}])[0].get("description", "unknown"),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    else:
+        record = {
+            "city": "Lahore",
+            "temperature": 25.0,
+            "humidity": 60,
+            "weather_description": "clear sky",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
 
     # Ingest as DataFrame
     df = pd.DataFrame([record])

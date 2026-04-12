@@ -6,13 +6,14 @@ import time
 import os
 from typing import Dict, Any
 from datetime import datetime
+import config
 
 log = logging.getLogger(__name__)
 
 class IoTProducer:
     def __init__(self, bootstrap_servers: str = None, topic: str = "supply_chain_inventory", max_retries: int = 15):
         if bootstrap_servers is None:
-            bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
+            bootstrap_servers = config.KAFKA_BOOTSTRAP_SERVERS
         self.producer = self._connect_with_retry(bootstrap_servers, max_retries)
         self.topic = topic
 

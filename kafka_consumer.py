@@ -5,6 +5,7 @@ import logging
 import time
 import os
 from typing import Callable, Dict, Any
+import config
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry
 
@@ -13,7 +14,7 @@ log = logging.getLogger(__name__)
 class IoTConsumer:
     def __init__(self, bootstrap_servers: str = None, topic: str = "supply_chain_inventory", group_id: str = "supply_chain_group", max_retries: int = 15):
         if bootstrap_servers is None:
-            bootstrap_servers = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
+            bootstrap_servers = config.KAFKA_BOOTSTRAP_SERVERS
         self.consumer = self._connect_with_retry(topic, bootstrap_servers, group_id, max_retries)
         self.source_id = "src_iot_rfid_stream"
         self.contract = CONTRACT_REGISTRY[self.source_id]

@@ -126,6 +126,6 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
     run_real_time_ingestion()
