@@ -153,8 +153,8 @@ docker-compose --version  # Docker Compose 2.0+
 ```bash
 # Create .env file in project root
 cat > .env << EOF
-API_TOKEN=your_secure_token_here_change_in_production
-WEATHER_API_KEY=your_openweathermap_api_key_optional
+API_TOKEN=token
+WEATHER_API_KEY=token 
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092
 EOF
 ```

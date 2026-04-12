@@ -15,7 +15,7 @@ import os
 import sys
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import matplotlib.pyplot as plt
 
 logging.basicConfig(
@@ -314,6 +314,65 @@ def run_phase_7():
     plt.grid(True)
     plt.savefig('logs/dashboard_throughput.png')
     log.info("  Dashboard plot saved to logs/dashboard_throughput.png")
+
+    log.info("")
+    log.info("  ── Log File Summary ──")
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as f:
+            lines = f.readlines()
+        total_lines = len(lines)
+        error_lines = sum(1 for line in lines if '[ERROR]' in line)
+        warning_lines = sum(1 for line in lines if '[WARNING]' in line)
+        info_lines = sum(1 for line in lines if '[INFO]' in line)
+        log.info(f"  Log file: {log_file}")
+        log.info(f"  Total lines: {total_lines}")
+        log.info(f"  INFO: {info_lines}, WARNING: {warning_lines}, ERROR: {error_lines}")
+        if lines:
+            log.info("  Last 5 lines:")
+            for line in lines[-5:]:
+                log.info(f"    {line.strip()}")
+    else:
+        log.warning("  No log file found")
+
+    log.info("")
+    log.info("  ── Ingestion Status ──")
+    stream_files = glob.glob(os.path.join("storage/stream_buffer", "*.parquet"))
+    if stream_files:
+        total_stream_events = 0
+        for fp in stream_files:
+            try:
+                df = pd.read_parquet(fp)
+                total_stream_events += len(df)
+            except:
+                pass
+        log.info(f"  Streaming: {len(stream_files)} files, {total_stream_events} events ingested")
+    else:
+        log.info("  Streaming: No stream buffer files found (run Phase 4d or production mode)")
+
+    log.info("")
+    log.info("  ── Source Configuration & Next Ingestion ──")
+    from control_plane.entities import ALL_SOURCES
+    now = datetime.now(timezone.utc)
+    for src in ALL_SOURCES:
+        freq = src.ingestion_frequency.value
+        if freq == "real_time":
+            next_time = "Continuous"
+        elif freq == "hourly":
+            next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            remaining = next_hour - now
+            next_time = f"{remaining.seconds // 3600}h {(remaining.seconds % 3600) // 60}m"
+        elif freq == "daily":
+            next_day = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            remaining = next_day - now
+            next_time = f"{remaining.days}d {remaining.seconds // 3600}h"
+        elif freq == "weekly":
+            days_to_next = (7 - now.weekday()) % 7 or 7
+            next_week = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=days_to_next)
+            remaining = next_week - now
+            next_time = f"{remaining.days}d {remaining.seconds // 3600}h"
+        else:  # on_demand
+            next_time = "On Demand"
+        log.info(f"  {src.source_id:<25} | {src.source_type.value:<6} | {src.extraction_mode.value:<4} | {freq:<9} | Next: {next_time}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -2,6 +2,9 @@
 # Phase 7 — Observability Plane: Telemetry collector.
 # Every ingestion job emits metrics here. Without telemetry, pipelines fail silently.
 
+import os
+import glob
+import json
 import time
 import threading
 import logging
@@ -10,6 +13,12 @@ from datetime import datetime, timezone
 from typing import Optional
 
 log = logging.getLogger(__name__)
+
+TELEMETRY_DIR = os.path.join("storage", "telemetry")
+TELEMETRY_LOG_FILE = os.path.join(TELEMETRY_DIR, "telemetry_records.jsonl")
+TELEMETRY_LOCK = threading.Lock()
+
+os.makedirs(TELEMETRY_DIR, exist_ok=True)
 
 
 @dataclass
@@ -94,6 +103,61 @@ class JobTelemetry:
         """
         return self.duration_seconds
 
+    def start(self):
+        return self.mark_start()
+
+    def end(self):
+        return self.mark_end()
+
+    @property
+    def storage_summary(self) -> dict:
+        patterns = {
+            "ingested": "storage/ingested/*.parquet",
+            "quarantine": "storage/quarantine/*.parquet",
+            "cdc_log": "storage/cdc_log/*.parquet",
+            "micro_batch": "storage/micro_batch/*.parquet",
+            "stream_buffer": "storage/stream_buffer/*.parquet",
+            "checkpoints": "storage/checkpoints/*.json",
+        }
+        summary = {}
+        for label, pattern in patterns.items():
+            matches = [fp for fp in glob.glob(pattern) if self.source_id in os.path.basename(fp)]
+            total_bytes = sum(os.path.getsize(fp) for fp in matches) if matches else 0
+            summary[label] = {
+                "file_count": len(matches),
+                "bytes": total_bytes,
+            }
+        return summary
+
+    def save_report(self) -> dict:
+        report = self.report()
+        record_line = json.dumps(report)
+        with TELEMETRY_LOCK:
+            with open(TELEMETRY_LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(record_line + "\n")
+            source_file = os.path.join(TELEMETRY_DIR, f"{self.source_id}.jsonl")
+            with open(source_file, "a", encoding="utf-8") as f:
+                f.write(record_line + "\n")
+        return report
+
+    @classmethod
+    def load_reports(cls, source_id: Optional[str] = None) -> list[dict]:
+        if not os.path.exists(TELEMETRY_LOG_FILE):
+            return []
+        records = []
+        with open(TELEMETRY_LOG_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    if source_id is None or data.get("source_id") == source_id:
+                        records.append(data)
+                except json.JSONDecodeError:
+                    continue
+        return records
+
     # ── Reporting ────────────────────────────────────────────────────────
 
     def report(self) -> dict:
@@ -112,6 +176,7 @@ class JobTelemetry:
             "throughput_rec_sec":   round(self.throughput, 2),
             "avg_ingestion_latency_sec": round(self.ingestion_latency, 6),
             "processing_lag_sec":   round(self.processing_lag, 4),
+            "storage_summary":      self.storage_summary,
             # Bonus
             "file_count_per_partition": self.file_count_per_partition,
             "snapshot_count":           self.snapshot_count,
@@ -125,7 +190,8 @@ class JobTelemetry:
         log.info(f"{'='*60}")
         for k, v in r.items():
             log.info(f"  {k:<35} {v}")
-        log.info(f"{'='*60}\n")
+        log.info(f"{'='*60}\n")        
+        self.save_report()        
         return r
 
 

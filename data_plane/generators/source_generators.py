@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import numpy as np
 
+import config
 from .base_generator import BaseGenerator
 
 logger = logging.getLogger(__name__)

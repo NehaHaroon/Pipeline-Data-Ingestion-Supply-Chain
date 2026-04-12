@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 # VIOLATION POLICY
 # ─────────────────────────────────────────────
 class ViolationPolicy(Enum):
-    REJECT      = "reject"       # Discard record entirely; pipeline may raise
+    REJECT      = "reject"       # Discard record entirely; pipeline may raise an alert
     QUARANTINE  = "quarantine"   # Bad record → dirty store; good data continues
     AUTO_COERCE = "auto_coerce"  # System attempts to fix the value automatically
 

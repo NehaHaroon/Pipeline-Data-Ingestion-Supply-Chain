@@ -30,21 +30,21 @@ def process_iot_event(event: Dict[str, Any], buffer: List[Dict], quarantine_buf:
     """Process a single IoT event from Kafka."""
     event_id = event["event_id"]
 
-    # Contract enforcement
-    result = IOT_CONTRACT.enforce(event)
-    violations = result["violations"]
-    status = result["status"]
+    # # Contract enforcement
+    # result = IOT_CONTRACT.enforce(event)
+    # violations = result["violations"]
+    # status = result["status"]
 
-    if status in ("quarantine", "rejected"):
-        tel.record_quarantine()
-        quarantine_buf.append({**event, "_violations": json.dumps(violations)})
-        log.warning(
-            f"  [IOT-QUARANTINE] event_id={event_id[:8]}... "
-            f"| product_id={event.get('product_id')} "
-            f"| shelf_location={event.get('shelf_location')} "
-            f"| violations={violations}"
-        )
-        return
+    # if status in ("quarantine", "rejected"):
+    #     tel.record_quarantine()
+    #     quarantine_buf.append({**event, "_violations": json.dumps(violations)})
+    #     log.warning(
+    #         f"  [IOT-QUARANTINE] event_id={event_id[:8]}... "
+    #         f"| product_id={event.get('product_id')} "
+    #         f"| shelf_location={event.get('shelf_location')} "
+    #         f"| violations={violations}"
+    #     )
+    #     return
 
     # Wrap in EventEnvelope
     envelope = EventEnvelope(

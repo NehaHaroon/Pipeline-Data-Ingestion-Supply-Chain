@@ -1,9 +1,20 @@
 # tests/test_api.py
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# Add parent directory to path to import config
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from fastapi.testclient import TestClient
+import config
 from api import app
 
 client = TestClient(app)
+
+# Get API token from config (loaded from .env)
+API_TOKEN = config.API_TOKEN
 
 def test_root():
     response = client.get("/")
@@ -20,7 +31,7 @@ def test_sources_unauthorized():
     assert response.status_code == 403  # No token
 
 def test_sources_authorized():
-    headers = {"Authorization": "Bearer default_token_change_in_prod"}
+    headers = {"Authorization": f"Bearer {API_TOKEN}"}
     response = client.get("/sources", headers=headers)
     assert response.status_code == 200
     assert "sources" in response.json()

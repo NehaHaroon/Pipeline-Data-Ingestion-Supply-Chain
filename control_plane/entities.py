@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import config
 
 # ─────────────────────────────────────────────
 # ENUMERATIONS
@@ -253,7 +254,7 @@ WEATHER_API_SOURCE = DataSource(
     extraction_mode=ExtractionMode.PULL,
     change_capture_mode=ChangeCaptureMode.INCREMENTAL,
     ingestion_frequency=IngestionFrequency.HOURLY,
-    connection_info={"url": "https://api.openweathermap.org/data/2.5/weather", "params": {"q": "Lahore", "appid": "your_api_key"}},
+    connection_info={"url": "https://api.openweathermap.org/data/2.5/weather", "params": {"q": "Lahore", "appid": config.WEATHER_API_KEY}},
     expected_schema={
         "city": "str", "temperature": "float", "humidity": "int", "weather_description": "str", "timestamp": "datetime"
     },

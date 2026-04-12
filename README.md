@@ -56,8 +56,8 @@ git clone <repo>
 cd supply_chain_ingestion
 
 # Set environment variables
-export API_TOKEN="your_secure_token_here"
-export WEATHER_API_KEY="your_openweather_key"  # Optional
+export API_TOKEN="token "
+export WEATHER_API_KEY="token "  # Optional
 
 # Run with Docker Compose
 docker-compose up --build

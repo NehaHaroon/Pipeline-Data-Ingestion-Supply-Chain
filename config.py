@@ -1,5 +1,24 @@
 import os
+from pathlib import Path
 from typing import Dict, Any
+
+# Load .env file if present, to support local development and container startup
+def load_env_file(env_path: str = None):
+    env_file = Path(env_path) if env_path else Path(__file__).resolve().parent / ".env"
+    if not env_file.exists():
+        return
+    with env_file.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+load_env_file()
 
 # Configuration for the Supply Chain Ingestion Pipeline
 
@@ -18,6 +37,7 @@ STORAGE_CHECKPOINTS = os.getenv("STORAGE_CHECKPOINTS", "storage/checkpoints")
 # API settings
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "8000"))
+API_TOKEN = os.getenv("API_TOKEN", "ee910d618e617c559f1ca41a3a48c3c7")
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
