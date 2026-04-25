@@ -25,7 +25,7 @@ def create_producer_with_retry(max_retries: int = 15):
                 retries=3,
                 linger_ms=10
             )
-            print("✅ Successfully connected to Kafka")
+            print(" Successfully connected to Kafka")
             return producer
         except NoBrokersAvailable as e:
             wait_time = min(2 ** attempt, 10)  # Exponential backoff, capped at 10 seconds

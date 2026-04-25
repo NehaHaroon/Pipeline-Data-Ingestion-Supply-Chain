@@ -281,11 +281,34 @@ WEATHER_CONTRACT = DataContract(
     }
 )
 
+INVENTORY_TRANSACTIONS_CONTRACT = DataContract(
+    contract_id="contract_inventory_txn_v1",
+    source_id="src_inventory_transactions",
+    version="v1",
+    required_fields=["transaction_id", "product_id", "warehouse_location", "transaction_type", "quantity_change", "timestamp", "created_at"],
+    nullable_fields=["reference_order_id"],
+    violation_policy=ViolationPolicy.QUARANTINE,
+    field_constraints={
+        "transaction_id":       FieldConstraint("transaction_id",       "str", nullable=False),
+        "product_id":           FieldConstraint("product_id",           "str", nullable=False),
+        "warehouse_location":   FieldConstraint("warehouse_location",   "str", nullable=False,
+                                                allowed_values={"WAREHOUSE-LONDON","WAREHOUSE-DUBAI","WAREHOUSE-KARACHI","WAREHOUSE-PARIS","WAREHOUSE-BERLIN","WAREHOUSE-NYC","WAREHOUSE-SINGAPORE"}),
+        "transaction_type":     FieldConstraint("transaction_type",     "str", nullable=False,
+                                                allowed_values={"IN","OUT","ADJUSTMENT","RETURN","CORRECTION"}),
+        "quantity_change":      FieldConstraint("quantity_change",      "int", nullable=False),   # Can be negative for OUT
+        "timestamp":            FieldConstraint("timestamp",            "str", nullable=False),
+        "reference_order_id":   FieldConstraint("reference_order_id",   "str", nullable=True),
+        "created_by":           FieldConstraint("created_by",           "str", nullable=True),
+        "created_at":           FieldConstraint("created_at",           "str", nullable=False),
+    }
+)
+
 CONTRACT_REGISTRY = {
-    "src_warehouse_master":   WAREHOUSE_CONTRACT,
-    "src_manufacturing_logs": MANUFACTURING_CONTRACT,
-    "src_sales_history":      SALES_CONTRACT,
-    "src_legacy_trends":      LEGACY_CONTRACT,
-    "src_iot_rfid_stream":    IOT_CONTRACT,
-    "src_weather_api":        WEATHER_CONTRACT,
+    "src_warehouse_master":        WAREHOUSE_CONTRACT,
+    "src_manufacturing_logs":      MANUFACTURING_CONTRACT,
+    "src_sales_history":           SALES_CONTRACT,
+    "src_legacy_trends":           LEGACY_CONTRACT,
+    "src_inventory_transactions":  INVENTORY_TRANSACTIONS_CONTRACT,
+    "src_iot_rfid_stream":         IOT_CONTRACT,
+    "src_weather_api":             WEATHER_CONTRACT,
 }

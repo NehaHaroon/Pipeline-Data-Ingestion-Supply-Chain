@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.join(BASE, ".."))
 
 import pandas as pd
 
+LOAD_MULTIPLIER = int(os.getenv("INGESTION_LOAD_MULTIPLIER", "3"))
 
 def banner(phase: str, title: str):
     log.info("")
@@ -175,33 +176,37 @@ def run_phase_4(product_ids: list):
 
     # ── 4b: Micro-batch demo on sales (most interesting) ────────────────
     log.info("")
-    log.info("  ── 4b: Micro-Batch on Sales History (3 batches × 200 rows) ──")
+    micro_batch_size = 200 * LOAD_MULTIPLIER
+    micro_batches = 3 * LOAD_MULTIPLIER
+    log.info(f"  ── 4b: Micro-Batch on Sales History ({micro_batches} batches × {micro_batch_size} rows) ──")
     run_micro_batch_ingestion(
         source_id  = "src_sales_history",
         raw_path   = "storage/raw/sales_history.csv",
         dataset_id = "ds_sales_history",
-        batch_size = 200,
-        max_batches= 3,
+        batch_size = micro_batch_size,
+        max_batches= micro_batches,
     )
 
     # ── 4c: Micro-batch demo on manufacturing ────────────────────────────
     log.info("")
-    log.info("  ── 4c: Micro-Batch on Manufacturing Logs (3 batches × 200 rows) ──")
+    log.info(f"  ── 4c: Micro-Batch on Manufacturing Logs ({micro_batches} batches × {micro_batch_size} rows) ──")
     run_micro_batch_ingestion(
         source_id  = "src_manufacturing_logs",
         raw_path   = "storage/raw/manufacturing_logs.csv",
         dataset_id = "ds_manufacturing_logs",
-        batch_size = 200,
-        max_batches= 3,
+        batch_size = micro_batch_size,
+        max_batches= micro_batches,
     )
 
     # ── 4d: IoT Stream simulation ────────────────────────────────────────
     log.info("")
-    log.info("  ── 4d: IoT RFID Stream Simulation (300 events, flush every 100) ──")
+    iot_total_events = 300 * LOAD_MULTIPLIER
+    iot_flush = 100 * LOAD_MULTIPLIER
+    log.info(f"  ── 4d: IoT RFID Stream Simulation ({iot_total_events} events, flush every {iot_flush}) ──")
     run_stream_simulation(
         product_ids          = product_ids,
-        total_events         = 300,
-        flush_interval_events= 100,
+        total_events         = iot_total_events,
+        flush_interval_events= iot_flush,
         duplicate_rate       = 0.03,
     )
 
@@ -230,23 +235,26 @@ def run_phase_5(product_ids: list):
     existing_sales = load_existing_records("storage/ingested/src_sales_history.parquet")
     existing_mfg   = load_existing_records("storage/ingested/src_manufacturing_logs.parquet")
 
-    log.info("  ── 5a: Steady stream — Sales (10 rec/s × 10s) ──")
+    steady_rps = 10 * LOAD_MULTIPLIER
+    steady_duration = 10 * LOAD_MULTIPLIER
+    burst_count = 5000 * LOAD_MULTIPLIER
+    log.info(f"  ── 5a: Steady stream — Sales ({steady_rps} rec/s × {steady_duration}s) ──")
     run_steady_stream(
         source_id  = "src_sales_history",
         dataset_id = "ds_sales_history",
         existing   = existing_sales,
         generator_fn = sal_gen.generate_one,
-        duration_sec = 10,
-        target_rps   = 10,
+        duration_sec = steady_duration,
+        target_rps   = steady_rps,
     )
 
-    log.info("  ── 5b: Burst — Manufacturing (5000 records) ──")
+    log.info(f"  ── 5b: Burst — Manufacturing ({burst_count} records) ──")
     run_burst(
         source_id    = "src_manufacturing_logs",
         dataset_id   = "ds_manufacturing_logs",
         existing     = existing_mfg,
         generator_fn = mfg_gen.generate_one,
-        burst_count  = 5000,
+        burst_count  = burst_count,
     )
 
 
@@ -389,6 +397,14 @@ def run_phase_7():
         freq = src.ingestion_frequency.value
         if freq == "real_time":
             next_time = "Continuous"
+        elif freq == "every_2_minutes":
+            period_start = now.replace(second=0, microsecond=0)
+            minute_bucket = (period_start.minute // 2) * 2
+            next_run = period_start.replace(minute=minute_bucket)
+            if next_run <= now:
+                next_run += timedelta(minutes=2)
+            remaining = next_run - now
+            next_time = f"{remaining.seconds // 60}m {(remaining.seconds % 60)}s"
         elif freq == "hourly":
             next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
             remaining = next_hour - now

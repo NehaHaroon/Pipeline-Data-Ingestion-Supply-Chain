@@ -34,10 +34,12 @@ BASE = os.path.dirname(__file__)
 sys.path.insert(0, BASE)
 
 from control_plane.entities import ALL_SOURCES, SourceType
-from config import API_HOST, API_PORT, API_TOKEN
+from config import API_HOST, API_PORT, API_TOKEN, LOCAL_API_HOST
 from observability_plane.telemetry import JobTelemetry
 
-LOCAL_API_HOST = "127.0.0.1"
+INGESTION_SCALE_FACTOR = int(os.getenv("INGESTION_SCALE_FACTOR", "3"))
+WEATHER_INGESTION_INTERVAL_SECONDS = int(os.getenv("WEATHER_INGESTION_INTERVAL_SECONDS", "120"))
+DB_INGESTION_INTERVAL_SECONDS = int(os.getenv("DB_INGESTION_INTERVAL_SECONDS", "120"))
 
 def banner(title: str, subtitle: str):
     log.info("")
@@ -121,6 +123,14 @@ def print_dashboard():
         freq = src.ingestion_frequency.value
         if freq == "real_time":
             next_time = "Continuous"
+        elif freq == "every_2_minutes":
+            period_start = now.replace(second=0, microsecond=0)
+            minute_bucket = (period_start.minute // 2) * 2
+            next_run = period_start.replace(minute=minute_bucket)
+            if next_run <= now:
+                next_run += timedelta(minutes=2)
+            remaining = next_run - now
+            next_time = f"{remaining.seconds // 60}m {(remaining.seconds % 60)}s"
         elif freq == "hourly":
             next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
             remaining = next_hour - now
@@ -166,22 +176,7 @@ def periodic_dashboard():
         time.sleep(300)  # 5 minutes
         print_dashboard()
 
-def start_api():
-    """Start the FastAPI server."""
-    banner("PHASE: API SERVER", "FastAPI startup")
-    log.info(f"Starting API server on http://{API_HOST}:{API_PORT}")
-    import uvicorn
-    uvicorn.run("api:app", host=API_HOST, port=API_PORT, log_level="info")
-
-def start_iot_consumer():
-    """Start the real-time IoT consumer."""
-    banner("PHASE: IOT CONSUMER", "Real-time IoT ingestion")
-    log.info("Starting IoT consumer...")
-    from data_plane.ingestion.real_time_iot_ingest import run_real_time_ingestion
-    run_real_time_ingestion()
-
-
-def wait_for_api_ready(base_url: str = f"http://{LOCAL_API_HOST}:{API_PORT}", timeout_sec: int = 30) -> bool:
+def wait_for_api_ready(base_url: str = f"http://{LOCAL_API_HOST}:{API_PORT}", timeout_sec: int = 60) -> bool:
     start = time.time()
     while time.time() - start < timeout_sec:
         try:
@@ -198,18 +193,67 @@ def wait_for_api_ready(base_url: str = f"http://{LOCAL_API_HOST}:{API_PORT}", ti
 
 
 def run_weather_api_ingestion():
-    """Run a weather API ingestion job to verify external API source paths."""
-    banner("PHASE: WEATHER API INGESTION", "Weather API source ingestion")
-    log.info("Starting weather API ingestion via internal batch path")
+    """Run one weather API ingestion cycle and return telemetry."""
+    log.info("[WEATHER] Starting weather API ingestion cycle")
+    cycle_start = time.time()
     try:
         from data_plane.ingestion.batch_ingest import run_api_ingestion
         tel = run_api_ingestion("src_weather_api", "ds_weather_api")
         log.info(
-            f"  Weather API ingestion completed: ingested={tel.records_ingested} "
-            f"failed={tel.records_failed} quarantined={tel.records_quarantined} coerced={tel.records_coerced}"
+            "[WEATHER] Completed cycle | ingested=%s failed=%s quarantined=%s coerced=%s duration=%.2fs",
+            tel.records_ingested,
+            tel.records_failed,
+            tel.records_quarantined,
+            tel.records_coerced,
+            time.time() - cycle_start,
         )
+        return tel
     except Exception as exc:
-        log.error(f"  Weather API ingestion failed: {exc}")
+        log.error(f"[WEATHER] Ingestion cycle failed: {exc}")
+        return None
+
+
+def run_periodic_weather_ingestion():
+    """Continuously ingest weather API data every configured interval."""
+    banner("PHASE: WEATHER SCHEDULER", f"Weather ingestion every {WEATHER_INGESTION_INTERVAL_SECONDS}s")
+    run_count = 0
+    while True:
+        run_count += 1
+        log.info(f"[SCHEDULER][WEATHER] Starting run #{run_count}")
+        tel = run_weather_api_ingestion()
+        if tel and tel.records_ingested == 0 and tel.records_failed > 0:
+            log.warning("[SCHEDULER][WEATHER] Run #%s completed with failures and no ingested records", run_count)
+        log.info(
+            f"[SCHEDULER][WEATHER] Completed run #{run_count}; next run in "
+            f"{WEATHER_INGESTION_INTERVAL_SECONDS}s"
+        )
+        time.sleep(WEATHER_INGESTION_INTERVAL_SECONDS)
+
+
+def run_periodic_db_ingestion():
+    """Continuously execute DB ingestion and emit telemetry every interval."""
+    banner("PHASE: DB INGESTION SCHEDULER", f"Database ingestion every {DB_INGESTION_INTERVAL_SECONDS}s")
+    from data_plane.ingestion.db_ingest import ingest_db_source
+
+    run_count = 0
+    while True:
+        run_count += 1
+        log.info(f"[SCHEDULER][DB] Starting DB ingestion run #{run_count}")
+        try:
+            tel = ingest_db_source()
+            log.info(
+                "[SCHEDULER][DB] Completed run #%s | ingested=%s failed=%s "
+                "quarantined=%s coerced=%s",
+                run_count,
+                tel.records_ingested,
+                tel.records_failed,
+                tel.records_quarantined,
+                tel.records_coerced,
+            )
+        except Exception as exc:
+            log.error(f"[SCHEDULER][DB] Run #{run_count} failed: {exc}")
+        log.info(f"[SCHEDULER][DB] Next run in {DB_INGESTION_INTERVAL_SECONDS}s")
+        time.sleep(DB_INGESTION_INTERVAL_SECONDS)
 
 
 def run_batch_on_startup():
@@ -219,7 +263,7 @@ def run_batch_on_startup():
     log.info(f"Preparing batch ingestion for {len(batch_sources)} file-based source(s)")
 
     headers = {"Authorization": f"Bearer {API_TOKEN}"}
-    base_url = f"http://{LOCAL_API_HOST}:{API_PORT}"
+    base_url = f"http://{API_HOST}:{API_PORT}"
     log.info(f"Using local API endpoint for ingestion: {base_url}")
 
     if not wait_for_api_ready(base_url=base_url):
@@ -241,6 +285,9 @@ def run_batch_on_startup():
         log.info(f"Loading data from {raw_path} for {source_id}")
         df = pd.read_csv(raw_path)
         records = df.to_dict('records')
+        if INGESTION_SCALE_FACTOR > 1:
+            # Intentional replay-style upscaling for stress/volume testing.
+            records = records * INGESTION_SCALE_FACTOR
         log.info(f"  {len(records)} rows loaded from raw file")
 
         # Convert NaN values to None so they serialize as JSON null
@@ -267,44 +314,81 @@ def run_batch_on_startup():
 
         log.info(f"Completed batch submission for {source_id}: {requests_sent} request(s)")
 
-    # In production startup, also verify external weather API ingestion
-    run_weather_api_ingestion()
+# def main():
+#     banner("PRODUCTION STARTUP", "Live API + Dashboard + Batch Ingestion")
+#     log.info("Starting Supply Chain Ingestion Pipeline (Production Mode)")
+#     log.info(f"Registered sources: {len(ALL_SOURCES)} | Starting production pipeline with live API and Kafka stream")
+#     log.info("Production endpoints: http://localhost:8000/health, /telemetry, /storage-summary, /dashboard-plots")
 
+#     # Start API in a thread
+#     # api_thread = threading.Thread(target=start_api, daemon=True)
+#     threading.Thread(target=periodic_dashboard, daemon=True).start()
+#     threading.Thread(target=run_batch_on_startup, daemon=True).start()
+#     # threading.Thread(target=start_iot_consumer, daemon=True).start()
+#     threading.Thread(target=run_periodic_weather_ingestion, daemon=True).start()
+#     threading.Thread(target=run_periodic_db_ingestion, daemon=True).start()
+#     # start_api()
+#     # api_thread.start()
 
+#     # Wait a bit for API to start
+#     time.sleep(5)
+
+#     # Print initial dashboard
+#     print_dashboard()
+
+#     # Start periodic dashboard
+#     dashboard_thread = threading.Thread(target=periodic_dashboard, daemon=True)
+#     dashboard_thread.start()
+
+#     # Start batch ingestion via API automation
+#     batch_thread = threading.Thread(target=run_batch_on_startup, daemon=True)
+#     batch_thread.start()
+
+#     # Start IoT consumer in its own thread so production startup stays responsive
+#     iot_thread = threading.Thread(target=start_iot_consumer, daemon=True)
+#     iot_thread.start()
+
+#     # Run weather API ingestion every 2 minutes (matches source frequency policy)
+#     weather_thread = threading.Thread(target=run_periodic_weather_ingestion, daemon=True)
+#     weather_thread.start()
+
+#     # Run database ingestion every 2 minutes and persist telemetry records
+#     db_thread = threading.Thread(target=run_periodic_db_ingestion, daemon=True)
+#     db_thread.start()
+
+#     log.info(
+#         "Production startup complete. API, batch ingestion, IoT consumer, "
+#         "weather scheduler, DB ingestion scheduler, and dashboard are running."
+#     )
+#     try:
+#         while True:
+#             time.sleep(60)
+#     except KeyboardInterrupt:
+#         log.info("Shutting down production runner")
 def main():
-    banner("PRODUCTION STARTUP", "Live API + Dashboard + Batch Ingestion")
-    log.info("Starting Supply Chain Ingestion Pipeline (Production Mode)")
-    log.info(f"Registered sources: {len(ALL_SOURCES)} | Starting production pipeline with live API and Kafka stream")
-    log.info("Production endpoints: http://localhost:8000/health, /telemetry, /storage-summary, /dashboard-plots")
+    banner("PRODUCTION STARTUP", "Batch + Scheduler + Dashboard")
 
-    # Start API in a thread
-    api_thread = threading.Thread(target=start_api, daemon=True)
-    api_thread.start()
+    log.info("Starting Supply Chain Ingestion Pipeline (Batch Runner Mode)")
+    log.info(f"Registered sources: {len(ALL_SOURCES)}")
+    log.info("API expected at: http://ingestion-api:8000")
 
-    # Wait a bit for API to start
-    time.sleep(2)
+    # Start ONLY ONCE
+    threading.Thread(target=periodic_dashboard, daemon=True).start()
+    threading.Thread(target=run_batch_on_startup, daemon=True).start()
+    threading.Thread(target=run_periodic_weather_ingestion, daemon=True).start()
+    threading.Thread(target=run_periodic_db_ingestion, daemon=True).start()
 
-    # Print initial dashboard
+    # Initial dashboard
+    time.sleep(5)
     print_dashboard()
 
-    # Start periodic dashboard
-    dashboard_thread = threading.Thread(target=periodic_dashboard, daemon=True)
-    dashboard_thread.start()
+    log.info("Batch runner started successfully")
 
-    # Start batch ingestion via API automation
-    batch_thread = threading.Thread(target=run_batch_on_startup, daemon=True)
-    batch_thread.start()
-
-    # Start IoT consumer in its own thread so production startup stays responsive
-    iot_thread = threading.Thread(target=start_iot_consumer, daemon=True)
-    iot_thread.start()
-
-    log.info("Production startup complete. API, batch ingestion, dashboard, and IoT consumer are running.")
     try:
         while True:
             time.sleep(60)
     except KeyboardInterrupt:
-        log.info("Shutting down production runner")
+        log.info("Shutting down batch runner")
 
 if __name__ == "__main__":
     main() 

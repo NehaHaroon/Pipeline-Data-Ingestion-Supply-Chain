@@ -331,7 +331,7 @@ def ingest_source(
                 pd.DataFrame(good_records).to_parquet(out_path, index=False)
                 tel.file_count_per_partition += 1
                 tel.snapshot_count += 1
-                log.info(f"  [WRITE] ✅ {len(good_records)} records → {out_path}")
+                log.info(f"  [WRITE]  {len(good_records)} records → {out_path}")
         except Exception as e:
             log.error(f"  [WRITE] Failed to write good records: {e}")
             tel.record_fail()
@@ -532,7 +532,15 @@ def run_api_ingestion(source_id: str, dataset_id: str) -> JobTelemetry:
         api_data = response.json()
     except requests.RequestException as e:
         log.error(f"API call failed: {e}")
-        return JobTelemetry(source_id, dataset_id, 0, 0, 0, 0, 0, 0, 0)
+        tel = JobTelemetry(
+            job_id=f"job_{source_id}_{int(time.time())}",
+            source_id=source_id,
+        )
+        tel.mark_start()
+        tel.record_fail()
+        tel.mark_end()
+        tel.log_report()
+        return tel
 
     if use_real_weather:
         record = {

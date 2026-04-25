@@ -58,13 +58,13 @@ python run_all.py
 ======================================================================
   ── 4a: Full Batch Initial Load ──
   [LOAD] Loaded 10000 rows from storage/raw/warehouse_master.csv
-  [WRITE] ✅ 9950 records → storage/ingested/src_warehouse_master.parquet
+  [WRITE]  9950 records → storage/ingested/src_warehouse_master.parquet
   [QUARANTINE] ⚠ 50 records → storage/quarantine/src_warehouse_master_quarantine.parquet
   ...
 
   ── 4b: Micro-Batch on Sales History ──
   Micro-Batch 1/3 | rows 0–200
-  [WRITE] ✅ 190 records → storage/micro_batch/...
+  [WRITE]  190 records → storage/micro_batch/...
   ...
 
 ======================================================================
@@ -82,14 +82,14 @@ python run_all.py
   PHASE 6: CDC Strategies — Log-Based, Trigger-Based, Timestamp-Based
 ======================================================================
   LOG-BASED CDC | src_sales_history | scenario=steady
-  ✅ Processed 100 events → storage/ingested/src_sales_history_log_cdc_steady.parquet
+   Processed 100 events → storage/ingested/src_sales_history_log_cdc_steady.parquet
 
   TRIGGER-BASED CDC | src_sales_history | scenario=steady
-  ✅ 30 trigger events (UPDATE/DELETE) processed
+   30 trigger events (UPDATE/DELETE) processed
   ...
 
   TIMESTAMP-BASED CDC | src_sales_history | scenario=steady
-  ✅ Processed 100 records → storage/ingested/src_sales_history_ts_cdc_steady.parquet
+   Processed 100 records → storage/ingested/src_sales_history_ts_cdc_steady.parquet
   ...
 
 ======================================================================
@@ -551,10 +551,10 @@ Typical execution times on a standard laptop:
 
 ## **Next Steps**
 
-1. ✅ Run `python run_all.py` to validate local setup
-2. ✅ Deploy with Docker Compose for production
-3. ✅ Configure API_TOKEN and WEATHER_API_KEY
-4. ✅ Run tests with `pytest tests/`
-5. ✅ Monitor with `/health` and `/metrics` endpoints
-6. ✅ Integration with downstream systems (dashboards, ML models, alerts)
+1.  Run `python run_all.py` to validate local setup
+2.  Deploy with Docker Compose for production
+3.  Configure API_TOKEN and WEATHER_API_KEY
+4.  Run tests with `pytest tests/`
+5.  Monitor with `/health` and `/metrics` endpoints
+6.  Integration with downstream systems (dashboards, ML models, alerts)
 

@@ -131,7 +131,7 @@ def run_log_based_cdc(source_id: str, cdc_log_path: str,
             save_checkpoint("log_based", source_id, start_idx + len(processed) - 1)
             out = f"storage/ingested/{source_id}_log_cdc_{scenario}.parquet"
             pd.DataFrame(processed).to_parquet(out, index=False)
-            log.info(f"[LOG-CDC] ✅ Processed {len(processed)} events → {out}")
+            log.info(f"[LOG-CDC]  Processed {len(processed)} events → {out}")
 
         op_counts = pd.DataFrame(processed)["_operation_type"].value_counts().to_dict() if processed else {}
         log.info(f"[LOG-CDC] Operation breakdown: {op_counts}")
@@ -213,7 +213,7 @@ def run_trigger_based_cdc(source_id: str, cdc_log_path: str,
             out = f"storage/ingested/{source_id}_trigger_cdc_{scenario}.parquet"
             pd.DataFrame(processed).to_parquet(out, index=False)
             op_counts = pd.DataFrame(processed)["_operation_type"].value_counts().to_dict()
-            log.info(f"[TRIGGER-CDC] ✅ {len(processed)} events → {out} | ops={op_counts}")
+            log.info(f"[TRIGGER-CDC]  {len(processed)} events → {out} | ops={op_counts}")
 
     except Exception as e:
         log.error(f"[TRIGGER-CDC] ❌ Error: {e}", exc_info=True)
@@ -287,7 +287,7 @@ def run_timestamp_based_cdc(source_id: str, cdc_log_path: str,
             save_checkpoint("timestamp_based", source_id, new_watermark)
             out = f"storage/ingested/{source_id}_ts_cdc_{scenario}.parquet"
             pd.DataFrame(processed).to_parquet(out, index=False)
-            log.info(f"[TS-CDC] ✅ {len(processed)} records → {out} | "
+            log.info(f"[TS-CDC]  {len(processed)} records → {out} | "
                      f"New watermark: {new_watermark}")
 
     except Exception as e:

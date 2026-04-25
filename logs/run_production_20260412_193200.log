@@ -263,7 +263,7 @@
 2026-04-12T19:32:06 [INFO] batch_ingest — ══════════════════════════════════════════════════════════════════════
 2026-04-12T19:32:06 [INFO] batch_ingest —   [LOAD] Micro-batch slice: 1 rows provided via df_override
 2026-04-12T19:32:06 [INFO] batch_ingest — [PASS] source=src_weather_api | row=1 | key=row_1 | contract=contract_weather_v1 | policy=quarantine | norm_changes=0
-2026-04-12T19:32:06 [INFO] batch_ingest —   [WRITE] ✅ 1 records → storage/ingested\src_weather_api.parquet
+2026-04-12T19:32:06 [INFO] batch_ingest —   [WRITE]  1 records → storage/ingested\src_weather_api.parquet
 2026-04-12T19:32:06 [INFO] batch_ingest —   [DETAIL LOG] 1 record entries → storage/ingested/detail_logs\src_weather_api_record_log.jsonl
 2026-04-12T19:32:06 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_weather_api_1776004326] ⏹  Job ended at 2026-04-12T14:32:06.578546+00:00 | Duration: 0.06s
 2026-04-12T19:32:06 [INFO] batch_ingest — 

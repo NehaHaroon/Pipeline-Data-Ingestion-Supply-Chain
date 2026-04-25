@@ -310,3 +310,83 @@ class WeatherAPIGenerator(BaseGenerator):
         except requests.RequestException as e:
             logger.warning(f"API call failed for {city}: {e}. Falling back to synthetic.")
             return self._generate_synthetic()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# INVENTORY TRANSACTIONS GENERATOR
+# Role: High-volume transactional DB source with continuous inventory movements.
+# CDC-friendly: simulates IN (purchases), OUT (sales), ADJUSTMENT (stocktakes).
+# Dirty data injected:
+#   • ~2%  null reference_order_id → referential integrity test
+#   • ~1%  negative quantities for IN → data quality test
+# ──────────────────────────────────────────────────────────────────────────────
+
+class InventoryTransactionsGenerator(BaseGenerator):
+    RAW_PATH = "storage/raw/inventory_transactions.csv"
+    WAREHOUSES = [
+        "WAREHOUSE-LONDON", "WAREHOUSE-DUBAI", "WAREHOUSE-KARACHI",
+        "WAREHOUSE-PARIS", "WAREHOUSE-BERLIN", "WAREHOUSE-NYC", "WAREHOUSE-SINGAPORE"
+    ]
+    TRANSACTION_TYPES = ["IN", "OUT", "ADJUSTMENT", "RETURN", "WRITE_OFF"]
+    CREATED_BY_ROLES = ["system", "warehouse_staff", "quality_control", "supervisor", "manager"]
+
+    def __init__(self, real_df: Optional[pd.DataFrame] = None,
+                 product_ids: Optional[List[str]] = None):
+        super().__init__("src_inventory_transactions")
+        df = real_df if real_df is not None else pd.read_csv(self._get_raw_path())
+        self.profile(df)
+        self.product_ids = product_ids or df["product_id"].tolist()
+        self._txn_counter = 10000  # Start from TXN-001-2025-10001
+
+    def _get_raw_path(self) -> str:
+        return self.RAW_PATH
+
+    def _post_process(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Post-process with business rules: IDs, warehouse constraints, DQ tests."""
+        self._txn_counter += 1
+        year = datetime.now(timezone.utc).year
+        record["transaction_id"] = f"TXN-{random.randint(1,3):03d}-{year}-{self._txn_counter:05d}"
+
+        record["product_id"] = random.choice(self.product_ids)
+        record["warehouse_location"] = random.choice(self.WAREHOUSES)
+        record["transaction_type"] = random.choice(self.TRANSACTION_TYPES)
+
+        # ── Quantity logic by transaction type ──
+        qty = int(abs(record.get("quantity_change", 100) or 100))
+        if record["transaction_type"] == "OUT":
+            qty = -qty  # OUT is negative
+        elif record["transaction_type"] == "RETURN":
+            qty = -qty  # RETURN is also negative
+        
+        # DIRTY DATA: 1% negative quantities for IN type → data quality test
+        if record["transaction_type"] == "IN" and random.random() < 0.01:
+            qty = -qty
+        
+        record["quantity_change"] = qty
+
+        # Timestamp logic
+        record["timestamp"] = datetime.now(timezone.utc).isoformat()
+        record["created_at"] = datetime.now(timezone.utc).isoformat()
+
+        # DIRTY DATA: 2% null reference_order_id → referential integrity test
+        if random.random() < 0.02:
+            record["reference_order_id"] = None
+        else:
+            txn_type = record["transaction_type"]
+            if txn_type == "IN":
+                record["reference_order_id"] = f"PO-{datetime.now().year}-{random.randint(1, 10000):05d}"
+            elif txn_type == "OUT":
+                record["reference_order_id"] = f"SO-{datetime.now().year}-{random.randint(1, 10000):05d}"
+            else:
+                record["reference_order_id"] = None
+
+        record["created_by"] = random.choice(self.CREATED_BY_ROLES)
+
+        return record
+
+    def generate_one(self) -> Dict[str, Any]:
+        """Generate one inventory transaction record."""
+        record = {}
+        for col, profile in self._profiles.items():
+            record[col] = self._sample(profile)
+        return self._post_process(record)

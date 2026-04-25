@@ -1,0 +1,49 @@
+
+version: "3.9"
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.9.1
+  env_file: .env
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ""            # generate one, put in .env
+    AIRFLOW__WEBSERVER__SECRET_KEY: ""
+    INGESTION_API_URL: http://ingestion-api:8000
+    API_TOKEN: ${API_TOKEN}
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./storage:/opt/airflow/storage      # shared storage volume
+    - ./logs:/opt/airflow/logs
+  networks:
+    - default                             # same Docker network as your existing stack
+
+services:
+  airflow-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    networks: [default]
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports: ["8080:8080"]
+    depends_on: [airflow-postgres, airflow-scheduler]
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on: [airflow-postgres]
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    entrypoint: >
+      bash -c "airflow db migrate &&
+               airflow users create --username admin --password admin
+               --firstname Admin --lastname User --role Admin --email admin@local.dev"
+    depends_on: [airflow-postgres]

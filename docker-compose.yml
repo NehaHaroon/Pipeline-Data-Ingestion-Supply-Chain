@@ -1,99 +1,157 @@
+version: "3.9"
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
-    healthcheck:
-      test: ["CMD-SHELL", "echo 'ruok' | nc localhost 2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     depends_on:
       zookeeper:
-        condition: service_healthy
+        condition: service_started
     environment:
-      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_LOG_RETENTION_HOURS: 24
-      KAFKA_MESSAGE_MAX_BYTES: 10485760
-      KAFKA_REPLICA_FETCH_MAX_BYTES: 10485760
-      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
-      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
       - "9092:9092"
       - "29092:29092"
-    networks:
-      - kafka-net
-    healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 20s
 
   ingestion-api:
     build: .
+    env_file:
+      - .env
     depends_on:
       kafka:
-        condition: service_healthy
+        condition: service_started
     environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      API_TOKEN: ${API_TOKEN}
-      WEATHER_API_KEY: ${WEATHER_API_KEY}
+    command: uvicorn api:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
-    networks:
-      - kafka-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
-      timeout: 5s
       retries: 5
+
+  batch-runner:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      ingestion-api:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    command: ["python", "run_production.py"]
+    volumes:
+      - ./storage:/app/storage
+      - ./logs:/app/logs
 
   iot-producer:
     build: .
+    env_file:
+      - .env
     depends_on:
       kafka:
-        condition: service_healthy
+        condition: service_started
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     command: ["python", "real_time_stream.py"]
     volumes:
-      - ./storage:/app/storage
       - ./logs:/app/logs
-    networks:
-      - kafka-net
+      - ./storage:/app/storage
     restart: unless-stopped
+    
 
   iot-consumer:
     build: .
+    env_file:
+      - .env
     depends_on:
-      kafka:
-        condition: service_healthy
       ingestion-api:
-        condition: service_started
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    command: ["python", "-c", "from data_plane.ingestion.real_time_iot_ingest import run_real_time_ingestion; run_real_time_ingestion()"]
+      INGESTION_API_URL: http://ingestion-api:8000
+    command: >
+      python -c "from data_plane.ingestion.real_time_iot_ingest import run_real_time_ingestion; run_real_time_ingestion()"
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
-    networks:
-      - kafka-net
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: etl_user
+      POSTGRES_PASSWORD: etl_password
+      POSTGRES_DB: supply_chain_db  
+    command: >
+      postgres -c wal_level=logical
+              -c max_replication_slots=10
+              -c max_wal_senders=10 
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data_plane/databases/init/postgreSQL:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etl_user -d supply_chain_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  db-postgres-generator:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://etl_user:etl_password@postgres:5432/supply_chain_db
+    command: ["python", "data_plane/generators/inventory_transaction_generator.py", "--mode", "burst"]
+    volumes:
+      - ./data_plane:/app/data_plane
+    restart: unless-stopped
+  kafka-connect:
+    image: debezium/connect:2.4
+    depends_on:
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: debezium-connect-group
+      CONFIG_STORAGE_TOPIC: debezium_configs
+      OFFSET_STORAGE_TOPIC: debezium_offsets
+      STATUS_STORAGE_TOPIC: debezium_status
+
+  cdc-consumer:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      ingestion-api:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INGESTION_API_URL: http://ingestion-api:8000
+    command: ["python", "data_plane/cdc/cdc_consumer.py"]
+
+volumes:
+  postgres_data:

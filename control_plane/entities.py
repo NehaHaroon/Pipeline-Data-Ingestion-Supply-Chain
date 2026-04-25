@@ -2,6 +2,7 @@
 # Phase 1 — Task 1: Core entity classes for the Control Plane.
 # Defines the "what" and "how" of every data source, dataset, job, and record envelope.
 
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -34,6 +35,7 @@ class ChangeCaptureMode(Enum):
 
 class IngestionFrequency(Enum):
     REAL_TIME = "real_time"
+    EVERY_2_MINUTES = "every_2_minutes"
     HOURLY    = "hourly"
     DAILY     = "daily"
     WEEKLY    = "weekly"
@@ -247,13 +249,37 @@ IOT_SOURCE = DataSource(
     tags=["supply-chain", "iot", "streaming", "real-time"]
 )
 
+INVENTORY_TRANSACTIONS_SOURCE = DataSource(
+    source_id="src_inventory_transactions",
+    name="Inventory Transactions DB",
+    source_type=SourceType.DB,
+    extraction_mode=ExtractionMode.PULL,
+    change_capture_mode=ChangeCaptureMode.CDC_LOG_BASED,
+    ingestion_frequency=IngestionFrequency.EVERY_2_MINUTES,
+    connection_info={
+        "database": "supply_chain_db",
+        "table": "inventory_transactions",
+        "host": os.getenv("POSTGRES_HOST", "postgres"),   # "postgres" inside Docker, "localhost" locally
+        "port": int(os.getenv("POSTGRES_PORT", "5432")),
+        "user": os.getenv("POSTGRES_USER", "etl_user"),
+        "password": os.getenv("POSTGRES_PASSWORD", "etl_password"),
+        "query": "SELECT * FROM inventory_transactions WHERE created_at > {checkpoint} ORDER BY created_at"
+    },
+    expected_schema={
+        "transaction_id": "str", "product_id": "str", "warehouse_location": "str",
+        "transaction_type": "str", "quantity_change": "int", "timestamp": "datetime",
+        "reference_order_id": "str", "created_by": "str", "created_at": "datetime"
+    },
+    tags=["internal", "inventory", "db", "transactional", "high-volume", "cdc"]
+)
+
 WEATHER_API_SOURCE = DataSource(
     source_id="src_weather_api",
     name="Weather API",
     source_type=SourceType.API,
     extraction_mode=ExtractionMode.PULL,
     change_capture_mode=ChangeCaptureMode.INCREMENTAL,
-    ingestion_frequency=IngestionFrequency.HOURLY,
+    ingestion_frequency=IngestionFrequency.EVERY_2_MINUTES,
     connection_info={"url": "https://api.openweathermap.org/data/2.5/weather", "params": {"q": "Lahore", "appid": config.WEATHER_API_KEY}},
     expected_schema={
         "city": "str", "temperature": "float", "humidity": "int", "weather_description": "str", "timestamp": "datetime"
@@ -261,7 +287,7 @@ WEATHER_API_SOURCE = DataSource(
     tags=["external", "weather", "api", "pull"]
 )
 
-ALL_SOURCES = [WAREHOUSE_SOURCE, MANUFACTURING_SOURCE, SALES_SOURCE, LEGACY_SOURCE, IOT_SOURCE, WEATHER_API_SOURCE]
+ALL_SOURCES = [WAREHOUSE_SOURCE, MANUFACTURING_SOURCE, SALES_SOURCE, LEGACY_SOURCE, INVENTORY_TRANSACTIONS_SOURCE, IOT_SOURCE, WEATHER_API_SOURCE]
 
 # ─────────────────────────────────────────────
 # DATASET REGISTRY
@@ -311,6 +337,17 @@ LEGACY_DATASET = Dataset(
     description="Historical monthly sales for seasonality analysis."
 )
 
+INVENTORY_TRANSACTIONS_DATASET = Dataset(
+    dataset_id="ds_inventory_transactions",
+    name="Inventory Transactions Dataset",
+    domain="supply_chain",
+    classification_level=ClassificationLevel.INTERNAL,
+    schema_version="v1",
+    retention_policy="90 days",
+    owner="data-engineering-team",
+    description="Real-time inventory movements and stock transactions from operational database. High-throughput CDC feed."
+)
+
 IOT_DATASET = Dataset(
     dataset_id="ds_iot_rfid_stream",
     name="IoT RFID Stream Dataset",
@@ -330,7 +367,7 @@ WEATHER_DATASET = Dataset(
     schema_version="v1",
     retention_policy="30 days",
     owner="data-engineering-team",
-    description="Hourly weather data for supply chain planning."
+    description="Weather data refreshed every 2 minutes for supply chain planning."
 )
 
-ALL_DATASETS = [WAREHOUSE_DATASET, MANUFACTURING_DATASET, SALES_DATASET, LEGACY_DATASET, IOT_DATASET, WEATHER_DATASET]
+ALL_DATASETS = [WAREHOUSE_DATASET, MANUFACTURING_DATASET, SALES_DATASET, LEGACY_DATASET, INVENTORY_TRANSACTIONS_DATASET, IOT_DATASET, WEATHER_DATASET]

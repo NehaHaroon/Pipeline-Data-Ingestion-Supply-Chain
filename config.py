@@ -23,7 +23,7 @@ load_env_file()
 # Configuration for the Supply Chain Ingestion Pipeline
 
 # Kafka settings
-KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 KAFKA_TOPIC_IOT = os.getenv("KAFKA_TOPIC_IOT", "supply_chain_inventory")
 KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "supply_chain_group")
 
@@ -38,6 +38,7 @@ STORAGE_CHECKPOINTS = os.getenv("STORAGE_CHECKPOINTS", "storage/checkpoints")
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "8000"))
 API_TOKEN = os.getenv("API_TOKEN", "ee910d618e617c559f1ca41a3a48c3c7")
+LOCAL_API_HOST = os.getenv("LOCAL_API_HOST","ingestion-api")
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -48,7 +49,7 @@ DB_TYPE = os.getenv("DB_TYPE", "parquet")  # parquet, postgres, etc.
 # Weather API key (for external API source)
 WEATHER_API_KEY = os.getenv(
     "WEATHER_API_KEY",
-    os.getenv("OPENWEATHER_API_KEY", "your_api_key_here")
+    os.getenv("WEATHER_API_KEY", "your_api_key_here")
 )
 
 # Batch settings

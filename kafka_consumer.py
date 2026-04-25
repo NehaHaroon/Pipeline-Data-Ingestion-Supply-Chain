@@ -4,7 +4,7 @@ import json
 import logging
 import time
 import os
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, List
 import config
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry
@@ -20,14 +20,34 @@ class IoTConsumer:
         self.contract = CONTRACT_REGISTRY[self.source_id]
         self.telemetry = JobTelemetry(job_id="streaming_job", source_id=self.source_id)
 
+    def _build_bootstrap_candidates(self, bootstrap_servers: str) -> List[str]:
+        raw_servers = [server.strip() for server in bootstrap_servers.split(",") if server.strip()]
+        candidates: List[str] = []
+        for server in raw_servers:
+            if server not in candidates:
+                candidates.append(server)
+
+        # If docker DNS host leaks into local runs, add host-network fallbacks.
+        if any(server.startswith("kafka:") for server in candidates):
+            for fallback in ["localhost:9092", "127.0.0.1:9092"]:
+                if fallback not in candidates:
+                    candidates.append(fallback)
+        return candidates
+
     def _connect_with_retry(self, topic: str, bootstrap_servers: str, group_id: str, max_retries: int):
         """Connect to Kafka with exponential backoff retry logic."""
+        bootstrap_candidates = self._build_bootstrap_candidates(bootstrap_servers)
         for attempt in range(max_retries):
             try:
-                log.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})...")
+                log.info(
+                    "Attempting to connect to Kafka (attempt %s/%s) using %s",
+                    attempt + 1,
+                    max_retries,
+                    bootstrap_candidates,
+                )
                 consumer = KafkaConsumer(
                     topic,
-                    bootstrap_servers=bootstrap_servers,
+                    bootstrap_servers=bootstrap_candidates,
                     group_id=group_id,
                     value_deserializer=lambda v: json.loads(v.decode('utf-8')),
                     key_deserializer=lambda k: k.decode('utf-8') if k else None,
