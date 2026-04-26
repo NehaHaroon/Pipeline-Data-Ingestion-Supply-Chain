@@ -1,0 +1,472 @@
+2026-04-26 09:55:02 [INFO] real_time_iot_ingest — ======================================================================
+2026-04-26 09:55:02 [INFO] real_time_iot_ingest — REAL-TIME IOT INGESTION STARTED | job=job_iot_realtime_1777197302
+2026-04-26 09:55:02 [INFO] real_time_iot_ingest — ======================================================================
+2026-04-26 09:55:02 [INFO] observability_plane.telemetry — [TELEMETRY][job_iot_realtime_1777197302] ▶  Job started at 2026-04-26T09:55:02.286089+00:00
+2026-04-26 09:55:02 [INFO] kafka_consumer — Attempting to connect to Kafka (attempt 1/15) using ['kafka:9092', 'localhost:9092', '127.0.0.1:9092']
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=bootstrap-2 host=kafka:9092 <connecting> [IPv4 ('172.18.0.4', 9092)]>: connecting to kafka:9092 [('172.18.0.4', 9092) IPv4]
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=bootstrap-2 host=kafka:9092 <checking_api_versions_recv> [IPv4 ('172.18.0.4', 9092)]>: Broker version identified as 2.6
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=bootstrap-2 host=kafka:9092 <connected> [IPv4 ('172.18.0.4', 9092)]>: Connection complete.
+2026-04-26 09:55:02 [INFO] kafka.consumer.subscription_state — Updating subscribed topics to: ('supply_chain_inventory',)
+2026-04-26 09:55:02 [INFO] kafka_consumer — Successfully connected to Kafka
+2026-04-26 09:55:02 [INFO] observability_plane.telemetry — [TELEMETRY][streaming_job] ▶  Job started at 2026-04-26T09:55:02.326216+00:00
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=1001 host=kafka:9092 <connecting> [IPv4 ('172.18.0.4', 9092)]>: connecting to kafka:9092 [('172.18.0.4', 9092) IPv4]
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=1001 host=kafka:9092 <connected> [IPv4 ('172.18.0.4', 9092)]>: Connection complete.
+2026-04-26 09:55:02 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=bootstrap-2 host=kafka:9092 <connected> [IPv4 ('172.18.0.4', 9092)]>: Closing connection. 
+2026-04-26 09:55:03 [INFO] kafka.cluster — Coordinator for group/supply_chain_group is BrokerMetadata(nodeId='coordinator-1001', host='kafka', port=9092, rack=None)
+2026-04-26 09:55:03 [INFO] kafka.coordinator — Discovered coordinator coordinator-1001 for group supply_chain_group
+2026-04-26 09:55:03 [INFO] kafka.coordinator.heartbeat — Starting new heartbeat thread
+2026-04-26 09:55:03 [INFO] kafka.coordinator.consumer — Revoking previously assigned partitions set() for group supply_chain_group
+2026-04-26 09:55:03 [INFO] kafka.coordinator — Failed to join group supply_chain_group: NodeNotReadyError: coordinator-1001
+2026-04-26 09:55:03 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=coordinator-1001 host=kafka:9092 <connecting> [IPv4 ('172.18.0.4', 9092)]>: connecting to kafka:9092 [('172.18.0.4', 9092) IPv4]
+2026-04-26 09:55:03 [INFO] kafka.conn — <BrokerConnection client_id=kafka-python-2.3.1, node_id=coordinator-1001 host=kafka:9092 <connected> [IPv4 ('172.18.0.4', 9092)]>: Connection complete.
+2026-04-26 09:55:03 [INFO] kafka.coordinator — (Re-)joining group supply_chain_group
+2026-04-26 09:55:03 [INFO] kafka.coordinator — Received member id kafka-python-2.3.1-db360d93-b68e-48df-bccc-f55fc55924ac for group supply_chain_group; will retry join-group
+2026-04-26 09:55:03 [INFO] kafka.coordinator — Failed to join group supply_chain_group: [Error 79] MemberIdRequiredError
+2026-04-26 09:55:03 [INFO] kafka.coordinator — (Re-)joining group supply_chain_group
+2026-04-26 09:55:06 [INFO] kafka.coordinator — Successfully joined group supply_chain_group <Generation 1 (member_id: kafka-python-2.3.1-db360d93-b68e-48df-bccc-f55fc55924ac, protocol: range)>
+2026-04-26 09:55:06 [INFO] kafka.coordinator — Elected group leader -- performing partition assignments using range
+2026-04-26 09:55:06 [INFO] kafka.consumer.subscription_state — Updated partition assignment: [TopicPartition(topic='supply_chain_inventory', partition=0)]
+2026-04-26 09:55:06 [INFO] kafka.coordinator.consumer — Setting newly assigned partitions {TopicPartition(topic='supply_chain_inventory', partition=0)} for group supply_chain_group
+2026-04-26 09:55:06 [INFO] kafka.consumer.fetcher — Resetting offset for partition TopicPartition(topic='supply_chain_inventory', partition=0) to offset 0.
+2026-04-26 09:55:06 [INFO] kafka_consumer — Received event: {'event_id': '8eef9ec0-182f-4f2e-9ced-ad182ea9e9b5', 'timestamp': '2026-04-26T09:55:01.470620', 'product_id': 'ART-1060-CLA-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 97, 'battery_level': '69%'}
+2026-04-26 09:55:06 [INFO] real_time_iot_ingest — [IOT] 8eef9ec0 | ART-1060-CLA-L | stock=97
+2026-04-26 09:55:06 [INFO] kafka_consumer — Received event: {'event_id': 'ff18a7ac-8781-4a94-9a75-d37fe2d55001', 'timestamp': '2026-04-26T09:55:03.078051', 'product_id': 'ART-1081-OLI-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 112, 'battery_level': '25%'}
+2026-04-26 09:55:06 [INFO] real_time_iot_ingest — [IOT] ff18a7ac | ART-1081-OLI-M | stock=112
+2026-04-26 09:55:06 [INFO] kafka_consumer — Received event: {'event_id': '295a56b5-af9d-4d5c-baca-d024969196a7', 'timestamp': '2026-04-26T09:55:04.076535', 'product_id': 'ART-1134-MID-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 88, 'battery_level': '12%'}
+2026-04-26 09:55:06 [INFO] real_time_iot_ingest — [IOT] 295a56b5 | ART-1134-MID-XL | stock=88
+2026-04-26 09:55:06 [INFO] kafka_consumer — Received event: {'event_id': '113964ef-b343-4c8d-9339-ff3f9fd71335', 'timestamp': '2026-04-26T09:55:05.077301', 'product_id': 'ART-1079-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 60, 'battery_level': '13%'}
+2026-04-26 09:55:06 [INFO] real_time_iot_ingest — [IOT] 113964ef | ART-1079-CLA-L | stock=60
+2026-04-26 09:55:06 [INFO] kafka_consumer — Received event: {'event_id': 'fe908354-0c8d-4f2e-b799-985d33667d1c', 'timestamp': '2026-04-26T09:55:06.078027', 'product_id': 'ART-1233-OLI-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 33, 'battery_level': '57%'}
+2026-04-26 09:55:06 [INFO] real_time_iot_ingest — [IOT] fe908354 | ART-1233-OLI-XL | stock=33
+2026-04-26 09:55:07 [INFO] kafka_consumer — Received event: {'event_id': '29072dba-ac17-4f5a-a457-f6f83fae076e', 'timestamp': '2026-04-26T09:55:07.078760', 'product_id': 'ART-1425-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 74, 'battery_level': '16%'}
+2026-04-26 09:55:07 [INFO] real_time_iot_ingest — [IOT] 29072dba | ART-1425-MID-L | stock=74
+2026-04-26 09:55:07 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=5.0s | ingested=6 | failed=0 | quarantined=0 | throughput=1.2 rec/s
+2026-04-26 09:55:08 [INFO] kafka_consumer — Received event: {'event_id': '6cb28809-1c4e-475d-a46c-444c5d6424c4', 'timestamp': '2026-04-26T09:55:08.079570', 'product_id': 'ART-1420-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 39, 'battery_level': '23%'}
+2026-04-26 09:55:08 [INFO] real_time_iot_ingest — [IOT] 6cb28809 | ART-1420-CLA-L | stock=39
+2026-04-26 09:55:09 [INFO] kafka_consumer — Received event: {'event_id': '63b85a79-5f73-45ae-9990-51a2a6addcee', 'timestamp': '2026-04-26T09:55:09.081366', 'product_id': 'ART-1361-OLI-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 12, 'battery_level': '14%'}
+2026-04-26 09:55:09 [INFO] real_time_iot_ingest — [IOT] 63b85a79 | ART-1361-OLI-XS | stock=12
+2026-04-26 09:55:10 [INFO] kafka_consumer — Received event: {'event_id': 'dd30d6c5-2ee1-44b4-beb8-766bceefbf4c', 'timestamp': '2026-04-26T09:55:10.082009', 'product_id': 'ART-1299-NAV-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 91, 'battery_level': '94%'}
+2026-04-26 09:55:10 [INFO] real_time_iot_ingest — [IOT] dd30d6c5 | ART-1299-NAV-XL | stock=91
+2026-04-26 09:55:11 [INFO] kafka_consumer — Received event: {'event_id': 'dbd6cf86-0af6-4ddf-b1d8-cae2426069b0', 'timestamp': '2026-04-26T09:55:11.082463', 'product_id': 'ART-1126-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 135, 'battery_level': '39%'}
+2026-04-26 09:55:11 [INFO] real_time_iot_ingest — [IOT] dbd6cf86 | ART-1126-NAV-S | stock=135
+2026-04-26 09:55:12 [INFO] kafka_consumer — Received event: {'event_id': '309109ba-dba6-459c-b8ad-288ae85089d8', 'timestamp': '2026-04-26T09:55:12.082964', 'product_id': 'ART-1373-CLA-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 50, 'battery_level': '51%'}
+2026-04-26 09:55:12 [INFO] real_time_iot_ingest — [IOT] 309109ba | ART-1373-CLA-XL | stock=50
+2026-04-26 09:55:12 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=10.0s | ingested=11 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:55:13 [INFO] kafka_consumer — Received event: {'event_id': 'd65d2011-8f53-46f9-8483-188a8618e135', 'timestamp': '2026-04-26T09:55:13.083682', 'product_id': 'ART-1181-CLA-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 79, 'battery_level': '82%'}
+2026-04-26 09:55:13 [INFO] real_time_iot_ingest — [IOT] d65d2011 | ART-1181-CLA-S | stock=79
+2026-04-26 09:55:14 [INFO] kafka_consumer — Received event: {'event_id': 'baa2fbe5-feee-4a37-be07-5322d3405ab6', 'timestamp': '2026-04-26T09:55:14.084352', 'product_id': 'ART-1108-OLI-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 67, 'battery_level': '44%'}
+2026-04-26 09:55:14 [INFO] real_time_iot_ingest — [IOT] baa2fbe5 | ART-1108-OLI-S | stock=67
+2026-04-26 09:55:15 [INFO] kafka_consumer — Received event: {'event_id': 'de90766e-8410-4835-a419-89c611fa933a', 'timestamp': '2026-04-26T09:55:15.084983', 'product_id': 'ART-1156-MID-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 147, 'battery_level': '99%'}
+2026-04-26 09:55:15 [INFO] real_time_iot_ingest — [IOT] de90766e | ART-1156-MID-S | stock=147
+2026-04-26 09:55:16 [INFO] kafka_consumer — Received event: {'event_id': '319fa18c-e1bc-49d4-a418-c3b498c8a588', 'timestamp': '2026-04-26T09:55:16.085639', 'product_id': 'ART-1360-OLI-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 33, 'battery_level': '35%'}
+2026-04-26 09:55:16 [INFO] real_time_iot_ingest — [IOT] 319fa18c | ART-1360-OLI-XL | stock=33
+2026-04-26 09:55:17 [INFO] kafka_consumer — Received event: {'event_id': '63561c58-7eba-47c6-8e50-a985235b0b07', 'timestamp': '2026-04-26T09:55:17.086346', 'product_id': 'ART-1131-CLA-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 11, 'battery_level': '54%'}
+2026-04-26 09:55:17 [INFO] real_time_iot_ingest — [IOT] 63561c58 | ART-1131-CLA-XL | stock=11
+2026-04-26 09:55:17 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=15.0s | ingested=16 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:55:18 [INFO] kafka_consumer — Received event: {'event_id': '2f5f8cb3-e1ca-43e2-bcfa-010c8c52faf0', 'timestamp': '2026-04-26T09:55:18.086853', 'product_id': 'ART-1089-CLA-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 34, 'battery_level': '38%'}
+2026-04-26 09:55:18 [INFO] real_time_iot_ingest — [IOT] 2f5f8cb3 | ART-1089-CLA-XL | stock=34
+2026-04-26 09:55:19 [INFO] kafka_consumer — Received event: {'event_id': 'ba3ab4d7-e00b-4c02-b6a8-6a83bbb50ce5', 'timestamp': '2026-04-26T09:55:19.087448', 'product_id': 'ART-1187-NAV-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 118, 'battery_level': '40%'}
+2026-04-26 09:55:19 [INFO] real_time_iot_ingest — [IOT] ba3ab4d7 | ART-1187-NAV-M | stock=118
+2026-04-26 09:55:20 [INFO] kafka_consumer — Received event: {'event_id': '8d962b90-aff2-470c-8d87-b99ac4004cab', 'timestamp': '2026-04-26T09:55:20.088088', 'product_id': 'ART-1165-NAV-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 45, 'battery_level': '81%'}
+2026-04-26 09:55:20 [INFO] real_time_iot_ingest — [IOT] 8d962b90 | ART-1165-NAV-L | stock=45
+2026-04-26 09:55:21 [INFO] kafka_consumer — Received event: {'event_id': '7d2f65b7-37ce-41a6-b2e1-711d53853e86', 'timestamp': '2026-04-26T09:55:21.088754', 'product_id': 'ART-1364-MID-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 39, 'battery_level': '59%'}
+2026-04-26 09:55:21 [INFO] real_time_iot_ingest — [IOT] 7d2f65b7 | ART-1364-MID-S | stock=39
+2026-04-26 09:55:22 [INFO] kafka_consumer — Received event: {'event_id': '175aaa33-f92d-4ccf-b172-cc1e7a14ee51', 'timestamp': '2026-04-26T09:55:22.089364', 'product_id': 'ART-1109-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 106, 'battery_level': '53%'}
+2026-04-26 09:55:22 [INFO] real_time_iot_ingest — [IOT] 175aaa33 | ART-1109-CLA-M | stock=106
+2026-04-26 09:55:22 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=20.0s | ingested=21 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:23 [INFO] kafka_consumer — Received event: {'event_id': 'ba2175bd-b334-42bb-a3ae-0a45cf3ae5c1', 'timestamp': '2026-04-26T09:55:23.089892', 'product_id': 'ART-1284-NAV-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 87, 'battery_level': '38%'}
+2026-04-26 09:55:23 [INFO] real_time_iot_ingest — [IOT] ba2175bd | ART-1284-NAV-XS | stock=87
+2026-04-26 09:55:24 [INFO] kafka_consumer — Received event: {'event_id': 'dbc26021-8206-4b86-984b-192113435878', 'timestamp': '2026-04-26T09:55:24.090900', 'product_id': 'ART-1358-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 129, 'battery_level': '92%'}
+2026-04-26 09:55:24 [INFO] real_time_iot_ingest — [IOT] dbc26021 | ART-1358-OLI-L | stock=129
+2026-04-26 09:55:25 [INFO] kafka_consumer — Received event: {'event_id': '70310a35-5c8e-4626-809a-bcac71e48a90', 'timestamp': '2026-04-26T09:55:25.092022', 'product_id': 'ART-1427-OLI-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 99, 'battery_level': '33%'}
+2026-04-26 09:55:25 [INFO] real_time_iot_ingest — [IOT] 70310a35 | ART-1427-OLI-XS | stock=99
+2026-04-26 09:55:26 [INFO] kafka_consumer — Received event: {'event_id': 'ff3629ff-dadb-488d-8183-beeaf3ddde25', 'timestamp': '2026-04-26T09:55:26.092666', 'product_id': 'ART-1100-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 20, 'battery_level': '17%'}
+2026-04-26 09:55:26 [INFO] real_time_iot_ingest — [IOT] ff3629ff | ART-1100-CLA-XS | stock=20
+2026-04-26 09:55:27 [INFO] kafka_consumer — Received event: {'event_id': 'eaa13fd9-bf13-4aca-8fe2-40420f09d09a', 'timestamp': '2026-04-26T09:55:27.093355', 'product_id': 'ART-1440-CLA-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 94, 'battery_level': '39%'}
+2026-04-26 09:55:27 [INFO] real_time_iot_ingest — [IOT] eaa13fd9 | ART-1440-CLA-XL | stock=94
+2026-04-26 09:55:27 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=25.0s | ingested=26 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:28 [INFO] kafka_consumer — Received event: {'event_id': '23eb3f25-2997-4a27-b021-c727455700e2', 'timestamp': '2026-04-26T09:55:28.093986', 'product_id': 'ART-1124-NAV-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 90, 'battery_level': '85%'}
+2026-04-26 09:55:28 [INFO] real_time_iot_ingest — [IOT] 23eb3f25 | ART-1124-NAV-L | stock=90
+2026-04-26 09:55:28 [INFO] kafka_consumer — Received event: {'event_id': '23eb3f25-2997-4a27-b021-c727455700e2', 'timestamp': '2026-04-26T09:55:28.093986', 'product_id': 'ART-1124-NAV-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 90, 'battery_level': '85%'}
+2026-04-26 09:55:28 [INFO] real_time_iot_ingest — [IOT] 23eb3f25 | ART-1124-NAV-L | stock=90
+2026-04-26 09:55:29 [INFO] kafka_consumer — Received event: {'event_id': '4bd3514a-6825-4190-a268-2d0d003ccad4', 'timestamp': '2026-04-26T09:55:29.094748', 'product_id': 'ART-1200-MID-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 53, 'battery_level': '33%'}
+2026-04-26 09:55:29 [INFO] real_time_iot_ingest — [IOT] 4bd3514a | ART-1200-MID-L | stock=53
+2026-04-26 09:55:30 [INFO] kafka_consumer — Received event: {'event_id': 'dc70370b-ebcd-423e-84c9-5f9f8a35807c', 'timestamp': '2026-04-26T09:55:30.095586', 'product_id': 'ART-1232-CLA-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 125, 'battery_level': '48%'}
+2026-04-26 09:55:30 [INFO] real_time_iot_ingest — [IOT] dc70370b | ART-1232-CLA-XL | stock=125
+2026-04-26 09:55:31 [INFO] kafka_consumer — Received event: {'event_id': 'af8a0c8c-0a55-4c43-8175-c880e93d9245', 'timestamp': '2026-04-26T09:55:31.096425', 'product_id': 'ART-1271-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 8, 'battery_level': '17%'}
+2026-04-26 09:55:31 [INFO] real_time_iot_ingest — [IOT] af8a0c8c | ART-1271-MID-L | stock=8
+2026-04-26 09:55:32 [INFO] kafka_consumer — Received event: {'event_id': '1ad4909d-c621-44ba-810f-c6cff34fd8fb', 'timestamp': '2026-04-26T09:55:32.097467', 'product_id': 'ART-1197-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 147, 'battery_level': '64%'}
+2026-04-26 09:55:32 [INFO] real_time_iot_ingest — [IOT] 1ad4909d | ART-1197-CLA-XS | stock=147
+2026-04-26 09:55:32 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=30.0s | ingested=32 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:55:33 [INFO] kafka_consumer — Received event: {'event_id': 'c8bec082-d796-4c4f-800d-4faa08f29087', 'timestamp': '2026-04-26T09:55:33.098382', 'product_id': 'ART-1255-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 33, 'battery_level': '40%'}
+2026-04-26 09:55:33 [INFO] real_time_iot_ingest — [IOT] c8bec082 | ART-1255-MID-L | stock=33
+2026-04-26 09:55:33 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:55:34 [INFO] kafka_consumer — Received event: {'event_id': 'b36676d6-b087-4e60-a821-8b7bb9008442', 'timestamp': '2026-04-26T09:55:34.096180', 'product_id': 'ART-1013-OLI-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 103, 'battery_level': '22%'}
+2026-04-26 09:55:34 [INFO] real_time_iot_ingest — [IOT] b36676d6 | ART-1013-OLI-S | stock=103
+2026-04-26 09:55:35 [INFO] kafka_consumer — Received event: {'event_id': 'e783d59a-8b82-4028-b113-e29ae8e98270', 'timestamp': '2026-04-26T09:55:35.096991', 'product_id': 'ART-1091-MID-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 57, 'battery_level': '92%'}
+2026-04-26 09:55:35 [INFO] real_time_iot_ingest — [IOT] e783d59a | ART-1091-MID-S | stock=57
+2026-04-26 09:55:36 [INFO] kafka_consumer — Received event: {'event_id': 'd469701f-56e9-4e72-9f02-0339b4dbed27', 'timestamp': '2026-04-26T09:55:36.097842', 'product_id': 'ART-1095-OLI-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 113, 'battery_level': '16%'}
+2026-04-26 09:55:36 [INFO] real_time_iot_ingest — [IOT] d469701f | ART-1095-OLI-L | stock=113
+2026-04-26 09:55:37 [INFO] kafka_consumer — Received event: {'event_id': '83c4b6ad-a299-45f9-acf4-e40d784e532f', 'timestamp': '2026-04-26T09:55:37.098951', 'product_id': 'ART-1487-CLA-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 136, 'battery_level': '79%'}
+2026-04-26 09:55:37 [INFO] real_time_iot_ingest — [IOT] 83c4b6ad | ART-1487-CLA-XL | stock=136
+2026-04-26 09:55:37 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=35.0s | ingested=37 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:55:38 [INFO] kafka_consumer — Received event: {'event_id': '0381bf32-b6bc-4232-9cbc-3ba0d09f78d4', 'timestamp': '2026-04-26T09:55:38.099802', 'product_id': 'ART-1457-NAV-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 128, 'battery_level': '24%'}
+2026-04-26 09:55:38 [INFO] real_time_iot_ingest — [IOT] 0381bf32 | ART-1457-NAV-M | stock=128
+2026-04-26 09:55:39 [INFO] kafka_consumer — Received event: {'event_id': '82581d4f-7edd-4a4a-bc47-3e91f8176439', 'timestamp': '2026-04-26T09:55:39.100608', 'product_id': 'ART-1495-MID-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 34, 'battery_level': '26%'}
+2026-04-26 09:55:39 [INFO] real_time_iot_ingest — [IOT] 82581d4f | ART-1495-MID-L | stock=34
+2026-04-26 09:55:40 [INFO] kafka_consumer — Received event: {'event_id': '959e37c2-d262-4ae7-99e6-41f205fbf127', 'timestamp': '2026-04-26T09:55:40.101446', 'product_id': 'ART-1483-OLI-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 74, 'battery_level': '43%'}
+2026-04-26 09:55:40 [INFO] real_time_iot_ingest — [IOT] 959e37c2 | ART-1483-OLI-XL | stock=74
+2026-04-26 09:55:41 [INFO] kafka_consumer — Received event: {'event_id': '53faf661-f65f-4b96-afad-361d09c69b66', 'timestamp': '2026-04-26T09:55:41.102349', 'product_id': 'ART-1446-NAV-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 79, 'battery_level': '33%'}
+2026-04-26 09:55:41 [INFO] real_time_iot_ingest — [IOT] 53faf661 | ART-1446-NAV-M | stock=79
+2026-04-26 09:55:42 [INFO] kafka_consumer — Received event: {'event_id': '41fcf5ae-b4eb-4b2f-b243-f8a4194830a1', 'timestamp': '2026-04-26T09:55:42.102931', 'product_id': 'ART-1385-CLA-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 124, 'battery_level': '47%'}
+2026-04-26 09:55:42 [INFO] real_time_iot_ingest — [IOT] 41fcf5ae | ART-1385-CLA-S | stock=124
+2026-04-26 09:55:42 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=40.0s | ingested=42 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:43 [INFO] kafka_consumer — Received event: {'event_id': '81130bfb-401d-4f51-b3da-985f23fe217f', 'timestamp': '2026-04-26T09:55:43.103598', 'product_id': 'ART-1237-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 90, 'battery_level': '98%'}
+2026-04-26 09:55:43 [INFO] real_time_iot_ingest — [IOT] 81130bfb | ART-1237-CLA-L | stock=90
+2026-04-26 09:55:44 [INFO] kafka_consumer — Received event: {'event_id': '7f1cb729-b694-4ee9-8394-47fc40b65bd1', 'timestamp': '2026-04-26T09:55:44.104196', 'product_id': 'ART-1295-OLI-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 61, 'battery_level': '19%'}
+2026-04-26 09:55:44 [INFO] real_time_iot_ingest — [IOT] 7f1cb729 | ART-1295-OLI-L | stock=61
+2026-04-26 09:55:45 [INFO] kafka_consumer — Received event: {'event_id': '7b438bae-ca77-4ad6-90c2-63ce45c12c35', 'timestamp': '2026-04-26T09:55:45.104880', 'product_id': 'ART-1313-CLA-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 75, 'battery_level': '42%'}
+2026-04-26 09:55:45 [INFO] real_time_iot_ingest — [IOT] 7b438bae | ART-1313-CLA-XL | stock=75
+2026-04-26 09:55:46 [INFO] kafka_consumer — Received event: {'event_id': '9b3541e9-e459-4f78-892e-c026c97ceaa2', 'timestamp': '2026-04-26T09:55:46.105441', 'product_id': 'ART-1286-CLA-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 64, 'battery_level': '30%'}
+2026-04-26 09:55:46 [INFO] real_time_iot_ingest — [IOT] 9b3541e9 | ART-1286-CLA-L | stock=64
+2026-04-26 09:55:47 [INFO] kafka_consumer — Received event: {'event_id': '38bebd81-8cd9-408d-8434-b99471d504af', 'timestamp': '2026-04-26T09:55:47.106126', 'product_id': 'ART-1141-MID-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 12, 'battery_level': '38%'}
+2026-04-26 09:55:47 [INFO] real_time_iot_ingest — [IOT] 38bebd81 | ART-1141-MID-XL | stock=12
+2026-04-26 09:55:47 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=45.0s | ingested=47 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:48 [INFO] kafka_consumer — Received event: {'event_id': '94e4e438-cdc3-4b76-b163-00d7ea48f4ee', 'timestamp': '2026-04-26T09:55:48.106779', 'product_id': 'ART-1435-MID-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 33, 'battery_level': '61%'}
+2026-04-26 09:55:48 [INFO] real_time_iot_ingest — [IOT] 94e4e438 | ART-1435-MID-S | stock=33
+2026-04-26 09:55:49 [INFO] kafka_consumer — Received event: {'event_id': '5414a133-f36d-4b14-a771-2b8fbd562f3e', 'timestamp': '2026-04-26T09:55:49.107511', 'product_id': 'ART-1174-MID-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 136, 'battery_level': '82%'}
+2026-04-26 09:55:49 [INFO] real_time_iot_ingest — [IOT] 5414a133 | ART-1174-MID-XS | stock=136
+2026-04-26 09:55:50 [INFO] kafka_consumer — Received event: {'event_id': '2fe337a9-e6bc-4555-a4b9-db141cf7961e', 'timestamp': '2026-04-26T09:55:50.108077', 'product_id': 'ART-1428-CLA-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 137, 'battery_level': '18%'}
+2026-04-26 09:55:50 [INFO] real_time_iot_ingest — [IOT] 2fe337a9 | ART-1428-CLA-XS | stock=137
+2026-04-26 09:55:51 [INFO] kafka_consumer — Received event: {'event_id': 'f92b5465-d146-4b2b-9801-700c256ad457', 'timestamp': '2026-04-26T09:55:51.108991', 'product_id': 'ART-1232-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 133, 'battery_level': '88%'}
+2026-04-26 09:55:51 [INFO] real_time_iot_ingest — [IOT] f92b5465 | ART-1232-NAV-S | stock=133
+2026-04-26 09:55:52 [INFO] kafka_consumer — Received event: {'event_id': '3a5c1540-e30f-437c-a70d-5e4e89ea7717', 'timestamp': '2026-04-26T09:55:52.109642', 'product_id': 'ART-1271-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 139, 'battery_level': '25%'}
+2026-04-26 09:55:52 [INFO] real_time_iot_ingest — [IOT] 3a5c1540 | ART-1271-OLI-L | stock=139
+2026-04-26 09:55:52 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=50.0s | ingested=52 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:53 [INFO] kafka_consumer — Received event: {'event_id': '9cb39b7c-c68e-481e-adae-fd57fce77b08', 'timestamp': '2026-04-26T09:55:53.110236', 'product_id': 'ART-1467-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 99, 'battery_level': '49%'}
+2026-04-26 09:55:53 [INFO] real_time_iot_ingest — [IOT] 9cb39b7c | ART-1467-CLA-XS | stock=99
+2026-04-26 09:55:54 [INFO] kafka_consumer — Received event: {'event_id': '31cb9b23-f826-4039-a533-1650b25d0264', 'timestamp': '2026-04-26T09:55:54.110872', 'product_id': 'ART-1465-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 27, 'battery_level': '77%'}
+2026-04-26 09:55:54 [INFO] real_time_iot_ingest — [IOT] 31cb9b23 | ART-1465-CLA-M | stock=27
+2026-04-26 09:55:55 [INFO] kafka_consumer — Received event: {'event_id': 'ad47e59a-77ed-41bd-9899-e01b387ce37c', 'timestamp': '2026-04-26T09:55:55.111461', 'product_id': 'ART-1348-CLA-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 33, 'battery_level': '44%'}
+2026-04-26 09:55:55 [INFO] real_time_iot_ingest — [IOT] ad47e59a | ART-1348-CLA-XS | stock=33
+2026-04-26 09:55:56 [INFO] kafka_consumer — Received event: {'event_id': 'f985ce24-4766-43ac-84b5-ac08dee45e2f', 'timestamp': '2026-04-26T09:55:56.112074', 'product_id': 'ART-1321-MID-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 52, 'battery_level': '37%'}
+2026-04-26 09:55:56 [INFO] real_time_iot_ingest — [IOT] f985ce24 | ART-1321-MID-M | stock=52
+2026-04-26 09:55:57 [INFO] kafka_consumer — Received event: {'event_id': '21730d1f-53e5-40f1-9ece-350324dfac72', 'timestamp': '2026-04-26T09:55:57.112609', 'product_id': 'ART-1243-OLI-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 35, 'battery_level': '85%'}
+2026-04-26 09:55:57 [INFO] real_time_iot_ingest — [IOT] 21730d1f | ART-1243-OLI-M | stock=35
+2026-04-26 09:55:57 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=55.0s | ingested=57 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:55:58 [INFO] kafka_consumer — Received event: {'event_id': '008b55ef-f2f4-4565-87d1-38e620e7882a', 'timestamp': '2026-04-26T09:55:58.113314', 'product_id': 'ART-1356-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 88, 'battery_level': '39%'}
+2026-04-26 09:55:58 [INFO] real_time_iot_ingest — [IOT] 008b55ef | ART-1356-CLA-XS | stock=88
+2026-04-26 09:55:59 [INFO] kafka_consumer — Received event: {'event_id': '619df2d6-8a61-4570-8515-23c1d1b4b3fa', 'timestamp': '2026-04-26T09:55:59.113836', 'product_id': 'ART-1434-OLI-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 100, 'battery_level': '78%'}
+2026-04-26 09:55:59 [INFO] real_time_iot_ingest — [IOT] 619df2d6 | ART-1434-OLI-XL | stock=100
+2026-04-26 09:56:00 [INFO] kafka_consumer — Received event: {'event_id': '829448b6-7b6f-4bc1-8abd-4d604071e98f', 'timestamp': '2026-04-26T09:56:00.114413', 'product_id': 'ART-1457-OLI-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 23, 'battery_level': '71%'}
+2026-04-26 09:56:00 [INFO] real_time_iot_ingest — [IOT] 829448b6 | ART-1457-OLI-M | stock=23
+2026-04-26 09:56:01 [INFO] kafka_consumer — Received event: {'event_id': '462c14bd-eef8-4b0d-8a03-1b9c3b6c0aaf', 'timestamp': '2026-04-26T09:56:01.115000', 'product_id': 'ART-1314-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 121, 'battery_level': '91%'}
+2026-04-26 09:56:01 [INFO] real_time_iot_ingest — [IOT] 462c14bd | ART-1314-CLA-M | stock=121
+2026-04-26 09:56:02 [INFO] kafka_consumer — Received event: {'event_id': 'c98bb73b-7192-4b9d-b410-ab4186fd9fcc', 'timestamp': '2026-04-26T09:56:02.115630', 'product_id': 'ART-1127-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 120, 'battery_level': '79%'}
+2026-04-26 09:56:02 [INFO] real_time_iot_ingest — [IOT] c98bb73b | ART-1127-NAV-S | stock=120
+2026-04-26 09:56:02 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=60.0s | ingested=62 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:56:03 [INFO] kafka_consumer — Received event: {'event_id': '038e631f-8779-41eb-ab00-4c0559e4757a', 'timestamp': '2026-04-26T09:56:03.116224', 'product_id': 'ART-1070-MID-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 124, 'battery_level': '49%'}
+2026-04-26 09:56:03 [INFO] real_time_iot_ingest — [IOT] 038e631f | ART-1070-MID-L | stock=124
+2026-04-26 09:56:04 [INFO] kafka_consumer — Received event: {'event_id': 'ebe93eea-21d1-4bbb-8144-4331bdddde10', 'timestamp': '2026-04-26T09:56:04.114857', 'product_id': 'ART-1390-OLI-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 11, 'battery_level': '14%'}
+2026-04-26 09:56:04 [INFO] real_time_iot_ingest — [IOT] ebe93eea | ART-1390-OLI-XS | stock=11
+2026-04-26 09:56:04 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:56:05 [INFO] kafka_consumer — Received event: {'event_id': '73b6616d-e83d-4130-b656-d1724678e350', 'timestamp': '2026-04-26T09:56:05.115666', 'product_id': 'ART-1305-CLA-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 132, 'battery_level': '81%'}
+2026-04-26 09:56:05 [INFO] real_time_iot_ingest — [IOT] 73b6616d | ART-1305-CLA-S | stock=132
+2026-04-26 09:56:06 [INFO] kafka_consumer — Received event: {'event_id': '6b57f47d-cf43-432a-9c1c-c65a73ba7498', 'timestamp': '2026-04-26T09:56:06.116140', 'product_id': 'ART-1260-NAV-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 76, 'battery_level': '22%'}
+2026-04-26 09:56:06 [INFO] real_time_iot_ingest — [IOT] 6b57f47d | ART-1260-NAV-M | stock=76
+2026-04-26 09:56:07 [INFO] kafka_consumer — Received event: {'event_id': 'dccea44a-a415-4203-80eb-4127825f37d4', 'timestamp': '2026-04-26T09:56:07.116694', 'product_id': 'ART-1225-CLA-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 121, 'battery_level': '53%'}
+2026-04-26 09:56:07 [INFO] real_time_iot_ingest — [IOT] dccea44a | ART-1225-CLA-XS | stock=121
+2026-04-26 09:56:07 [INFO] kafka_consumer — Received event: {'event_id': 'dccea44a-a415-4203-80eb-4127825f37d4', 'timestamp': '2026-04-26T09:56:07.116694', 'product_id': 'ART-1225-CLA-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 121, 'battery_level': '53%'}
+2026-04-26 09:56:07 [INFO] real_time_iot_ingest — [IOT] dccea44a | ART-1225-CLA-XS | stock=121
+2026-04-26 09:56:07 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=65.0s | ingested=68 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:56:08 [INFO] kafka_consumer — Received event: {'event_id': '59038c44-0159-4668-aae1-f4c9c7122c81', 'timestamp': '2026-04-26T09:56:08.117572', 'product_id': 'ART-1361-CLA-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 101, 'battery_level': '35%'}
+2026-04-26 09:56:08 [INFO] real_time_iot_ingest — [IOT] 59038c44 | ART-1361-CLA-S | stock=101
+2026-04-26 09:56:09 [INFO] kafka_consumer — Received event: {'event_id': 'be85471f-b084-4757-a0ef-2e70fe24a5de', 'timestamp': '2026-04-26T09:56:09.118117', 'product_id': 'ART-1462-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 51, 'battery_level': '96%'}
+2026-04-26 09:56:09 [INFO] real_time_iot_ingest — [IOT] be85471f | ART-1462-NAV-S | stock=51
+2026-04-26 09:56:10 [INFO] kafka_consumer — Received event: {'event_id': '86e030e3-7571-4536-888b-7d88542770a3', 'timestamp': '2026-04-26T09:56:10.118655', 'product_id': 'ART-1453-MID-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 126, 'battery_level': '46%'}
+2026-04-26 09:56:10 [INFO] real_time_iot_ingest — [IOT] 86e030e3 | ART-1453-MID-XS | stock=126
+2026-04-26 09:56:11 [INFO] kafka_consumer — Received event: {'event_id': '8f018a4f-9fba-4b10-a869-9f0a964de066', 'timestamp': '2026-04-26T09:56:11.119173', 'product_id': 'ART-1430-NAV-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 68, 'battery_level': '71%'}
+2026-04-26 09:56:11 [INFO] real_time_iot_ingest — [IOT] 8f018a4f | ART-1430-NAV-M | stock=68
+2026-04-26 09:56:12 [INFO] kafka_consumer — Received event: {'event_id': '8a76f968-c307-4b3f-b101-02e0b1fba989', 'timestamp': '2026-04-26T09:56:12.119680', 'product_id': 'ART-1057-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 111, 'battery_level': '100%'}
+2026-04-26 09:56:12 [INFO] real_time_iot_ingest — [IOT] 8a76f968 | ART-1057-OLI-L | stock=111
+2026-04-26 09:56:12 [INFO] kafka_consumer — Received event: {'event_id': '8a76f968-c307-4b3f-b101-02e0b1fba989', 'timestamp': '2026-04-26T09:56:12.119680', 'product_id': 'ART-1057-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 111, 'battery_level': '100%'}
+2026-04-26 09:56:12 [INFO] real_time_iot_ingest — [IOT] 8a76f968 | ART-1057-OLI-L | stock=111
+2026-04-26 09:56:12 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=70.0s | ingested=74 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:13 [INFO] kafka_consumer — Received event: {'event_id': '576d0390-fe93-4e5e-87b2-69adee02c82c', 'timestamp': '2026-04-26T09:56:13.120151', 'product_id': 'ART-1489-CLA-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 103, 'battery_level': '67%'}
+2026-04-26 09:56:13 [INFO] real_time_iot_ingest — [IOT] 576d0390 | ART-1489-CLA-L | stock=103
+2026-04-26 09:56:14 [INFO] kafka_consumer — Received event: {'event_id': '321d190d-16bb-4368-abc2-fb07c13321fd', 'timestamp': '2026-04-26T09:56:14.120558', 'product_id': 'ART-1398-MID-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 129, 'battery_level': '11%'}
+2026-04-26 09:56:14 [INFO] real_time_iot_ingest — [IOT] 321d190d | ART-1398-MID-XS | stock=129
+2026-04-26 09:56:15 [INFO] kafka_consumer — Received event: {'event_id': '02be1dea-09a5-489a-a761-08c999c95cc7', 'timestamp': '2026-04-26T09:56:15.121073', 'product_id': 'ART-1029-MID-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 127, 'battery_level': '39%'}
+2026-04-26 09:56:15 [INFO] real_time_iot_ingest — [IOT] 02be1dea | ART-1029-MID-S | stock=127
+2026-04-26 09:56:16 [INFO] kafka_consumer — Received event: {'event_id': '6f5e0255-f57a-4ffe-98eb-73a8cdf1382f', 'timestamp': '2026-04-26T09:56:16.121595', 'product_id': 'ART-1051-OLI-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 7, 'battery_level': '31%'}
+2026-04-26 09:56:16 [INFO] real_time_iot_ingest — [IOT] 6f5e0255 | ART-1051-OLI-XL | stock=7
+2026-04-26 09:56:17 [INFO] kafka_consumer — Received event: {'event_id': 'aa76b1d3-b891-4ff2-8d4f-ff11907f1437', 'timestamp': '2026-04-26T09:56:17.122203', 'product_id': 'ART-1400-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 136, 'battery_level': '85%'}
+2026-04-26 09:56:17 [INFO] real_time_iot_ingest — [IOT] aa76b1d3 | ART-1400-CLA-XS | stock=136
+2026-04-26 09:56:17 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=75.0s | ingested=79 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:18 [INFO] kafka_consumer — Received event: {'event_id': 'dc29a1f2-c070-48ff-a414-41193e3c3ac5', 'timestamp': '2026-04-26T09:56:18.122896', 'product_id': 'ART-1464-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 86, 'battery_level': '51%'}
+2026-04-26 09:56:18 [INFO] real_time_iot_ingest — [IOT] dc29a1f2 | ART-1464-NAV-S | stock=86
+2026-04-26 09:56:19 [INFO] kafka_consumer — Received event: {'event_id': 'b694d2f0-0537-46e0-9c5b-2d4c75fdf779', 'timestamp': '2026-04-26T09:56:19.123565', 'product_id': 'ART-1409-MID-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 21, 'battery_level': '28%'}
+2026-04-26 09:56:19 [INFO] real_time_iot_ingest — [IOT] b694d2f0 | ART-1409-MID-L | stock=21
+2026-04-26 09:56:20 [INFO] kafka_consumer — Received event: {'event_id': 'c1aaff1c-83b4-441c-8f4d-e2350097d5bf', 'timestamp': '2026-04-26T09:56:20.123958', 'product_id': 'ART-1096-MID-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 73, 'battery_level': '37%'}
+2026-04-26 09:56:20 [INFO] real_time_iot_ingest — [IOT] c1aaff1c | ART-1096-MID-XS | stock=73
+2026-04-26 09:56:21 [INFO] kafka_consumer — Received event: {'event_id': '82bcad30-3e67-4fa8-81e9-4a9afe13e714', 'timestamp': '2026-04-26T09:56:21.124542', 'product_id': 'ART-1069-CLA-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 75, 'battery_level': '89%'}
+2026-04-26 09:56:21 [INFO] real_time_iot_ingest — [IOT] 82bcad30 | ART-1069-CLA-XS | stock=75
+2026-04-26 09:56:22 [INFO] kafka_consumer — Received event: {'event_id': 'd08226e1-5357-4bb2-a2d3-b75a443daf39', 'timestamp': '2026-04-26T09:56:22.125084', 'product_id': 'ART-1210-OLI-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 107, 'battery_level': '58%'}
+2026-04-26 09:56:22 [INFO] real_time_iot_ingest — [IOT] d08226e1 | ART-1210-OLI-XS | stock=107
+2026-04-26 09:56:22 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=80.0s | ingested=84 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:56:23 [INFO] kafka_consumer — Received event: {'event_id': 'a726f1f5-e66e-4984-ad3b-1da2233e7c86', 'timestamp': '2026-04-26T09:56:23.125593', 'product_id': 'ART-1485-OLI-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 61, 'battery_level': '54%'}
+2026-04-26 09:56:23 [INFO] real_time_iot_ingest — [IOT] a726f1f5 | ART-1485-OLI-XS | stock=61
+2026-04-26 09:56:24 [INFO] kafka_consumer — Received event: {'event_id': 'd170649f-079f-481c-bd04-76d81316eb41', 'timestamp': '2026-04-26T09:56:24.126157', 'product_id': 'ART-1148-OLI-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 144, 'battery_level': '48%'}
+2026-04-26 09:56:24 [INFO] real_time_iot_ingest — [IOT] d170649f | ART-1148-OLI-XL | stock=144
+2026-04-26 09:56:25 [INFO] kafka_consumer — Received event: {'event_id': '9f61c016-03a9-47bf-902d-7df96bbb45cc', 'timestamp': '2026-04-26T09:56:25.126758', 'product_id': 'ART-1326-OLI-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 72, 'battery_level': '50%'}
+2026-04-26 09:56:25 [INFO] real_time_iot_ingest — [IOT] 9f61c016 | ART-1326-OLI-M | stock=72
+2026-04-26 09:56:26 [INFO] kafka_consumer — Received event: {'event_id': '87a9fe52-7723-4f92-989c-c02c12e1abb0', 'timestamp': '2026-04-26T09:56:26.127404', 'product_id': 'ART-1022-CLA-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 6, 'battery_level': '18%'}
+2026-04-26 09:56:26 [INFO] real_time_iot_ingest — [IOT] 87a9fe52 | ART-1022-CLA-M | stock=6
+2026-04-26 09:56:27 [INFO] kafka_consumer — Received event: {'event_id': '327921ab-f7fd-4771-940d-27eef445dc65', 'timestamp': '2026-04-26T09:56:27.127858', 'product_id': 'ART-1478-CLA-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 45, 'battery_level': '65%'}
+2026-04-26 09:56:27 [INFO] real_time_iot_ingest — [IOT] 327921ab | ART-1478-CLA-S | stock=45
+2026-04-26 09:56:27 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=85.0s | ingested=89 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:56:28 [INFO] kafka_consumer — Received event: {'event_id': '5fb01338-0781-4e37-928c-d0c9f0645e48', 'timestamp': '2026-04-26T09:56:28.128356', 'product_id': 'ART-1281-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 107, 'battery_level': '21%'}
+2026-04-26 09:56:28 [INFO] real_time_iot_ingest — [IOT] 5fb01338 | ART-1281-OLI-L | stock=107
+2026-04-26 09:56:28 [INFO] kafka_consumer — Received event: {'event_id': '5fb01338-0781-4e37-928c-d0c9f0645e48', 'timestamp': '2026-04-26T09:56:28.128356', 'product_id': 'ART-1281-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 107, 'battery_level': '21%'}
+2026-04-26 09:56:28 [INFO] real_time_iot_ingest — [IOT] 5fb01338 | ART-1281-OLI-L | stock=107
+2026-04-26 09:56:29 [INFO] kafka_consumer — Received event: {'event_id': '98170bff-e95b-494a-86c8-b92d6d333bd1', 'timestamp': '2026-04-26T09:56:29.129147', 'product_id': 'ART-1203-CLA-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 55, 'battery_level': '92%'}
+2026-04-26 09:56:29 [INFO] real_time_iot_ingest — [IOT] 98170bff | ART-1203-CLA-S | stock=55
+2026-04-26 09:56:29 [INFO] kafka_consumer — Received event: {'event_id': '98170bff-e95b-494a-86c8-b92d6d333bd1', 'timestamp': '2026-04-26T09:56:29.129147', 'product_id': 'ART-1203-CLA-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 55, 'battery_level': '92%'}
+2026-04-26 09:56:29 [INFO] real_time_iot_ingest — [IOT] 98170bff | ART-1203-CLA-S | stock=55
+2026-04-26 09:56:30 [INFO] kafka_consumer — Received event: {'event_id': '848c5ee9-1a09-4c33-a5f0-b226f6230457', 'timestamp': '2026-04-26T09:56:30.130091', 'product_id': 'ART-1485-NAV-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 128, 'battery_level': '52%'}
+2026-04-26 09:56:30 [INFO] real_time_iot_ingest — [IOT] 848c5ee9 | ART-1485-NAV-L | stock=128
+2026-04-26 09:56:31 [INFO] kafka_consumer — Received event: {'event_id': '4997ee4f-1535-419c-b5d9-7f296d1f9f2a', 'timestamp': '2026-04-26T09:56:31.130770', 'product_id': 'ART-1386-CLA-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 97, 'battery_level': '68%'}
+2026-04-26 09:56:31 [INFO] real_time_iot_ingest — [IOT] 4997ee4f | ART-1386-CLA-XL | stock=97
+2026-04-26 09:56:32 [INFO] kafka_consumer — Received event: {'event_id': 'b5a34da0-c6f2-4221-b3b5-cb33e5581ef2', 'timestamp': '2026-04-26T09:56:32.131247', 'product_id': 'ART-1423-MID-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 57, 'battery_level': '67%'}
+2026-04-26 09:56:32 [INFO] real_time_iot_ingest — [IOT] b5a34da0 | ART-1423-MID-XS | stock=57
+2026-04-26 09:56:32 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=90.0s | ingested=96 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:33 [INFO] kafka_consumer — Received event: {'event_id': '104f8e51-8033-4170-8c48-3a5d9ebf78c2', 'timestamp': '2026-04-26T09:56:33.131800', 'product_id': 'ART-1011-OLI-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 32, 'battery_level': '54%'}
+2026-04-26 09:56:33 [INFO] real_time_iot_ingest — [IOT] 104f8e51 | ART-1011-OLI-M | stock=32
+2026-04-26 09:56:34 [INFO] kafka_consumer — Received event: {'event_id': '584183c2-6833-4257-8746-906502fdf586', 'timestamp': '2026-04-26T09:56:34.130784', 'product_id': 'ART-1049-OLI-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 125, 'battery_level': '90%'}
+2026-04-26 09:56:34 [INFO] real_time_iot_ingest — [IOT] 584183c2 | ART-1049-OLI-XL | stock=125
+2026-04-26 09:56:35 [INFO] kafka_consumer — Received event: {'event_id': 'b5a8a78d-80d2-4dc3-b071-25405b639fef', 'timestamp': '2026-04-26T09:56:35.131229', 'product_id': 'ART-1095-MID-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 148, 'battery_level': '17%'}
+2026-04-26 09:56:35 [INFO] real_time_iot_ingest — [IOT] b5a8a78d | ART-1095-MID-M | stock=148
+2026-04-26 09:56:35 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:56:36 [INFO] kafka_consumer — Received event: {'event_id': '237e963b-74e8-42ed-91b3-e7bbc87e538d', 'timestamp': '2026-04-26T09:56:36.131667', 'product_id': 'ART-1407-CLA-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 5, 'battery_level': '18%'}
+2026-04-26 09:56:36 [INFO] real_time_iot_ingest — [IOT] 237e963b | ART-1407-CLA-S | stock=5
+2026-04-26 09:56:37 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=95.0s | ingested=100 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:38 [INFO] common.api_utils — Successfully sent 100 records to http://ingestion-api:8000/ingest/src_iot_rfid_stream
+2026-04-26 09:56:38 [INFO] real_time_iot_ingest — [IOT-WRITE] 100 records → storage/stream_buffer/src_iot_rfid_stream_20260426T095636_batch001.parquet
+2026-04-26 09:56:38 [INFO] kafka_consumer — Received event: {'event_id': '876d6a03-a85b-4ffb-be39-9acd29685620', 'timestamp': '2026-04-26T09:56:37.132214', 'product_id': 'ART-1030-NAV-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 7, 'battery_level': '72%'}
+2026-04-26 09:56:38 [INFO] real_time_iot_ingest — [IOT] 876d6a03 | ART-1030-NAV-L | stock=7
+2026-04-26 09:56:38 [INFO] kafka_consumer — Received event: {'event_id': 'c96261f2-cf8d-470e-8fbd-77688e5e7664', 'timestamp': '2026-04-26T09:56:38.132853', 'product_id': 'ART-1451-NAV-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 16, 'battery_level': '91%'}
+2026-04-26 09:56:38 [INFO] real_time_iot_ingest — [IOT] c96261f2 | ART-1451-NAV-M | stock=16
+2026-04-26 09:56:38 [INFO] kafka_consumer — Received event: {'event_id': 'c96261f2-cf8d-470e-8fbd-77688e5e7664', 'timestamp': '2026-04-26T09:56:38.132853', 'product_id': 'ART-1451-NAV-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 16, 'battery_level': '91%'}
+2026-04-26 09:56:38 [INFO] real_time_iot_ingest — [IOT] c96261f2 | ART-1451-NAV-M | stock=16
+2026-04-26 09:56:39 [INFO] kafka_consumer — Received event: {'event_id': '91435133-bce6-4a70-b5df-3df846dc0772', 'timestamp': '2026-04-26T09:56:39.133521', 'product_id': 'ART-1103-CLA-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 35, 'battery_level': '24%'}
+2026-04-26 09:56:39 [INFO] real_time_iot_ingest — [IOT] 91435133 | ART-1103-CLA-L | stock=35
+2026-04-26 09:56:40 [INFO] kafka_consumer — Received event: {'event_id': '4751370f-6388-4e8d-b021-91678bdba373', 'timestamp': '2026-04-26T09:56:40.134174', 'product_id': 'ART-1427-OLI-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 49, 'battery_level': '21%'}
+2026-04-26 09:56:40 [INFO] real_time_iot_ingest — [IOT] 4751370f | ART-1427-OLI-XL | stock=49
+2026-04-26 09:56:41 [INFO] kafka_consumer — Received event: {'event_id': 'f63b179c-9513-4096-821f-90ac8b45fffe', 'timestamp': '2026-04-26T09:56:41.134802', 'product_id': 'ART-1199-CLA-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 35, 'battery_level': '91%'}
+2026-04-26 09:56:41 [INFO] real_time_iot_ingest — [IOT] f63b179c | ART-1199-CLA-S | stock=35
+2026-04-26 09:56:42 [INFO] kafka_consumer — Received event: {'event_id': '13f8dde7-eeb5-4329-8c41-c2a9e53c491c', 'timestamp': '2026-04-26T09:56:42.135455', 'product_id': 'ART-1024-NAV-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 93, 'battery_level': '47%'}
+2026-04-26 09:56:42 [INFO] real_time_iot_ingest — [IOT] 13f8dde7 | ART-1024-NAV-XL | stock=93
+2026-04-26 09:56:42 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=100.0s | ingested=107 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:43 [INFO] kafka_consumer — Received event: {'event_id': '5accb1d2-ed9a-4654-b7b7-7aecfe8af4e0', 'timestamp': '2026-04-26T09:56:43.136168', 'product_id': 'ART-1295-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 61, 'battery_level': '44%'}
+2026-04-26 09:56:43 [INFO] real_time_iot_ingest — [IOT] 5accb1d2 | ART-1295-NAV-S | stock=61
+2026-04-26 09:56:44 [INFO] kafka_consumer — Received event: {'event_id': '2ed3879f-c82d-4068-8b0f-d5b72a32649d', 'timestamp': '2026-04-26T09:56:44.136839', 'product_id': 'ART-1255-OLI-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 44, 'battery_level': '54%'}
+2026-04-26 09:56:44 [INFO] real_time_iot_ingest — [IOT] 2ed3879f | ART-1255-OLI-S | stock=44
+2026-04-26 09:56:45 [INFO] kafka_consumer — Received event: {'event_id': '45cd0c35-6875-4cfa-a07f-df334b98c727', 'timestamp': '2026-04-26T09:56:45.137550', 'product_id': 'ART-1089-MID-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 16, 'battery_level': '91%'}
+2026-04-26 09:56:45 [INFO] real_time_iot_ingest — [IOT] 45cd0c35 | ART-1089-MID-M | stock=16
+2026-04-26 09:56:46 [INFO] kafka_consumer — Received event: {'event_id': '01704f8c-20e1-4847-a799-09788b869529', 'timestamp': '2026-04-26T09:56:46.138240', 'product_id': 'ART-1199-NAV-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 21, 'battery_level': '59%'}
+2026-04-26 09:56:46 [INFO] real_time_iot_ingest — [IOT] 01704f8c | ART-1199-NAV-XS | stock=21
+2026-04-26 09:56:47 [INFO] kafka_consumer — Received event: {'event_id': '3e0914d5-1c74-4267-8a4e-1f0b6e3cfc2c', 'timestamp': '2026-04-26T09:56:47.139158', 'product_id': 'ART-1390-NAV-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 56, 'battery_level': '87%'}
+2026-04-26 09:56:47 [INFO] real_time_iot_ingest — [IOT] 3e0914d5 | ART-1390-NAV-S | stock=56
+2026-04-26 09:56:47 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=105.0s | ingested=112 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:48 [INFO] kafka_consumer — Received event: {'event_id': 'fb366f84-59e9-4316-8cc5-b43c0fd900a5', 'timestamp': '2026-04-26T09:56:48.139774', 'product_id': 'ART-1200-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 107, 'battery_level': '82%'}
+2026-04-26 09:56:48 [INFO] real_time_iot_ingest — [IOT] fb366f84 | ART-1200-NAV-S | stock=107
+2026-04-26 09:56:49 [INFO] kafka_consumer — Received event: {'event_id': 'ed671e22-e43d-4052-9465-ee96b80ccf41', 'timestamp': '2026-04-26T09:56:49.140351', 'product_id': 'ART-1496-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 106, 'battery_level': '40%'}
+2026-04-26 09:56:49 [INFO] real_time_iot_ingest — [IOT] ed671e22 | ART-1496-MID-L | stock=106
+2026-04-26 09:56:50 [INFO] kafka_consumer — Received event: {'event_id': '7cdf9ff7-3094-4d2a-85b6-0b6363f6c14d', 'timestamp': '2026-04-26T09:56:50.141220', 'product_id': 'ART-1186-MID-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 65, 'battery_level': '14%'}
+2026-04-26 09:56:50 [INFO] real_time_iot_ingest — [IOT] 7cdf9ff7 | ART-1186-MID-M | stock=65
+2026-04-26 09:56:51 [INFO] kafka_consumer — Received event: {'event_id': '9ca40c73-50d6-4603-af86-bf03b08089f5', 'timestamp': '2026-04-26T09:56:51.141826', 'product_id': 'ART-1040-MID-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 137, 'battery_level': '26%'}
+2026-04-26 09:56:51 [INFO] real_time_iot_ingest — [IOT] 9ca40c73 | ART-1040-MID-XL | stock=137
+2026-04-26 09:56:52 [INFO] kafka_consumer — Received event: {'event_id': '0c98d448-bcc0-458e-b20b-d45da803a22b', 'timestamp': '2026-04-26T09:56:52.142447', 'product_id': 'ART-1216-CLA-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 139, 'battery_level': '46%'}
+2026-04-26 09:56:52 [INFO] real_time_iot_ingest — [IOT] 0c98d448 | ART-1216-CLA-M | stock=139
+2026-04-26 09:56:52 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=110.0s | ingested=117 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:53 [INFO] kafka_consumer — Received event: {'event_id': 'a1b46ead-3fc7-4118-9660-8fedfbbef769', 'timestamp': '2026-04-26T09:56:53.143018', 'product_id': 'ART-1324-CLA-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 138, 'battery_level': '66%'}
+2026-04-26 09:56:53 [INFO] real_time_iot_ingest — [IOT] a1b46ead | ART-1324-CLA-S | stock=138
+2026-04-26 09:56:54 [INFO] kafka_consumer — Received event: {'event_id': 'a43578ee-1eed-491e-a73b-27258061f8e2', 'timestamp': '2026-04-26T09:56:54.143588', 'product_id': 'ART-1292-MID-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 127, 'battery_level': '68%'}
+2026-04-26 09:56:54 [INFO] real_time_iot_ingest — [IOT] a43578ee | ART-1292-MID-M | stock=127
+2026-04-26 09:56:55 [INFO] kafka_consumer — Received event: {'event_id': 'dd85dd2b-bd72-48ca-9710-e856c1975267', 'timestamp': '2026-04-26T09:56:55.144227', 'product_id': 'ART-1201-OLI-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 122, 'battery_level': '90%'}
+2026-04-26 09:56:55 [INFO] real_time_iot_ingest — [IOT] dd85dd2b | ART-1201-OLI-M | stock=122
+2026-04-26 09:56:56 [INFO] kafka_consumer — Received event: {'event_id': 'af21e5be-bc78-49c9-970a-92070876e250', 'timestamp': '2026-04-26T09:56:56.145019', 'product_id': 'ART-1130-OLI-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 145, 'battery_level': '15%'}
+2026-04-26 09:56:56 [INFO] real_time_iot_ingest — [IOT] af21e5be | ART-1130-OLI-S | stock=145
+2026-04-26 09:56:57 [INFO] kafka_consumer — Received event: {'event_id': '98477a68-66c8-46b2-b39a-5748c0907f8f', 'timestamp': '2026-04-26T09:56:57.145787', 'product_id': 'ART-1295-NAV-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 16, 'battery_level': '35%'}
+2026-04-26 09:56:57 [INFO] real_time_iot_ingest — [IOT] 98477a68 | ART-1295-NAV-L | stock=16
+2026-04-26 09:56:57 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=115.0s | ingested=122 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:56:58 [INFO] kafka_consumer — Received event: {'event_id': 'ffcefd21-2ce1-4a2f-873d-39b02ea280d5', 'timestamp': '2026-04-26T09:56:58.146535', 'product_id': 'ART-1081-CLA-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 117, 'battery_level': '29%'}
+2026-04-26 09:56:58 [INFO] real_time_iot_ingest — [IOT] ffcefd21 | ART-1081-CLA-S | stock=117
+2026-04-26 09:56:59 [INFO] kafka_consumer — Received event: {'event_id': '8fc2efab-b690-4d20-8e4e-5f8e787313dd', 'timestamp': '2026-04-26T09:56:59.147239', 'product_id': 'ART-1480-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 147, 'battery_level': '11%'}
+2026-04-26 09:56:59 [INFO] real_time_iot_ingest — [IOT] 8fc2efab | ART-1480-OLI-L | stock=147
+2026-04-26 09:57:00 [INFO] kafka_consumer — Received event: {'event_id': '1f332f0d-bcc7-4545-8869-ba57cf40b294', 'timestamp': '2026-04-26T09:57:00.147854', 'product_id': 'ART-1144-NAV-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 49, 'battery_level': '24%'}
+2026-04-26 09:57:00 [INFO] real_time_iot_ingest — [IOT] 1f332f0d | ART-1144-NAV-M | stock=49
+2026-04-26 09:57:01 [INFO] kafka_consumer — Received event: {'event_id': '2a48db3d-c474-4a8f-a11c-0fbc97ee764f', 'timestamp': '2026-04-26T09:57:01.148520', 'product_id': 'ART-1442-MID-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 21, 'battery_level': '56%'}
+2026-04-26 09:57:01 [INFO] real_time_iot_ingest — [IOT] 2a48db3d | ART-1442-MID-M | stock=21
+2026-04-26 09:57:02 [INFO] kafka_consumer — Received event: {'event_id': '6f77dfb4-90b1-431e-9e66-fbc15d8456e4', 'timestamp': '2026-04-26T09:57:02.149244', 'product_id': 'ART-1482-NAV-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 26, 'battery_level': '86%'}
+2026-04-26 09:57:02 [INFO] real_time_iot_ingest — [IOT] 6f77dfb4 | ART-1482-NAV-M | stock=26
+2026-04-26 09:57:02 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=120.0s | ingested=127 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:57:03 [INFO] kafka_consumer — Received event: {'event_id': '54afb158-743c-48fa-8f30-8b7070166f7d', 'timestamp': '2026-04-26T09:57:03.149940', 'product_id': 'ART-1328-NAV-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 97, 'battery_level': '66%'}
+2026-04-26 09:57:03 [INFO] real_time_iot_ingest — [IOT] 54afb158 | ART-1328-NAV-M | stock=97
+2026-04-26 09:57:04 [INFO] kafka_consumer — Received event: {'event_id': 'be8338bd-a5cd-4bcf-a20f-607b15f90aa5', 'timestamp': '2026-04-26T09:57:04.147658', 'product_id': 'ART-1453-OLI-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 28, 'battery_level': '71%'}
+2026-04-26 09:57:04 [INFO] real_time_iot_ingest — [IOT] be8338bd | ART-1453-OLI-XS | stock=28
+2026-04-26 09:57:05 [INFO] kafka_consumer — Received event: {'event_id': 'df75e140-b56d-4faa-beae-0313210782d4', 'timestamp': '2026-04-26T09:57:05.148527', 'product_id': 'ART-1397-NAV-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 114, 'battery_level': '63%'}
+2026-04-26 09:57:05 [INFO] real_time_iot_ingest — [IOT] df75e140 | ART-1397-NAV-XL | stock=114
+2026-04-26 09:57:06 [INFO] kafka_consumer — Received event: {'event_id': 'eb48a199-fb6c-478c-ad9c-f8feab1b233d', 'timestamp': '2026-04-26T09:57:06.149103', 'product_id': 'ART-1397-MID-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 106, 'battery_level': '40%'}
+2026-04-26 09:57:06 [INFO] real_time_iot_ingest — [IOT] eb48a199 | ART-1397-MID-S | stock=106
+2026-04-26 09:57:07 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=125.0s | ingested=131 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:07 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:57:07 [INFO] kafka_consumer — Received event: {'event_id': '11380cd9-2988-4d96-818b-3ab913cd9e71', 'timestamp': '2026-04-26T09:57:07.149831', 'product_id': 'ART-1352-CLA-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 30, 'battery_level': '77%'}
+2026-04-26 09:57:07 [INFO] real_time_iot_ingest — [IOT] 11380cd9 | ART-1352-CLA-S | stock=30
+2026-04-26 09:57:08 [INFO] kafka_consumer — Received event: {'event_id': 'bd557fad-2f2e-4014-987f-5031c39778cc', 'timestamp': '2026-04-26T09:57:08.150672', 'product_id': 'ART-1287-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 67, 'battery_level': '93%'}
+2026-04-26 09:57:08 [INFO] real_time_iot_ingest — [IOT] bd557fad | ART-1287-CLA-M | stock=67
+2026-04-26 09:57:09 [INFO] kafka_consumer — Received event: {'event_id': 'cfe7cb43-4a02-44a9-94ee-fe9b5dd77743', 'timestamp': '2026-04-26T09:57:09.151717', 'product_id': 'ART-1358-MID-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 97, 'battery_level': '26%'}
+2026-04-26 09:57:09 [INFO] real_time_iot_ingest — [IOT] cfe7cb43 | ART-1358-MID-M | stock=97
+2026-04-26 09:57:10 [INFO] kafka_consumer — Received event: {'event_id': 'fb9f8231-96ce-47f7-8a07-5cecf48bd7e8', 'timestamp': '2026-04-26T09:57:10.152389', 'product_id': 'ART-1165-NAV-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 10, 'battery_level': '73%'}
+2026-04-26 09:57:10 [INFO] real_time_iot_ingest — [IOT] fb9f8231 | ART-1165-NAV-XL | stock=10
+2026-04-26 09:57:11 [INFO] kafka_consumer — Received event: {'event_id': '254d02ce-68f5-4b6e-b673-62aa9ede550c', 'timestamp': '2026-04-26T09:57:11.153126', 'product_id': 'ART-1156-OLI-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 78, 'battery_level': '22%'}
+2026-04-26 09:57:11 [INFO] real_time_iot_ingest — [IOT] 254d02ce | ART-1156-OLI-XL | stock=78
+2026-04-26 09:57:12 [INFO] kafka_consumer — Received event: {'event_id': 'af2658bd-aeda-495f-a4f9-fc079eacf4df', 'timestamp': '2026-04-26T09:57:12.153885', 'product_id': 'ART-1307-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 79, 'battery_level': '88%'}
+2026-04-26 09:57:12 [INFO] real_time_iot_ingest — [IOT] af2658bd | ART-1307-MID-L | stock=79
+2026-04-26 09:57:12 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=130.0s | ingested=137 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:57:13 [INFO] kafka_consumer — Received event: {'event_id': '8f8e47a0-c643-45b5-ac41-675d54a4689c', 'timestamp': '2026-04-26T09:57:13.154540', 'product_id': 'ART-1391-CLA-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 20, 'battery_level': '52%'}
+2026-04-26 09:57:13 [INFO] real_time_iot_ingest — [IOT] 8f8e47a0 | ART-1391-CLA-M | stock=20
+2026-04-26 09:57:14 [INFO] kafka_consumer — Received event: {'event_id': '33174018-c1ff-4747-a377-7d86847083c0', 'timestamp': '2026-04-26T09:57:14.155252', 'product_id': 'ART-1323-OLI-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 20, 'battery_level': '94%'}
+2026-04-26 09:57:14 [INFO] real_time_iot_ingest — [IOT] 33174018 | ART-1323-OLI-M | stock=20
+2026-04-26 09:57:15 [INFO] kafka_consumer — Received event: {'event_id': '6010fcb5-8a54-40bd-8fbf-4d9357d1922e', 'timestamp': '2026-04-26T09:57:15.156065', 'product_id': 'ART-1403-OLI-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 130, 'battery_level': '58%'}
+2026-04-26 09:57:15 [INFO] real_time_iot_ingest — [IOT] 6010fcb5 | ART-1403-OLI-XL | stock=130
+2026-04-26 09:57:16 [INFO] kafka_consumer — Received event: {'event_id': '0384dc0c-6482-46ae-8277-b16e8715c3fc', 'timestamp': '2026-04-26T09:57:16.156820', 'product_id': 'ART-1406-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 39, 'battery_level': '89%'}
+2026-04-26 09:57:16 [INFO] real_time_iot_ingest — [IOT] 0384dc0c | ART-1406-CLA-M | stock=39
+2026-04-26 09:57:17 [INFO] kafka_consumer — Received event: {'event_id': '7817cb1d-0744-4624-a140-773cb00d0638', 'timestamp': '2026-04-26T09:57:17.157505', 'product_id': 'ART-1093-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 75, 'battery_level': '76%'}
+2026-04-26 09:57:17 [INFO] real_time_iot_ingest — [IOT] 7817cb1d | ART-1093-CLA-M | stock=75
+2026-04-26 09:57:17 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=135.0s | ingested=142 | failed=0 | quarantined=0 | throughput=1.1 rec/s
+2026-04-26 09:57:18 [INFO] kafka_consumer — Received event: {'event_id': '9195d5bf-02ab-436c-a14f-edd363299705', 'timestamp': '2026-04-26T09:57:18.158236', 'product_id': 'ART-1429-OLI-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 129, 'battery_level': '94%'}
+2026-04-26 09:57:18 [INFO] real_time_iot_ingest — [IOT] 9195d5bf | ART-1429-OLI-XS | stock=129
+2026-04-26 09:57:19 [INFO] kafka_consumer — Received event: {'event_id': '7ecdfef6-e023-4d24-968b-d47cebc0f4be', 'timestamp': '2026-04-26T09:57:19.158872', 'product_id': 'ART-1378-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 10, 'battery_level': '57%'}
+2026-04-26 09:57:19 [INFO] real_time_iot_ingest — [IOT] 7ecdfef6 | ART-1378-CLA-M | stock=10
+2026-04-26 09:57:20 [INFO] kafka_consumer — Received event: {'event_id': '6aba2baf-41ff-4e51-8467-09613b62ffec', 'timestamp': '2026-04-26T09:57:20.159514', 'product_id': 'ART-1223-CLA-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 92, 'battery_level': '88%'}
+2026-04-26 09:57:20 [INFO] real_time_iot_ingest — [IOT] 6aba2baf | ART-1223-CLA-XS | stock=92
+2026-04-26 09:57:21 [INFO] kafka_consumer — Received event: {'event_id': '5d71dab8-62db-4b5d-904d-090fd76849ec', 'timestamp': '2026-04-26T09:57:21.160230', 'product_id': 'ART-1302-MID-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 102, 'battery_level': '43%'}
+2026-04-26 09:57:21 [INFO] real_time_iot_ingest — [IOT] 5d71dab8 | ART-1302-MID-L | stock=102
+2026-04-26 09:57:22 [INFO] kafka_consumer — Received event: {'event_id': '6f4c8747-aa06-47e7-8ab6-9d2b193e6110', 'timestamp': '2026-04-26T09:57:22.160886', 'product_id': 'ART-1465-OLI-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 150, 'battery_level': '14%'}
+2026-04-26 09:57:22 [INFO] real_time_iot_ingest — [IOT] 6f4c8747 | ART-1465-OLI-XL | stock=150
+2026-04-26 09:57:22 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=140.0s | ingested=147 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:23 [INFO] kafka_consumer — Received event: {'event_id': 'b5c353ad-cec2-47b9-9ac4-f275c2855275', 'timestamp': '2026-04-26T09:57:23.161522', 'product_id': 'ART-1262-MID-XL', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 63, 'battery_level': '28%'}
+2026-04-26 09:57:23 [INFO] real_time_iot_ingest — [IOT] b5c353ad | ART-1262-MID-XL | stock=63
+2026-04-26 09:57:24 [INFO] kafka_consumer — Received event: {'event_id': 'd8e65b0d-8f99-48ad-b676-8d7d53d39894', 'timestamp': '2026-04-26T09:57:24.162275', 'product_id': 'ART-1403-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 13, 'battery_level': '83%'}
+2026-04-26 09:57:24 [INFO] real_time_iot_ingest — [IOT] d8e65b0d | ART-1403-NAV-S | stock=13
+2026-04-26 09:57:25 [INFO] kafka_consumer — Received event: {'event_id': '04879ea3-7310-4c84-a92a-87c494fdf367', 'timestamp': '2026-04-26T09:57:25.163066', 'product_id': 'ART-1077-MID-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 42, 'battery_level': '99%'}
+2026-04-26 09:57:25 [INFO] real_time_iot_ingest — [IOT] 04879ea3 | ART-1077-MID-M | stock=42
+2026-04-26 09:57:26 [INFO] kafka_consumer — Received event: {'event_id': 'ad07b3f6-693a-441d-a573-91e6f36b9bda', 'timestamp': '2026-04-26T09:57:26.163729', 'product_id': 'ART-1197-CLA-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 10, 'battery_level': '44%'}
+2026-04-26 09:57:26 [INFO] real_time_iot_ingest — [IOT] ad07b3f6 | ART-1197-CLA-S | stock=10
+2026-04-26 09:57:27 [INFO] kafka_consumer — Received event: {'event_id': 'dc91ccdc-a3f3-4d5f-9934-af8f5856ee4e', 'timestamp': '2026-04-26T09:57:27.164623', 'product_id': 'ART-1215-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 42, 'battery_level': '33%'}
+2026-04-26 09:57:27 [INFO] real_time_iot_ingest — [IOT] dc91ccdc | ART-1215-NAV-S | stock=42
+2026-04-26 09:57:27 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=145.0s | ingested=152 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:28 [INFO] kafka_consumer — Received event: {'event_id': '39e02f03-cacd-46e8-8299-e343aba641c1', 'timestamp': '2026-04-26T09:57:28.165618', 'product_id': 'ART-1215-CLA-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 144, 'battery_level': '98%'}
+2026-04-26 09:57:28 [INFO] real_time_iot_ingest — [IOT] 39e02f03 | ART-1215-CLA-L | stock=144
+2026-04-26 09:57:29 [INFO] kafka_consumer — Received event: {'event_id': '2777b51b-44d9-4f10-b18a-35766f334f57', 'timestamp': '2026-04-26T09:57:29.166354', 'product_id': 'ART-1012-NAV-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 73, 'battery_level': '30%'}
+2026-04-26 09:57:29 [INFO] real_time_iot_ingest — [IOT] 2777b51b | ART-1012-NAV-L | stock=73
+2026-04-26 09:57:30 [INFO] kafka_consumer — Received event: {'event_id': '65b8449f-220b-4ddd-a94e-27abf4c27595', 'timestamp': '2026-04-26T09:57:30.167401', 'product_id': 'ART-1042-NAV-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 134, 'battery_level': '32%'}
+2026-04-26 09:57:30 [INFO] real_time_iot_ingest — [IOT] 65b8449f | ART-1042-NAV-XL | stock=134
+2026-04-26 09:57:31 [INFO] kafka_consumer — Received event: {'event_id': 'fc26f941-1dd8-4088-98ef-1c2a95fcb54b', 'timestamp': '2026-04-26T09:57:31.168133', 'product_id': 'ART-1271-OLI-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 128, 'battery_level': '27%'}
+2026-04-26 09:57:31 [INFO] real_time_iot_ingest — [IOT] fc26f941 | ART-1271-OLI-S | stock=128
+2026-04-26 09:57:32 [INFO] kafka_consumer — Received event: {'event_id': 'a2a98558-ee38-4c73-b311-71c419a4adfb', 'timestamp': '2026-04-26T09:57:32.168645', 'product_id': 'ART-1186-MID-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 128, 'battery_level': '68%'}
+2026-04-26 09:57:32 [INFO] real_time_iot_ingest — [IOT] a2a98558 | ART-1186-MID-M | stock=128
+2026-04-26 09:57:32 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=150.0s | ingested=157 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:33 [INFO] kafka_consumer — Received event: {'event_id': 'e379b06c-a058-47c4-bdc7-eb585c64445b', 'timestamp': '2026-04-26T09:57:33.169150', 'product_id': 'ART-1065-NAV-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 98, 'battery_level': '85%'}
+2026-04-26 09:57:33 [INFO] real_time_iot_ingest — [IOT] e379b06c | ART-1065-NAV-L | stock=98
+2026-04-26 09:57:34 [INFO] kafka_consumer — Received event: {'event_id': 'b7b4abc2-74a1-42da-929e-16540295fd6a', 'timestamp': '2026-04-26T09:57:34.167768', 'product_id': 'ART-1309-OLI-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 23, 'battery_level': '88%'}
+2026-04-26 09:57:34 [INFO] real_time_iot_ingest — [IOT] b7b4abc2 | ART-1309-OLI-L | stock=23
+2026-04-26 09:57:35 [INFO] kafka_consumer — Received event: {'event_id': '04e41f77-c45d-4985-8701-6b7b3a0a07d8', 'timestamp': '2026-04-26T09:57:35.168639', 'product_id': 'ART-1062-NAV-M', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 77, 'battery_level': '71%'}
+2026-04-26 09:57:35 [INFO] real_time_iot_ingest — [IOT] 04e41f77 | ART-1062-NAV-M | stock=77
+2026-04-26 09:57:36 [INFO] kafka_consumer — Received event: {'event_id': '0710de34-86f5-4288-bc16-c54a67e958d4', 'timestamp': '2026-04-26T09:57:36.169290', 'product_id': 'ART-1194-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 101, 'battery_level': '100%'}
+2026-04-26 09:57:36 [INFO] real_time_iot_ingest — [IOT] 0710de34 | ART-1194-CLA-L | stock=101
+2026-04-26 09:57:37 [INFO] kafka_consumer — Received event: {'event_id': '76f99afa-e654-4bb3-b613-2143133aefc9', 'timestamp': '2026-04-26T09:57:37.169956', 'product_id': 'ART-1220-CLA-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 56, 'battery_level': '17%'}
+2026-04-26 09:57:37 [INFO] real_time_iot_ingest — [IOT] 76f99afa | ART-1220-CLA-S | stock=56
+2026-04-26 09:57:37 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=155.0s | ingested=162 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:38 [INFO] kafka_consumer — Received event: {'event_id': 'c63db86b-3b67-4dca-8d50-d09e32aa66a7', 'timestamp': '2026-04-26T09:57:38.170733', 'product_id': 'ART-1376-NAV-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 74, 'battery_level': '21%'}
+2026-04-26 09:57:38 [INFO] real_time_iot_ingest — [IOT] c63db86b | ART-1376-NAV-S | stock=74
+2026-04-26 09:57:38 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:57:39 [INFO] kafka_consumer — Received event: {'event_id': 'cb88e7fc-be17-4f59-87ae-bf3111688e99', 'timestamp': '2026-04-26T09:57:39.171417', 'product_id': 'ART-1048-OLI-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 109, 'battery_level': '16%'}
+2026-04-26 09:57:39 [INFO] real_time_iot_ingest — [IOT] cb88e7fc | ART-1048-OLI-M | stock=109
+2026-04-26 09:57:40 [INFO] kafka_consumer — Received event: {'event_id': 'b9c2a43b-12aa-4f0b-b658-2982e4b66dcd', 'timestamp': '2026-04-26T09:57:40.173043', 'product_id': 'ART-1341-MID-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 75, 'battery_level': '93%'}
+2026-04-26 09:57:40 [INFO] real_time_iot_ingest — [IOT] b9c2a43b | ART-1341-MID-S | stock=75
+2026-04-26 09:57:41 [INFO] kafka_consumer — Received event: {'event_id': '566ee0c5-2a9e-4387-973c-53792ac7a074', 'timestamp': '2026-04-26T09:57:41.173798', 'product_id': 'ART-1069-NAV-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 76, 'battery_level': '28%'}
+2026-04-26 09:57:41 [INFO] real_time_iot_ingest — [IOT] 566ee0c5 | ART-1069-NAV-XL | stock=76
+2026-04-26 09:57:42 [INFO] kafka_consumer — Received event: {'event_id': 'be4cc259-13ed-4b57-af0d-2b0f84654a59', 'timestamp': '2026-04-26T09:57:42.174467', 'product_id': 'ART-1210-CLA-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 145, 'battery_level': '25%'}
+2026-04-26 09:57:42 [INFO] real_time_iot_ingest — [IOT] be4cc259 | ART-1210-CLA-S | stock=145
+2026-04-26 09:57:42 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=160.0s | ingested=167 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:43 [INFO] kafka_consumer — Received event: {'event_id': 'f3b6676b-6f46-4ada-bae5-6869a5943f84', 'timestamp': '2026-04-26T09:57:43.175055', 'product_id': 'ART-1359-MID-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 120, 'battery_level': '41%'}
+2026-04-26 09:57:43 [INFO] real_time_iot_ingest — [IOT] f3b6676b | ART-1359-MID-XS | stock=120
+2026-04-26 09:57:44 [INFO] kafka_consumer — Received event: {'event_id': '4bfae15c-0c21-4d56-b21b-180d571bc84b', 'timestamp': '2026-04-26T09:57:44.175921', 'product_id': 'ART-1380-CLA-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 112, 'battery_level': '17%'}
+2026-04-26 09:57:44 [INFO] real_time_iot_ingest — [IOT] 4bfae15c | ART-1380-CLA-XS | stock=112
+2026-04-26 09:57:45 [INFO] kafka_consumer — Received event: {'event_id': '76fe06a4-bad9-4e3e-840c-6339bdf992e1', 'timestamp': '2026-04-26T09:57:45.176525', 'product_id': 'ART-1141-MID-XL', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 55, 'battery_level': '20%'}
+2026-04-26 09:57:45 [INFO] real_time_iot_ingest — [IOT] 76fe06a4 | ART-1141-MID-XL | stock=55
+2026-04-26 09:57:46 [INFO] kafka_consumer — Received event: {'event_id': '81b1b7dd-c7d5-47f5-bc59-5ceb8499a3bb', 'timestamp': '2026-04-26T09:57:46.177007', 'product_id': 'ART-1078-OLI-S', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 138, 'battery_level': '66%'}
+2026-04-26 09:57:46 [INFO] real_time_iot_ingest — [IOT] 81b1b7dd | ART-1078-OLI-S | stock=138
+2026-04-26 09:57:47 [INFO] kafka_consumer — Received event: {'event_id': '9ba9bd54-9a84-4589-b524-eb7bc9e54bc0', 'timestamp': '2026-04-26T09:57:47.177645', 'product_id': 'ART-1338-OLI-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 30, 'battery_level': '76%'}
+2026-04-26 09:57:47 [INFO] real_time_iot_ingest — [IOT] 9ba9bd54 | ART-1338-OLI-M | stock=30
+2026-04-26 09:57:47 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=165.0s | ingested=172 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:48 [INFO] kafka_consumer — Received event: {'event_id': '31098992-8279-4747-aec0-1d9e186bdd51', 'timestamp': '2026-04-26T09:57:48.178283', 'product_id': 'ART-1291-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 121, 'battery_level': '17%'}
+2026-04-26 09:57:48 [INFO] real_time_iot_ingest — [IOT] 31098992 | ART-1291-NAV-S | stock=121
+2026-04-26 09:57:49 [INFO] kafka_consumer — Received event: {'event_id': '7508434e-8a89-4639-9eb9-6c4184570907', 'timestamp': '2026-04-26T09:57:49.179010', 'product_id': 'ART-1249-NAV-XS', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 94, 'battery_level': '94%'}
+2026-04-26 09:57:49 [INFO] real_time_iot_ingest — [IOT] 7508434e | ART-1249-NAV-XS | stock=94
+2026-04-26 09:57:50 [INFO] kafka_consumer — Received event: {'event_id': '72cd18ca-d8eb-49ff-9c9f-40796505be14', 'timestamp': '2026-04-26T09:57:50.179719', 'product_id': 'ART-1247-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 136, 'battery_level': '35%'}
+2026-04-26 09:57:50 [INFO] real_time_iot_ingest — [IOT] 72cd18ca | ART-1247-NAV-S | stock=136
+2026-04-26 09:57:50 [INFO] kafka_consumer — Received event: {'event_id': '72cd18ca-d8eb-49ff-9c9f-40796505be14', 'timestamp': '2026-04-26T09:57:50.179719', 'product_id': 'ART-1247-NAV-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 136, 'battery_level': '35%'}
+2026-04-26 09:57:50 [INFO] real_time_iot_ingest — [IOT] 72cd18ca | ART-1247-NAV-S | stock=136
+2026-04-26 09:57:51 [INFO] kafka_consumer — Received event: {'event_id': '482d76e5-08be-4c4b-b4b6-ca77632d7895', 'timestamp': '2026-04-26T09:57:51.180567', 'product_id': 'ART-1232-MID-L', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 43, 'battery_level': '89%'}
+2026-04-26 09:57:51 [INFO] real_time_iot_ingest — [IOT] 482d76e5 | ART-1232-MID-L | stock=43
+2026-04-26 09:57:52 [INFO] kafka_consumer — Received event: {'event_id': '0f1edf17-92e8-4efa-8ee1-b0c7f9e0cdf3', 'timestamp': '2026-04-26T09:57:52.181194', 'product_id': 'ART-1131-CLA-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 74, 'battery_level': '40%'}
+2026-04-26 09:57:52 [INFO] real_time_iot_ingest — [IOT] 0f1edf17 | ART-1131-CLA-XL | stock=74
+2026-04-26 09:57:52 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=170.0s | ingested=178 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:53 [INFO] kafka_consumer — Received event: {'event_id': '698b4a65-3821-4180-888e-7d242d735560', 'timestamp': '2026-04-26T09:57:53.181796', 'product_id': 'ART-1397-OLI-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 38, 'battery_level': '30%'}
+2026-04-26 09:57:53 [INFO] real_time_iot_ingest — [IOT] 698b4a65 | ART-1397-OLI-S | stock=38
+2026-04-26 09:57:54 [INFO] kafka_consumer — Received event: {'event_id': '4cd20395-d713-4940-a66b-7b22a65ead04', 'timestamp': '2026-04-26T09:57:54.182435', 'product_id': 'ART-1117-OLI-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 106, 'battery_level': '99%'}
+2026-04-26 09:57:54 [INFO] real_time_iot_ingest — [IOT] 4cd20395 | ART-1117-OLI-S | stock=106
+2026-04-26 09:57:55 [INFO] kafka_consumer — Received event: {'event_id': 'ad6feef5-7d43-4c3e-89d2-b5f1bfff678a', 'timestamp': '2026-04-26T09:57:55.182979', 'product_id': 'ART-1232-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 121, 'battery_level': '81%'}
+2026-04-26 09:57:55 [INFO] real_time_iot_ingest — [IOT] ad6feef5 | ART-1232-CLA-L | stock=121
+2026-04-26 09:57:56 [INFO] kafka_consumer — Received event: {'event_id': 'c3d74eea-4d04-4cae-8fef-0b0824abe8d0', 'timestamp': '2026-04-26T09:57:56.183500', 'product_id': 'ART-1480-NAV-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 68, 'battery_level': '99%'}
+2026-04-26 09:57:56 [INFO] real_time_iot_ingest — [IOT] c3d74eea | ART-1480-NAV-XS | stock=68
+2026-04-26 09:57:57 [INFO] kafka_consumer — Received event: {'event_id': '17a107dc-912d-40d8-b3e8-508f62b02a4e', 'timestamp': '2026-04-26T09:57:57.184273', 'product_id': 'ART-1364-NAV-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 25, 'battery_level': '19%'}
+2026-04-26 09:57:57 [INFO] real_time_iot_ingest — [IOT] 17a107dc | ART-1364-NAV-XS | stock=25
+2026-04-26 09:57:57 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=175.0s | ingested=183 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:57:58 [INFO] kafka_consumer — Received event: {'event_id': '8e46a2eb-7afc-4046-89e7-658de4013c99', 'timestamp': '2026-04-26T09:57:58.184880', 'product_id': 'ART-1005-MID-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 32, 'battery_level': '43%'}
+2026-04-26 09:57:58 [INFO] real_time_iot_ingest — [IOT] 8e46a2eb | ART-1005-MID-M | stock=32
+2026-04-26 09:57:59 [INFO] kafka_consumer — Received event: {'event_id': 'd53215b3-1c2f-44df-bf36-854793a58114', 'timestamp': '2026-04-26T09:57:59.185654', 'product_id': 'ART-1434-CLA-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 106, 'battery_level': '85%'}
+2026-04-26 09:57:59 [INFO] real_time_iot_ingest — [IOT] d53215b3 | ART-1434-CLA-L | stock=106
+2026-04-26 09:58:00 [INFO] kafka_consumer — Received event: {'event_id': 'adc19738-55c6-4ec7-9833-fdd2a607e543', 'timestamp': '2026-04-26T09:58:00.186395', 'product_id': 'ART-1405-OLI-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 121, 'battery_level': '91%'}
+2026-04-26 09:58:00 [INFO] real_time_iot_ingest — [IOT] adc19738 | ART-1405-OLI-L | stock=121
+2026-04-26 09:58:01 [INFO] kafka_consumer — Received event: {'event_id': '779b0cc0-4ada-41e7-9aad-826757c874cf', 'timestamp': '2026-04-26T09:58:01.187057', 'product_id': 'ART-1310-MID-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 113, 'battery_level': '27%'}
+2026-04-26 09:58:01 [INFO] real_time_iot_ingest — [IOT] 779b0cc0 | ART-1310-MID-S | stock=113
+2026-04-26 09:58:02 [INFO] kafka_consumer — Received event: {'event_id': '358ab11b-08a5-4044-9685-9ea448387c4b', 'timestamp': '2026-04-26T09:58:02.187727', 'product_id': 'ART-1322-NAV-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 119, 'battery_level': '72%'}
+2026-04-26 09:58:02 [INFO] real_time_iot_ingest — [IOT] 358ab11b | ART-1322-NAV-XS | stock=119
+2026-04-26 09:58:02 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=180.0s | ingested=188 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:58:03 [INFO] kafka_consumer — Received event: {'event_id': '70ab3bb0-f613-4ca2-86b0-f26c79ee6445', 'timestamp': '2026-04-26T09:58:03.188461', 'product_id': 'ART-1040-MID-XS', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 109, 'battery_level': '84%'}
+2026-04-26 09:58:03 [INFO] real_time_iot_ingest — [IOT] 70ab3bb0 | ART-1040-MID-XS | stock=109
+2026-04-26 09:58:04 [INFO] kafka_consumer — Received event: {'event_id': '1b67d5dc-480e-45b8-b182-b318d192d2e3', 'timestamp': '2026-04-26T09:58:04.186966', 'product_id': 'ART-1329-NAV-XL', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 138, 'battery_level': '84%'}
+2026-04-26 09:58:04 [INFO] real_time_iot_ingest — [IOT] 1b67d5dc | ART-1329-NAV-XL | stock=138
+2026-04-26 09:58:05 [INFO] kafka_consumer — Received event: {'event_id': 'a847a339-1f27-40c8-bde6-84f703b5bc86', 'timestamp': '2026-04-26T09:58:05.187704', 'product_id': 'ART-1268-CLA-M', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 128, 'battery_level': '75%'}
+2026-04-26 09:58:05 [INFO] real_time_iot_ingest — [IOT] a847a339 | ART-1268-CLA-M | stock=128
+2026-04-26 09:58:06 [INFO] kafka_consumer — Received event: {'event_id': 'b5a8e3f3-11cc-4131-abd3-c540c23122ef', 'timestamp': '2026-04-26T09:58:06.188580', 'product_id': 'ART-1254-MID-L', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 26, 'battery_level': '76%'}
+2026-04-26 09:58:06 [INFO] real_time_iot_ingest — [IOT] b5a8e3f3 | ART-1254-MID-L | stock=26
+2026-04-26 09:58:07 [INFO] kafka_consumer — Received event: {'event_id': '2a890ffb-dbb9-4f94-8973-0fe902561844', 'timestamp': '2026-04-26T09:58:07.189358', 'product_id': 'ART-1349-MID-S', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 32, 'battery_level': '33%'}
+2026-04-26 09:58:07 [INFO] real_time_iot_ingest — [IOT] 2a890ffb | ART-1349-MID-S | stock=32
+2026-04-26 09:58:07 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=185.0s | ingested=193 | failed=0 | quarantined=0 | throughput=1.0 rec/s
+2026-04-26 09:58:08 [INFO] kafka_consumer — Received event: {'event_id': 'b0fb7bd9-f945-4290-8d29-a6ceaa073bdc', 'timestamp': '2026-04-26T09:58:08.190204', 'product_id': 'ART-1447-CLA-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 136, 'battery_level': '100%'}
+2026-04-26 09:58:08 [INFO] real_time_iot_ingest — [IOT] b0fb7bd9 | ART-1447-CLA-M | stock=136
+2026-04-26 09:58:09 [INFO] kafka_consumer — Received event: {'event_id': '0dd144af-d6b5-4651-a324-dbb47f79406d', 'timestamp': '2026-04-26T09:58:09.190889', 'product_id': 'ART-1492-NAV-L', 'shelf_location': 'ZONE-C', 'current_stock_on_shelf': 22, 'battery_level': '50%'}
+2026-04-26 09:58:09 [INFO] real_time_iot_ingest — [IOT] 0dd144af | ART-1492-NAV-L | stock=22
+2026-04-26 09:58:09 [INFO] real_time_iot_ingest — [TELEMETRY] Periodic flush saved
+2026-04-26 09:58:10 [INFO] kafka_consumer — Received event: {'event_id': '89c73a0f-3486-49de-bd05-70916f753683', 'timestamp': '2026-04-26T09:58:10.191621', 'product_id': 'ART-1389-NAV-M', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 27, 'battery_level': '48%'}
+2026-04-26 09:58:10 [INFO] real_time_iot_ingest — [IOT] 89c73a0f | ART-1389-NAV-M | stock=27
+2026-04-26 09:58:11 [INFO] kafka_consumer — Received event: {'event_id': 'e3b3ea6a-1e66-474f-b03a-6cc30a44f9b0', 'timestamp': '2026-04-26T09:58:11.192110', 'product_id': 'ART-1489-NAV-XS', 'shelf_location': 'ZONE-B', 'current_stock_on_shelf': 63, 'battery_level': '52%'}
+2026-04-26 09:58:11 [INFO] real_time_iot_ingest — [IOT] e3b3ea6a | ART-1489-NAV-XS | stock=63
+2026-04-26 09:58:12 [INFO] kafka_consumer — Received event: {'event_id': '932d15bf-14da-44ff-aae2-e065a47fcc8c', 'timestamp': '2026-04-26T09:58:12.192635', 'product_id': 'ART-1446-MID-S', 'shelf_location': 'ZONE-A', 'current_stock_on_shelf': 78, 'battery_level': '70%'}
+2026-04-26 09:58:12 [INFO] real_time_iot_ingest — [IOT] 932d15bf | ART-1446-MID-S | stock=78
+2026-04-26 09:58:12 [INFO] observability_plane.telemetry — [HEARTBEAT][job_iot_realtime_1777197302] elapsed=190.0s | ingested=198 | failed=0 | quarantined=0 | throughput=1.0 rec/s

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import config
 
 # ─────────────────────────────────────────────
-# region: ENUMERATIONS
+# region: region: ENUMERATIONS
 # ─────────────────────────────────────────────
 
 class SourceType(Enum):
@@ -60,7 +60,7 @@ class OperationType(Enum):
 
 
 # ─────────────────────────────────────────────
-# region: ENTITY: DataSource
+# region: region: ENTITY: DataSource
 # Justification: separating source metadata from job logic lets us reuse
 # the same source definition across multiple jobs and detect schema drift.
 # ─────────────────────────────────────────────
@@ -86,7 +86,7 @@ class DataSource:
 
 
 # ─────────────────────────────────────────────
-# region: ENTITY: Dataset
+# region: region: ENTITY: Dataset
 # Justification: explicit versioned dataset objects enforce schema
 # versioning and retention rules before data lands in storage.
 # ─────────────────────────────────────────────
@@ -107,7 +107,7 @@ class Dataset:
 
 
 # ─────────────────────────────────────────────
-# region: ENTITY: IngestionJob
+# region: region: ENTITY: IngestionJob
 # Justification: decoupling job config from execution lets us schedule,
 # retry, or replay jobs without touching business logic.
 # ─────────────────────────────────────────────
@@ -130,7 +130,7 @@ class IngestionJob:
 
 
 # ─────────────────────────────────────────────
-# region: ENTITY: EventEnvelope
+# region: region: ENTITY: EventEnvelope
 # Justification: every record gets a wrapper for lineage, auditability,
 # schema evolution, and replay. Without this the data lake becomes a swamp.
 # ─────────────────────────────────────────────
@@ -169,7 +169,7 @@ class EventEnvelope:
 
 
 # ─────────────────────────────────────────────
-# region SOURCE REGISTRY — pre-configured for this project
+# region: region SOURCE REGISTRY — pre-configured for this project
 # ─────────────────────────────────────────────
 
 WAREHOUSE_SOURCE = DataSource(
@@ -289,7 +289,7 @@ WEATHER_API_SOURCE = DataSource(
 ALL_SOURCES = [WAREHOUSE_SOURCE, MANUFACTURING_SOURCE, SALES_SOURCE, LEGACY_SOURCE, INVENTORY_TRANSACTIONS_SOURCE, IOT_SOURCE, WEATHER_API_SOURCE]
 
 # ─────────────────────────────────────────────
-# region DATASET REGISTRY
+# region: region DATASET REGISTRY
 # ─────────────────────────────────────────────
 
 WAREHOUSE_DATASET = Dataset(

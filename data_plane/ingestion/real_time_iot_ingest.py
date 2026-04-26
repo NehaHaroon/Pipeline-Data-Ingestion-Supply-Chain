@@ -30,31 +30,20 @@ TELEMETRY_FLUSH_INTERVAL = 30  # seconds
 
 
 # ─────────────────────────────────────────────
-# API SENDER
+# region: API SENDER
 # ─────────────────────────────────────────────
 
 def send_to_api(records: List[Dict]):
+    """Send records to ingestion API."""
     if not records:
-        return
+        return True
 
     api_url = build_api_url(INGESTION_API_URL, "src_iot_rfid_stream")
     return send_records_to_api(records, api_url, API_TOKEN)
-            headers=headers,
-            timeout=5
-        )
-
-        if response.status_code == 200:
-            job_id = response.json().get("job_id")
-            log.info(f"[IOT-API] Sent {len(records)} records → job_id={job_id}")
-        else:
-            log.error(f"[IOT-API-FAIL] {response.status_code} {response.text}")
-
-    except Exception as e:
-        log.error(f"[IOT-API-ERROR] {e}")
 
 
 # ─────────────────────────────────────────────
-# EVENT PROCESSING
+# region: EVENT PROCESSING
 # ─────────────────────────────────────────────
 
 def process_iot_event(event: Dict[str, Any], buffer: List[Dict], tel: JobTelemetry):
@@ -86,7 +75,7 @@ def process_iot_event(event: Dict[str, Any], buffer: List[Dict], tel: JobTelemet
 
 
 # ─────────────────────────────────────────────
-# FLUSH
+# region: FLUSH
 # ─────────────────────────────────────────────
 
 def flush(buffer: List[Dict], flush_count: int):
@@ -109,7 +98,7 @@ def flush(buffer: List[Dict], flush_count: int):
 
 
 # ─────────────────────────────────────────────
-# MAIN INGESTION
+# region: MAIN INGESTION
 # ─────────────────────────────────────────────
 
 def run_real_time_ingestion():
@@ -175,7 +164,7 @@ def run_real_time_ingestion():
 
 
 # ─────────────────────────────────────────────
-# ENTRYPOINT
+# region: ENTRYPOINT
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":

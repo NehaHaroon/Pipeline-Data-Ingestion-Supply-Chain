@@ -52,7 +52,7 @@ SIMULATED_DB_PATH = os.path.join(SIM_DB_DIR, "inventory_transactions.jsonl")
 # SIMULATED DATABASE OPERATIONS
 # ──────────────────────────────────────────────────────────────────────────────
 
-def generate_sample_inventory_transactions(count: int = 10) -> None:
+def generate_sample_inventory_transactions(count: int = 100) -> None:
     """
     Generate sample inventory transaction records for testing batch ingestion.
     This simulates what would normally come from a database or CDC stream.
@@ -121,6 +121,8 @@ def read_from_simulated_db(checkpoint_timestamp: Optional[str] = None) -> List[D
                     pass
             records.append(record)
 
+    # Ensure we always process records in created_at order for correct CDC checkpoint behavior
+    records.sort(key=lambda rec: pd.to_datetime(rec.get("created_at", None), utc=True))
     return records
 
 
@@ -299,7 +301,7 @@ def ingest_db_source(
         # ── Generate sample data for first run ───────────────────────────
         if checkpoint is None and not os.path.exists(SIMULATED_DB_PATH):
             log.info("  [DB] First run - generating sample inventory transactions for testing")
-            generate_sample_inventory_transactions(25)  # Generate 25 sample records
+            generate_sample_inventory_transactions(100)  # Generate an initial stream of sample records
 
         # ── Query simulated DB ───────────────────────────────────────────
         db_records = read_from_simulated_db(checkpoint)
@@ -317,6 +319,11 @@ def ingest_db_source(
 
                 # Step 1: Normalize
                 record, norm_changes = normalize_record(record, source_id)
+
+                # Candidate checkpoint advance for all processed CDC rows.
+                record_ts = record.get("created_at")
+                if record_ts and (new_checkpoint is None or record_ts > new_checkpoint):
+                    new_checkpoint = record_ts
 
                 # Step 2: Deduplicate
                 if record_key in seen_ids:
@@ -381,8 +388,10 @@ def ingest_db_source(
                 good_records.append(envelope.to_dict())
                 tel.record_ok()
 
-                # Update checkpoint
-                new_checkpoint = record.get("created_at")
+                # Update checkpoint candidate for this batch
+                record_ts = record.get("created_at")
+                if record_ts and (new_checkpoint is None or record_ts > new_checkpoint):
+                    new_checkpoint = record_ts
 
             except Exception as e:
                 log.error(f"  [RECORD ERROR] Record {record_num}: {e}")

@@ -103,7 +103,6 @@ python run_all.py
   ─────────────────────────────────────────
   TOTAL                 77 files   4493.3 KB
 
-  Dashboard plot saved to logs/dashboard_throughput.png
 
 ======================================================================
   ALL 7 PHASES COMPLETE

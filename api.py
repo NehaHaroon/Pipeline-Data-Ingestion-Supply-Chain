@@ -23,13 +23,14 @@ from control_plane.entities import ALL_SOURCES, ALL_DATASETS, IngestionJob, Exec
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry
 from ui_manager import (
-    render_storage_summary, render_dataset_samples, generate_visualizations, DASHBOARD_HTML
+    # render_storage_summary, render_dataset_samples, generate_visualizations, DASHBOARD_HTML
+    render_storage_summary, render_dataset_samples, DASHBOARD_HTML
 )
 
 from fastapi.staticfiles import StaticFiles
 
 # ---------------------------------------------------------------------------
-# App bootstrap
+# region: App bootstrap
 # ---------------------------------------------------------------------------
 app = FastAPI()
 
@@ -51,7 +52,7 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 
 # ---------------------------------------------------------------------------
-# Security
+# region: Security
 # ---------------------------------------------------------------------------
 security = HTTPBearer()
 API_TOKEN = config.API_TOKEN
@@ -68,14 +69,14 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 
 # ---------------------------------------------------------------------------
-# In-memory stores  (use a real DB in production)
+# region: In-memory stores  (use a real DB in production)
 # ---------------------------------------------------------------------------
 jobs_db: Dict[str, Any] = {}
 datasets_db: Dict[str, List[Any]] = {}   # source_id -> list of records
 
 
 # ---------------------------------------------------------------------------
-# Pydantic models
+# region: Pydantic models
 # ---------------------------------------------------------------------------
 class IngestRequest(BaseModel):
     records: List[Dict[str, Any]]
@@ -97,7 +98,7 @@ def health_check():
 
 
 # ---------------------------------------------------------------------------
-# Metrics
+# region: Metrics
 # ---------------------------------------------------------------------------
 @app.get("/metrics")
 def metrics():
@@ -227,7 +228,7 @@ def metrics():
 
 
 # ---------------------------------------------------------------------------
-# Sources / Datasets
+# region: Sources / Datasets
 # ---------------------------------------------------------------------------
 @app.get("/sources")
 def list_sources():
@@ -240,7 +241,7 @@ def list_datasets():
 
 
 # ---------------------------------------------------------------------------
-# Ingestion
+# region: Ingestion
 # ---------------------------------------------------------------------------
 @app.post("/ingest/{source_id}")
 @limiter.limit("10000/minute")
@@ -301,7 +302,7 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
 
 
 # ---------------------------------------------------------------------------
-# Jobs / Telemetry
+# region: Jobs / Telemetry
 # ---------------------------------------------------------------------------
 @app.get("/jobs")
 def list_jobs(token: str = Depends(verify_token)):
@@ -317,7 +318,7 @@ def get_telemetry(token: str = Depends(verify_token)):
 
 
 # ---------------------------------------------------------------------------
-# Datasets
+# region: Datasets
 # ---------------------------------------------------------------------------
 @app.get("/datasets/{dataset_id}")
 def query_dataset(dataset_id: str, limit: int = 100, token: str = Depends(verify_token)):
@@ -325,17 +326,6 @@ def query_dataset(dataset_id: str, limit: int = 100, token: str = Depends(verify
     if source_id not in datasets_db:
         return {"records": []}
     return {"records": datasets_db[source_id][:limit]}
-
-
-# ---------------------------------------------------------------------------
-# Storage / Dataset-sample helpers  (kept for /dashboard/json compatibility)
-# ---------------------------------------------------------------------------
-@app.get("/dashboard-plots")
-def get_dashboard_plots(token: str = Depends(verify_token)):
-    """Get list of available plot files (legacy – kept for backward-compat)."""
-    plots = generate_visualizations()
-    return {"plots": plots}
-
 
 @app.get("/storage-summary")
 def get_storage_summary(token: str = Depends(verify_token)):
@@ -350,7 +340,7 @@ def get_dataset_samples(token: str = Depends(verify_token)):
 
 
 # ---------------------------------------------------------------------------
-# Dashboard JSON  (used by the JS front-end)
+# region: Dashboard JSON  (used by the JS front-end)
 # ---------------------------------------------------------------------------
 @app.get("/dashboard/json")
 def dashboard_json(token: str = Depends(verify_token)):
@@ -405,7 +395,7 @@ def dashboard_json(token: str = Depends(verify_token)):
 
 
 # ---------------------------------------------------------------------------
-# Source configurations
+# region: Source configurations
 # ---------------------------------------------------------------------------
 @app.get("/source-configurations")
 def get_source_configurations(token: str = Depends(verify_token)):
@@ -468,7 +458,7 @@ def get_source_configurations(token: str = Depends(verify_token)):
 
 
 # ---------------------------------------------------------------------------
-# Inventory alerts
+# region: Inventory alerts
 # ---------------------------------------------------------------------------
 @app.get("/inventory/alerts")
 def get_inventory_alerts(token: str = Depends(verify_token)):

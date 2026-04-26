@@ -196,7 +196,7 @@ class JobTelemetry:
 
 
 # ─────────────────────────────────────────────
-# HEARTBEAT — logs every 5 seconds while a job runs
+# region: HEARTBEAT — logs every 5 seconds while a job runs
 # ─────────────────────────────────────────────
 
 class Heartbeat:

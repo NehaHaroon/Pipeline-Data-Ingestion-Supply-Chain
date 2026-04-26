@@ -37,7 +37,9 @@ def setup_logging(module_name: str, log_dir: str = "logs", log_level: str = "INF
         root_logger.addHandler(console_handler)
         
         # File handler
-        log_file = os.path.join(log_dir, f"app_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+        # filename = f"{module_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        filename = f"run_production_{datetime.now().strftime('%Y%m%d_%H')}.log"
+        log_file = os.path.join(log_dir, filename)
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
         file_handler.setFormatter(logging.Formatter(log_format, datefmt=date_format))
         root_logger.addHandler(file_handler)

@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
-# region: VIOLATION POLICY
+# region: region: VIOLATION POLICY
 # ─────────────────────────────────────────────
 class ViolationPolicy(Enum):
     REJECT      = "reject"       # Discard record entirely; pipeline may raise an alert
@@ -20,7 +20,7 @@ class ViolationPolicy(Enum):
 
 
 # ─────────────────────────────────────────────
-# region:FIELD CONSTRAINT
+# region: region:FIELD CONSTRAINT
 # ─────────────────────────────────────────────
 @dataclass
 class FieldConstraint:
@@ -77,7 +77,7 @@ class FieldConstraint:
 
 
 # ─────────────────────────────────────────────
-# region: DATA CONTRACT
+# region: region: DATA CONTRACT
 # ─────────────────────────────────────────────
 @dataclass
 class DataContract:
@@ -174,7 +174,7 @@ def _auto_coerce(record: Dict[str, Any], constraints: Dict[str, FieldConstraint]
 
 
 # ─────────────────────────────────────────────
-# region: PROJECT CONTRACTS — one per source
+# region: region: PROJECT CONTRACTS — one per source
 # ─────────────────────────────────────────────
 
 WAREHOUSE_CONTRACT = DataContract(

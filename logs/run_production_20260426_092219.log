@@ -1,0 +1,821 @@
+2026-04-26 09:22:19 [INFO] run_production — 
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production —   PRODUCTION STARTUP: Batch + Scheduler + Dashboard
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production — Starting Supply Chain Ingestion Pipeline (Batch Runner Mode)
+2026-04-26 09:22:19 [INFO] run_production — Registered sources: 7
+2026-04-26 09:22:19 [INFO] run_production — API expected at: http://ingestion-api:8000
+2026-04-26 09:22:19 [INFO] run_production — 
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production —   PHASE: BATCH INGESTION: Load raw sources via API
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production — Preparing batch ingestion for 4 file-based source(s)
+2026-04-26 09:22:19 [INFO] run_production — Using local API endpoint for ingestion: http://0.0.0.0:8000
+2026-04-26 09:22:19 [INFO] run_production — 
+2026-04-26 09:22:19 [INFO] run_production — 
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production —   PHASE: WEATHER SCHEDULER: Weather ingestion every 120s (from WEATHER_API_SOURCE.ingestion_frequency)
+2026-04-26 09:22:19 [INFO] run_production —   PHASE: DB INGESTION SCHEDULER: Database ingestion every 300s (from INVENTORY_TRANSACTIONS_SOURCE.ingestion_frequency)
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production — ======================================================================
+2026-04-26 09:22:19 [INFO] run_production — [SCHEDULER][WEATHER] Starting run #1
+2026-04-26 09:22:19 [INFO] run_production — [WEATHER] Starting weather API ingestion cycle
+2026-04-26 09:22:19 [INFO] batch_ingest —   ── API Ingestion for src_weather_api ──
+2026-04-26 09:22:19 [INFO] run_production — [SCHEDULER][DB] Starting DB ingestion run #1
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_inventory_transactions_1777195339] ▶  Job started at 2026-04-26T09:22:19.758215+00:00
+2026-04-26 09:22:19 [INFO] db_ingest — 
+2026-04-26 09:22:19 [INFO] db_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-26 09:22:19 [INFO] db_ingest —   DB INGESTION START (CDC) | source=src_inventory_transactions | job=job_src_inventory_transactions_1777195339
+2026-04-26 09:22:19 [INFO] db_ingest —   contract=contract_inventory_txn_v1 | violation_policy=quarantine
+2026-04-26 09:22:19 [INFO] db_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-26 09:22:19 [INFO] db_ingest —   [CDC] Loading checkpoint: 2026-04-26T08:17:50.346865+00:00
+2026-04-26 09:22:19 [INFO] db_ingest —   [DB] Retrieved 0 records from simulated database
+2026-04-26 09:22:19 [INFO] db_ingest —   [DB] No new records to ingest. Checkpoint already up-to-date.
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_inventory_transactions_1777195339] ⏹  Job ended at 2026-04-26T09:22:19.792259+00:00 | Duration: 0.03s
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_inventory_transactions_1777195339] ⏹  Job ended at 2026-04-26T09:22:19.793329+00:00 | Duration: 0.04s
+2026-04-26 09:22:19 [INFO] db_ingest — 
+2026-04-26 09:22:19 [INFO] db_ingest —   [TIMER] Duration: 0.0329s
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry — 
+============================================================
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   TELEMETRY REPORT — job_src_inventory_transactions_1777195339
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry — ============================================================
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   job_id                              job_src_inventory_transactions_1777195339
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   source_id                           src_inventory_transactions
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   start_time                          2026-04-26T09:22:19.758208+00:00
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   end_time                            2026-04-26T09:22:19.793326+00:00
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   duration_seconds                    0.0351
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   records_ingested                    0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   records_failed                      0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   records_quarantined                 0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   records_coerced                     0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   throughput_rec_sec                  0.0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   avg_ingestion_latency_sec           0.0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   processing_lag_sec                  0.0351
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   storage_summary                     {'ingested': {'file_count': 1, 'bytes': 15327}, 'quarantine': {'file_count': 0, 'bytes': 0}, 'cdc_log': {'file_count': 0, 'bytes': 0}, 'micro_batch': {'file_count': 0, 'bytes': 0}, 'stream_buffer': {'file_count': 0, 'bytes': 0}, 'checkpoints': {'file_count': 1, 'bytes': 118}}
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   file_count_per_partition            0
+2026-04-26 09:22:19 [INFO] observability_plane.telemetry —   snapshot_count                      0
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — ============================================================
+
+2026-04-26 09:22:20 [INFO] run_production — [SCHEDULER][DB] Completed run #1 | ingested=0 failed=0 quarantined=0 coerced=0
+2026-04-26 09:22:20 [INFO] run_production — [SCHEDULER][DB] Next run in 300s
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_weather_api_1777195340] ▶  Job started at 2026-04-26T09:22:20.299281+00:00
+2026-04-26 09:22:20 [INFO] batch_ingest — 
+2026-04-26 09:22:20 [INFO] batch_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-26 09:22:20 [INFO] batch_ingest —   INGESTION START | source=src_weather_api | job=job_src_weather_api_1777195340
+2026-04-26 09:22:20 [INFO] batch_ingest —   contract=contract_weather_v1 | violation_policy=quarantine
+2026-04-26 09:22:20 [INFO] batch_ingest —   dedup_key=None | output_suffix=''
+2026-04-26 09:22:20 [INFO] batch_ingest — ══════════════════════════════════════════════════════════════════════
+2026-04-26 09:22:20 [INFO] batch_ingest —   [LOAD] Micro-batch slice: 1 rows provided via df_override
+2026-04-26 09:22:20 [INFO] batch_ingest — [PASS] source=src_weather_api | row=1 | key=row_1 | contract=contract_weather_v1 | policy=quarantine | norm_changes=0
+2026-04-26 09:22:20 [INFO] batch_ingest —   [WRITE]  1 records → storage/ingested/src_weather_api.parquet
+2026-04-26 09:22:20 [INFO] batch_ingest —   [DETAIL LOG] 1 record entries → storage/ingested/detail_logs/src_weather_api_record_log.jsonl
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — [TELEMETRY][job_src_weather_api_1777195340] ⏹  Job ended at 2026-04-26T09:22:20.630261+00:00 | Duration: 0.33s
+2026-04-26 09:22:20 [INFO] batch_ingest — 
+2026-04-26 09:22:20 [INFO] batch_ingest —   [TIMER] source=src_weather_api | start=2026-04-26T09:22:20.304485+00:00 | end=2026-04-26T09:22:20.634750+00:00 | duration=0.3303s
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — 
+============================================================
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   TELEMETRY REPORT — job_src_weather_api_1777195340
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — ============================================================
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   job_id                              job_src_weather_api_1777195340
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   source_id                           src_weather_api
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   start_time                          2026-04-26T09:22:20.299271+00:00
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   end_time                            2026-04-26T09:22:20.630254+00:00
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   duration_seconds                    0.331
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   records_ingested                    1
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   records_failed                      0
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   records_quarantined                 0
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   records_coerced                     0
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   throughput_rec_sec                  3.02
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   avg_ingestion_latency_sec           0.0
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   processing_lag_sec                  0.331
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   storage_summary                     {'ingested': {'file_count': 1, 'bytes': 9118}, 'quarantine': {'file_count': 0, 'bytes': 0}, 'cdc_log': {'file_count': 0, 'bytes': 0}, 'micro_batch': {'file_count': 0, 'bytes': 0}, 'stream_buffer': {'file_count': 0, 'bytes': 0}, 'checkpoints': {'file_count': 0, 'bytes': 0}}
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   file_count_per_partition            1
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry —   snapshot_count                      1
+2026-04-26 09:22:20 [INFO] observability_plane.telemetry — ============================================================
+
+2026-04-26 09:22:20 [INFO] batch_ingest —   [API] Ingested 1 record from https://api.openweathermap.org/data/2.5/weather
+2026-04-26 09:22:20 [INFO] run_production — [WEATHER] Completed cycle | ingested=1 failed=0 quarantined=0 coerced=0 duration=1.11s
+2026-04-26 09:22:20 [INFO] run_production — [SCHEDULER][WEATHER] Completed run #1; next run in 120s
+2026-04-26 09:22:24 [INFO] run_production — 
+2026-04-26 09:22:24 [INFO] run_production — ======================================================================
+2026-04-26 09:22:24 [INFO] run_production —   PRODUCTION DASHBOARD: Status & Health Summary
+2026-04-26 09:22:24 [INFO] run_production — ======================================================================
+2026-04-26 09:22:24 [INFO] run_production — 
+2026-04-26 09:22:24 [INFO] run_production —   -- Storage Audit --
+2026-04-26 09:22:24 [INFO] run_production —   Ingested (Parquet)               22 files    7595.5 KB
+2026-04-26 09:22:24 [INFO] run_production —   Quarantine                        0 files       0.0 KB
+2026-04-26 09:22:24 [INFO] run_production —   CDC Log                           2 files     622.8 KB
+2026-04-26 09:22:24 [INFO] run_production —   Micro-Batch                       6 files     213.2 KB
+2026-04-26 09:22:27 [INFO] run_production —   Stream Buffer                   669 files   18187.3 KB
+2026-04-26 09:22:27 [INFO] run_production —   Checkpoints                       5 files       0.4 KB
+2026-04-26 09:22:28 [INFO] run_production —   Detail Logs (JSONL)              12 files    2384.7 KB
+2026-04-26 09:22:28 [INFO] run_production —   -------------------------------------------------------
+2026-04-26 09:22:28 [INFO] run_production —   TOTAL                           716 files   29004.0 KB
+2026-04-26 09:22:28 [INFO] run_production — 
+2026-04-26 09:22:28 [INFO] run_production —   -- Parquet Row Counts --
+2026-04-26 09:22:28 [INFO] run_production —   src_inventory_transactions_cdc_20260426_081750.parquet      25 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_legacy_trends.parquet                                 6298 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs.parquet                           10000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_log_cdc_burst.parquet              5000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_ts_cdc_burst.parquet               5000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history.parquet                                10000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_log_cdc_steady.parquet                   100 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_ts_cdc_steady.parquet                    100 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_warehouse_master.parquet                             10000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_weather_api.parquet                                      1 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_burst_cdc.parquet                  5000 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_steady_cdc.parquet                       100 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_microbatch_001.parquet              200 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_microbatch_002.parquet              200 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_manufacturing_logs_microbatch_003.parquet              200 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_microbatch_001.parquet                   200 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_microbatch_002.parquet                   200 rows
+2026-04-26 09:22:28 [INFO] run_production —   src_sales_history_microbatch_003.parquet                   200 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T074558_batch001.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T074735_batch002.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T074911_batch003.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075048_batch004.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075226_batch005.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075404_batch006.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075539_batch007.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075714_batch008.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T075852_batch009.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T080031_batch010.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T080208_batch011.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T083519_batch001.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T083658_batch002.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T090156_batch001.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T090334_batch002.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T090511_batch003.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T090649_batch004.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T090829_batch005.parquet              100 rows
+2026-04-26 09:22:28 [INFO] run_production —   iot_realtime_20260412T091004_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091142_batch007.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091319_batch008.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091457_batch009.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091633_batch010.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091813_batch011.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T091952_batch012.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T092128_batch013.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T092306_batch014.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T092442_batch015.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T095817_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T095957_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T100134_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T100310_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T100448_batch005.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T100626_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T100803_batch007.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T104056_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T104234_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T104410_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T104550_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T113418_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T113554_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T113731_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T113908_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114046_batch005.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114225_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114404_batch007.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114540_batch008.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114715_batch009.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T114850_batch010.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115024_batch011.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115202_batch012.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115342_batch013.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115520_batch014.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115653_batch015.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T115829_batch016.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T120008_batch017.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130118_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130255_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130432_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130608_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130746_batch005.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T130924_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T133713_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T133848_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134027_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134206_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134341_batch005.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134515_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134656_batch007.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T134832_batch008.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T135010_batch009.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T135150_batch010.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T135327_batch011.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T142544_batch001.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T142722_batch002.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T142858_batch003.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143033_batch004.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143212_batch005.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143349_batch006.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143526_batch007.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143703_batch008.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T143840_batch009.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144016_batch010.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144156_batch011.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144333_batch012.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144510_batch013.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144649_batch014.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T144828_batch015.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145006_batch016.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145144_batch017.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145319_batch018.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145458_batch019.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145638_batch020.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145817_batch021.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T145953_batch022.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T150133_batch023.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T150312_batch024.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T150450_batch025.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T150629_batch026.parquet              100 rows
+2026-04-26 09:22:29 [INFO] run_production —   iot_realtime_20260412T150805_batch027.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T150944_batch028.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151118_batch029.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151255_batch030.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151430_batch031.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151609_batch032.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151749_batch033.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T151925_batch034.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T152104_batch035.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T152242_batch036.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T152422_batch037.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T152558_batch038.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260412T152736_batch039.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033045_batch001.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033221_batch002.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033359_batch003.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033535_batch004.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033710_batch005.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T033846_batch006.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034025_batch007.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034203_batch008.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034338_batch009.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034513_batch010.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034648_batch011.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T034825_batch012.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035001_batch013.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035140_batch014.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035317_batch015.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035455_batch016.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035634_batch017.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035813_batch018.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T035951_batch019.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040130_batch020.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040308_batch021.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040446_batch022.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040625_batch023.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040801_batch024.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T040937_batch025.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041117_batch026.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041253_batch027.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041430_batch028.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041610_batch029.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041750_batch030.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T041927_batch031.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T042106_batch032.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T042245_batch033.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T042422_batch034.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T054655_batch035.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T054833_batch036.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T055009_batch037.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T055148_batch038.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T080259_batch039.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T080438_batch040.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T080611_batch041.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T080748_batch042.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T080927_batch043.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081103_batch044.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081239_batch045.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081428_batch001.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081604_batch002.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081743_batch003.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T081920_batch004.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082059_batch005.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082236_batch006.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082415_batch007.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082549_batch008.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082726_batch009.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T082905_batch010.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083042_batch011.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083215_batch012.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083355_batch013.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083533_batch014.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083712_batch015.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T083846_batch016.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084025_batch017.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084203_batch018.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084340_batch019.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084520_batch020.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084658_batch021.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T084836_batch022.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T092232_batch001.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T092351_batch002.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T092526_batch003.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T092703_batch004.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T092840_batch005.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093014_batch006.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093151_batch007.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093326_batch008.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093504_batch009.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093641_batch010.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093817_batch011.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T093952_batch012.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094131_batch013.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094308_batch014.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094448_batch015.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094622_batch016.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094758_batch017.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T094932_batch018.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095108_batch019.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095245_batch020.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095422_batch021.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095603_batch022.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095739_batch023.parquet              100 rows
+2026-04-26 09:22:30 [INFO] run_production —   iot_realtime_20260424T095919_batch024.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T100057_batch025.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T100230_batch026.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T102952_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103126_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103304_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103444_batch004.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103623_batch005.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103802_batch006.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T103939_batch007.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T104117_batch008.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T104254_batch009.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T104431_batch010.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T104610_batch011.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T104749_batch012.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T105136_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T105311_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T105742_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T105918_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T110056_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T110234_batch004.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T110833_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111011_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111151_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111329_batch004.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111504_batch005.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111639_batch006.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111812_batch007.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T111951_batch008.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112128_batch009.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112301_batch010.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112439_batch011.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112617_batch012.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112752_batch013.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T112927_batch014.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113103_batch015.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113240_batch016.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113417_batch017.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113554_batch018.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113732_batch019.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T113908_batch020.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114045_batch021.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114219_batch022.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114356_batch023.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114534_batch024.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114714_batch025.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T114853_batch026.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115027_batch027.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115202_batch028.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115340_batch029.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115513_batch030.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115652_batch031.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T115831_batch032.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120009_batch033.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120144_batch034.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120322_batch035.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120500_batch036.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120636_batch037.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120812_batch038.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T120950_batch039.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T121129_batch040.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T121521_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T121659_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T121835_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T122211_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T122347_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T122525_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T122700_batch004.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T122837_batch005.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123014_batch006.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123151_batch007.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123327_batch008.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123506_batch009.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123643_batch010.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123819_batch011.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T123957_batch012.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124134_batch013.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124310_batch014.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124447_batch015.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124625_batch016.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124803_batch017.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T124940_batch018.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T125116_batch019.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T125253_batch020.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T125432_batch021.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T125608_batch022.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T125747_batch023.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T130153_batch024.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T130331_batch025.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T130507_batch026.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T130646_batch027.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T130826_batch028.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131003_batch029.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131141_batch030.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131318_batch031.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131456_batch032.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131630_batch033.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131807_batch034.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T131943_batch035.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132121_batch036.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132258_batch037.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132435_batch038.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132609_batch039.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132747_batch040.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T132926_batch041.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T133104_batch042.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T133241_batch043.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T133602_batch001.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T133739_batch002.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T133917_batch003.parquet              100 rows
+2026-04-26 09:22:31 [INFO] run_production —   iot_realtime_20260424T134055_batch004.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T134234_batch005.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T134411_batch006.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T134548_batch007.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T134723_batch008.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T134901_batch009.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T135037_batch010.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T135210_batch011.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T135603_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T135741_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T135918_batch003.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T140054_batch004.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T140231_batch005.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T140406_batch006.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T140546_batch007.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T140722_batch008.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T162105_batch009.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T162245_batch010.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T162420_batch011.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T193023_batch012.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T193159_batch013.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T193335_batch014.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T193511_batch015.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T194103_batch016.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T194241_batch017.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T194418_batch018.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260424T194554_batch019.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T034350_batch020.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T034530_batch021.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T041309_batch022.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T041447_batch023.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T041624_batch024.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T041804_batch025.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T041940_batch026.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042116_batch027.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042255_batch028.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042432_batch029.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042610_batch030.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042747_batch031.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T042919_batch032.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043058_batch033.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043237_batch034.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043414_batch035.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043549_batch036.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043726_batch037.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T043905_batch038.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T044043_batch039.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T044220_batch040.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T044359_batch041.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T044538_batch042.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T063028_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T063202_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T063511_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T063650_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T063828_batch003.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T064004_batch004.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T064143_batch005.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T064320_batch006.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T064457_batch007.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T064636_batch008.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T072747_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T072926_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T073143_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T073336_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T073453_batch003.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T073631_batch004.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074012_batch001.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074151_batch002.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074328_batch003.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074504_batch004.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074643_batch005.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T074822_batch006.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075001_batch007.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075138_batch008.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075314_batch009.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075449_batch010.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075624_batch011.parquet              100 rows
+2026-04-26 09:22:32 [INFO] run_production —   iot_realtime_20260425T075802_batch012.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_realtime_20260425T075941_batch013.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_realtime_20260425T080119_batch014.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_realtime_20260425T080255_batch015.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_realtime_20260425T080644_batch001.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_realtime_20260425T080822_batch002.parquet              100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124554_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124554_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124554_batch003.parquet                 95 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124702_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124702_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T124702_batch003.parquet                 94 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T142908_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T142908_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T142908_batch003.parquet                 89 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T143202_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T143202_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T143202_batch003.parquet                 89 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T144321_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T144321_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260405T144321_batch003.parquet                 94 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260407T043850_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260407T043850_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260407T043850_batch003.parquet                 89 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260411T104740_batch001.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260411T104740_batch002.parquet                100 rows
+2026-04-26 09:22:33 [INFO] run_production —   iot_stream_20260411T104740_batch003.parquet                 84 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T094637_batch001.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T094813_batch002.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T094949_batch003.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095126_batch004.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095305_batch005.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095442_batch006.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095620_batch007.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095757_batch008.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T095931_batch009.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100105_batch010.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100241_batch011.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100417_batch012.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100552_batch013.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100728_batch014.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T100906_batch015.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101045_batch016.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101221_batch017.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101400_batch018.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101538_batch019.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101718_batch020.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T101856_batch021.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T102034_batch022.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T102918_batch001.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103057_batch002.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103233_batch003.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103410_batch004.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103548_batch005.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103724_batch006.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T103859_batch007.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T104036_batch008.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T104213_batch009.parquet       100 rows
+2026-04-26 09:22:33 [INFO] run_production —   src_iot_rfid_stream_20260425T104348_batch010.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T104526_batch011.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T104702_batch012.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T104838_batch013.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105017_batch014.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105158_batch015.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105334_batch016.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105511_batch017.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105647_batch018.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T105823_batch019.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110000_batch020.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110135_batch021.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110313_batch022.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110449_batch023.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110627_batch024.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110802_batch025.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T110936_batch026.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T111113_batch027.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T111252_batch028.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T111431_batch029.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T111743_batch001.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T111921_batch002.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T112201_batch001.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T112340_batch002.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T112650_batch001.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T112826_batch002.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T113004_batch003.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T113143_batch004.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T113319_batch005.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T113458_batch006.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T113954_batch001.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T114132_batch002.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T114306_batch003.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T114442_batch004.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T115041_batch001.parquet       100 rows
+2026-04-26 09:22:34 [INFO] run_production —   src_iot_rfid_stream_20260425T115219_batch002.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T115358_batch003.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T115538_batch004.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T115718_batch005.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T115854_batch006.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120033_batch007.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120210_batch008.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120348_batch009.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120525_batch010.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120705_batch011.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T120841_batch012.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121019_batch013.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121159_batch014.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121335_batch015.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121511_batch016.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121648_batch017.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T121826_batch018.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122004_batch019.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122143_batch020.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122316_batch021.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122452_batch022.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122626_batch023.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122804_batch024.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T122939_batch025.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123116_batch026.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123254_batch027.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123432_batch028.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123607_batch029.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123746_batch030.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T123923_batch031.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124101_batch032.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124237_batch033.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124413_batch034.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124550_batch035.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124726_batch036.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T124900_batch037.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125037_batch038.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125212_batch039.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125349_batch040.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125524_batch041.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125701_batch042.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T125838_batch043.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130015_batch044.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130155_batch045.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130334_batch046.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130512_batch047.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130650_batch048.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T130824_batch049.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131002_batch050.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131137_batch051.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131313_batch052.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131448_batch053.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131623_batch054.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131802_batch055.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T131940_batch056.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T132116_batch057.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T132253_batch058.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T132427_batch059.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T132600_batch060.parquet       100 rows
+2026-04-26 09:22:35 [INFO] run_production —   src_iot_rfid_stream_20260425T132736_batch061.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T132912_batch062.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133049_batch063.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133226_batch064.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133359_batch065.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133538_batch066.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133715_batch067.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T133853_batch068.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134030_batch069.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134207_batch070.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134343_batch071.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134521_batch072.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134659_batch073.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T134833_batch074.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135012_batch075.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135149_batch076.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135323_batch077.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135634_batch001.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135810_batch002.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T135949_batch003.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140127_batch004.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140306_batch005.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140444_batch006.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140622_batch007.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140800_batch008.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T140937_batch009.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T141116_batch010.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T141254_batch011.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T141429_batch012.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T141608_batch013.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T141846_batch001.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142017_batch002.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142227_batch001.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142404_batch002.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142543_batch003.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142722_batch004.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T142900_batch005.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T143038_batch006.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T143218_batch007.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T143355_batch008.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T143533_batch009.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T143851_batch001.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T144028_batch002.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T144207_batch003.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T144345_batch004.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T144726_batch001.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T144904_batch002.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145041_batch003.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145220_batch004.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145355_batch005.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145532_batch006.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145708_batch007.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T145847_batch008.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150023_batch009.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150201_batch010.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150339_batch011.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150516_batch012.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150653_batch013.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T150832_batch014.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T151009_batch015.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T151145_batch016.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T151323_batch017.parquet       100 rows
+2026-04-26 09:22:36 [INFO] run_production —   src_iot_rfid_stream_20260425T151459_batch018.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T151636_batch019.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T151814_batch020.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T151950_batch021.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152125_batch022.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152305_batch023.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152442_batch024.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152621_batch025.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152759_batch026.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T152936_batch027.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T154353_batch001.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260425T154821_batch001.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T063239_batch001.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T063417_batch002.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T063552_batch003.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T063729_batch004.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T064521_batch001.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T064659_batch002.parquet       100 rows
+2026-04-26 09:22:37 [INFO] run_production —   src_iot_rfid_stream_20260426T064837_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T065121_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T065257_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T065433_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T065610_batch004.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T065747_batch005.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T070221_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T070401_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T070622_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T070756_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T070933_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T071221_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T071358_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T071534_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T071712_batch004.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T071848_batch005.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072025_batch006.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072202_batch007.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072339_batch008.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072516_batch009.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072754_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T072935_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T073108_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T073532_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T073711_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T073848_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T074024_batch004.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T074202_batch005.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T074341_batch006.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T074518_batch007.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075030_batch001.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075207_batch002.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075342_batch003.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075521_batch004.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075659_batch005.parquet       100 rows
+2026-04-26 09:22:38 [INFO] run_production —   src_iot_rfid_stream_20260426T075834_batch006.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T080011_batch007.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T080148_batch008.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T081936_batch001.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T090740_batch001.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T090917_batch002.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091051_batch003.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091227_batch004.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091509_batch001.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091647_batch002.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091822_batch003.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T091957_batch004.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production —   src_iot_rfid_stream_20260426T092131_batch005.parquet       100 rows
+2026-04-26 09:22:39 [INFO] run_production — 
+2026-04-26 09:22:39 [INFO] run_production —   -- Ingestion Status --
+2026-04-26 09:23:02 [INFO] run_production —   Streaming: 669 files, 66834 events ingested
+2026-04-26 09:23:02 [INFO] run_production — 
+2026-04-26 09:23:02 [INFO] run_production —   -- Telemetry Summary --
+2026-04-26 09:23:02 [INFO] run_production —   Persisted telemetry jobs: 10130
+2026-04-26 09:23:02 [INFO] run_production —   Telemetry sources: ['src_inventory_transactions', 'src_iot_rfid_stream', 'src_legacy_trends', 'src_manufacturing_logs', 'src_sales_history', 'src_warehouse_master', 'src_weather_api']
+2026-04-26 09:23:02 [INFO] run_production — 
+2026-04-26 09:23:02 [INFO] run_production —   -- Source Configuration & Next Ingestion --
+2026-04-26 09:23:02 [INFO] run_production —   src_warehouse_master      | file   | pull | daily     | Next: 0d 14h
+2026-04-26 09:23:02 [INFO] run_production —   src_manufacturing_logs    | file   | pull | daily     | Next: 0d 14h
+2026-04-26 09:23:02 [INFO] run_production —   src_sales_history         | file   | pull | daily     | Next: 0d 14h
+2026-04-26 09:23:02 [INFO] run_production —   src_legacy_trends         | file   | pull | weekly    | Next: 0d 14h
+2026-04-26 09:23:02 [INFO] run_production —   src_inventory_transactions | db     | pull | hourly    | Next: 0h 36m
+2026-04-26 09:23:02 [INFO] run_production —   src_iot_rfid_stream       | stream | push | real_time | Next: Continuous
+2026-04-26 09:23:02 [INFO] run_production —   src_weather_api           | api    | pull | every_2_minutes | Next: 0m 57s
+2026-04-26 09:23:02 [INFO] run_production — 
+2026-04-26 09:23:02 [INFO] run_production —   -- Log File Summary --
