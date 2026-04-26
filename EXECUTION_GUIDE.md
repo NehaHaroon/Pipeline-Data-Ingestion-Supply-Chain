@@ -154,7 +154,7 @@ docker-compose --version  # Docker Compose 2.0+
 # Create .env file in project root
 cat > .env << EOF
 API_TOKEN=token
-WEATHER_API_KEY=token 
+API_TOKEN=token 
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 EOF
 ```
@@ -553,7 +553,7 @@ Typical execution times on a standard laptop:
 
 1.  Run `python run_all.py` to validate local setup
 2.  Deploy with Docker Compose for production
-3.  Configure API_TOKEN and WEATHER_API_KEY
+3.  Configure API_TOKEN and API_TOKEN
 4.  Run tests with `pytest tests/`
 5.  Monitor with `/health` and `/metrics` endpoints
 6.  Integration with downstream systems (dashboards, ML models, alerts)

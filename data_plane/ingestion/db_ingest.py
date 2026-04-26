@@ -13,13 +13,16 @@ import os
 import sys
 import time
 import json
-import logging
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+# Setup path and logging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
+from common import setup_logging, ensure_storage_directories
+
+log = setup_logging("db_ingest")
 
 from control_plane.entities import (
     OperationType, EventEnvelope, INVENTORY_TRANSACTIONS_SOURCE, INVENTORY_TRANSACTIONS_DATASET
@@ -27,23 +30,13 @@ from control_plane.entities import (
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry, Heartbeat
 
-# ── Logging setup ──────────────────────────────────────────────────────────────
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-log = logging.getLogger("db_ingest")
-
 # ── Storage directories ────────────────────────────────────────────────────────
-OUTPUT_DIR      = "storage/ingested"
-QUARANTINE_DIR  = "storage/quarantine"
-DETAIL_LOG_DIR  = "storage/ingested/detail_logs"
-CHECKPOINT_DIR  = "storage/checkpoints"
-SIM_DB_DIR      = "storage/simulated_db"
-
-for d in [OUTPUT_DIR, QUARANTINE_DIR, DETAIL_LOG_DIR, CHECKPOINT_DIR, SIM_DB_DIR]:
-    os.makedirs(d, exist_ok=True)
+storage_paths = ensure_storage_directories()
+OUTPUT_DIR      = storage_paths['ingested']
+QUARANTINE_DIR  = storage_paths['quarantine']
+DETAIL_LOG_DIR  = storage_paths['detail_logs']
+CHECKPOINT_DIR  = storage_paths['checkpoints']
+SIM_DB_DIR      = storage_paths['simulated_db']
 
 # ── Deduplication key ──────────────────────────────────────────────────────────
 DEDUP_KEY = "transaction_id"
@@ -58,6 +51,41 @@ SIMULATED_DB_PATH = os.path.join(SIM_DB_DIR, "inventory_transactions.jsonl")
 # ──────────────────────────────────────────────────────────────────────────────
 # SIMULATED DATABASE OPERATIONS
 # ──────────────────────────────────────────────────────────────────────────────
+
+def generate_sample_inventory_transactions(count: int = 10) -> None:
+    """
+    Generate sample inventory transaction records for testing batch ingestion.
+    This simulates what would normally come from a database or CDC stream.
+    """
+    import random
+    from datetime import datetime, timedelta, timezone
+
+    products = ["ART-1001-MID-XS", "ART-1001-MID-S", "ART-1001-MID-M", "ART-1017-OLI-XS", "ART-1017-OLI-M"]
+    warehouses = ["WAREHOUSE-LONDON", "WAREHOUSE-DUBAI", "WAREHOUSE-KARACHI"]
+    transaction_types = ["IN", "OUT", "ADJUSTMENT"]
+    users = ["system", "warehouse_staff", "quality_control"]
+
+    base_time = datetime.now(timezone.utc) - timedelta(hours=2)  # Start 2 hours ago
+
+    for i in range(count):
+        created_at = base_time + timedelta(minutes=i * 5)  # 5 minutes apart
+
+        record = {
+            "transaction_id": f"TXN-{datetime.now().strftime('%Y%m%d')}-{str(i+1).zfill(4)}",
+            "product_id": random.choice(products),
+            "warehouse_location": random.choice(warehouses),
+            "transaction_type": random.choice(transaction_types),
+            "quantity_change": random.randint(-100, 100),
+            "timestamp": created_at.isoformat(),
+            "reference_order_id": f"ORD-{str(i+1).zfill(6)}" if random.random() > 0.3 else None,
+            "created_by": random.choice(users),
+            "created_at": created_at.isoformat()
+        }
+
+        write_to_simulated_db(record)
+
+    log.info(f"Generated {count} sample inventory transactions in simulated DB")
+
 
 def write_to_simulated_db(record: Dict[str, Any]) -> None:
     """
@@ -267,6 +295,11 @@ def ingest_db_source(
         # ── Load checkpoint ──────────────────────────────────────────────
         checkpoint = get_checkpoint(source_id)
         log.info(f"  [CDC] Loading checkpoint: {checkpoint or 'FIRST RUN (no checkpoint)'}")
+
+        # ── Generate sample data for first run ───────────────────────────
+        if checkpoint is None and not os.path.exists(SIMULATED_DB_PATH):
+            log.info("  [DB] First run - generating sample inventory transactions for testing")
+            generate_sample_inventory_transactions(25)  # Generate 25 sample records
 
         # ── Query simulated DB ───────────────────────────────────────────
         db_records = read_from_simulated_db(checkpoint)

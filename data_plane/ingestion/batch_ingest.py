@@ -515,13 +515,13 @@ def run_api_ingestion(source_id: str, dataset_id: str) -> JobTelemetry:
     params = source.connection_info["params"].copy()
 
     use_real_weather = (
-        config.WEATHER_API_KEY and config.WEATHER_API_KEY != "your_api_key_here"
+        config.API_TOKEN and config.API_TOKEN != "your_api_key_here"
     )
     if use_real_weather:
-        params["appid"] = config.WEATHER_API_KEY
+        params["appid"] = config.API_TOKEN
         params.setdefault("units", "metric")
     else:
-        log.warning("WEATHER_API_KEY not configured or placeholder detected; using httpbin demo fallback for weather ingestion.")
+        log.warning("API_TOKEN not configured or placeholder detected; using httpbin demo fallback for weather ingestion.")
 
     try:
         if use_real_weather:

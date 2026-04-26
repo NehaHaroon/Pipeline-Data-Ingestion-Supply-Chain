@@ -70,8 +70,8 @@ python run_production.py
 
 Optional scheduler overrides:
 
-- `WEATHER_INGESTION_INTERVAL_SECONDS` (default `120`)
-- `DB_INGESTION_INTERVAL_SECONDS` (default `120`)
+- `WEATHER_INGESTION_INTERVAL_SECONDS` (default: auto-detected from WEATHER_API_SOURCE.ingestion_frequency)
+- `DB_INGESTION_INTERVAL_SECONDS` (default: auto-detected from INVENTORY_TRANSACTIONS_SOURCE.ingestion_frequency)
 
 ## Kafka topic naming convention
 

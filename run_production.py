@@ -2,12 +2,9 @@
 # run_production.py — Production runner for the supply chain ingestion pipeline.
 #
 # Usage:  python run_production.py
-#
-# This script starts the API and optionally the real-time IoT consumer.
 
 import os
 import sys
-import logging
 import threading
 import time
 import requests
@@ -15,31 +12,24 @@ import pandas as pd
 import glob
 from datetime import datetime, timezone, timedelta
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-log = logging.getLogger("run_production")
+# Setup path and logging
+sys.path.insert(0, os.path.dirname(__file__))
+from common import setup_logging, ensure_storage_directories, get_ingestion_interval_for_source
 
-# Add file logging to root logger to capture all logs
-log_dir = "logs"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"run_production_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
-file_handler = logging.FileHandler(log_file, encoding="utf-8")
-file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s — %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-logging.getLogger().addHandler(file_handler)
-
-BASE = os.path.dirname(__file__)
-sys.path.insert(0, BASE)
+log = setup_logging("run_production")
 
 from control_plane.entities import ALL_SOURCES, SourceType
 from config import API_HOST, API_PORT, API_TOKEN, LOCAL_API_HOST
 from observability_plane.telemetry import JobTelemetry
 
 INGESTION_SCALE_FACTOR = int(os.getenv("INGESTION_SCALE_FACTOR", "3"))
-WEATHER_INGESTION_INTERVAL_SECONDS = int(os.getenv("WEATHER_INGESTION_INTERVAL_SECONDS", "120"))
-DB_INGESTION_INTERVAL_SECONDS = int(os.getenv("DB_INGESTION_INTERVAL_SECONDS", "120"))
+
+# Get storage directories
+storage_paths = ensure_storage_directories()
+
+# Use dynamic intervals based on source frequencies
+DB_INGESTION_INTERVAL_SECONDS = get_ingestion_interval_for_source("src_inventory_transactions")
+WEATHER_INGESTION_INTERVAL_SECONDS = get_ingestion_interval_for_source("src_weather_api")
 
 def banner(title: str, subtitle: str):
     log.info("")
@@ -215,7 +205,7 @@ def run_weather_api_ingestion():
 
 def run_periodic_weather_ingestion():
     """Continuously ingest weather API data every configured interval."""
-    banner("PHASE: WEATHER SCHEDULER", f"Weather ingestion every {WEATHER_INGESTION_INTERVAL_SECONDS}s")
+    banner("PHASE: WEATHER SCHEDULER", f"Weather ingestion every {WEATHER_INGESTION_INTERVAL_SECONDS}s (from WEATHER_API_SOURCE.ingestion_frequency)")
     run_count = 0
     while True:
         run_count += 1
@@ -232,7 +222,7 @@ def run_periodic_weather_ingestion():
 
 def run_periodic_db_ingestion():
     """Continuously execute DB ingestion and emit telemetry every interval."""
-    banner("PHASE: DB INGESTION SCHEDULER", f"Database ingestion every {DB_INGESTION_INTERVAL_SECONDS}s")
+    banner("PHASE: DB INGESTION SCHEDULER", f"Database ingestion every {DB_INGESTION_INTERVAL_SECONDS}s (from INVENTORY_TRANSACTIONS_SOURCE.ingestion_frequency)")
     from data_plane.ingestion.db_ingest import ingest_db_source
 
     run_count = 0
@@ -314,57 +304,6 @@ def run_batch_on_startup():
 
         log.info(f"Completed batch submission for {source_id}: {requests_sent} request(s)")
 
-# def main():
-#     banner("PRODUCTION STARTUP", "Live API + Dashboard + Batch Ingestion")
-#     log.info("Starting Supply Chain Ingestion Pipeline (Production Mode)")
-#     log.info(f"Registered sources: {len(ALL_SOURCES)} | Starting production pipeline with live API and Kafka stream")
-#     log.info("Production endpoints: http://localhost:8000/health, /telemetry, /storage-summary, /dashboard-plots")
-
-#     # Start API in a thread
-#     # api_thread = threading.Thread(target=start_api, daemon=True)
-#     threading.Thread(target=periodic_dashboard, daemon=True).start()
-#     threading.Thread(target=run_batch_on_startup, daemon=True).start()
-#     # threading.Thread(target=start_iot_consumer, daemon=True).start()
-#     threading.Thread(target=run_periodic_weather_ingestion, daemon=True).start()
-#     threading.Thread(target=run_periodic_db_ingestion, daemon=True).start()
-#     # start_api()
-#     # api_thread.start()
-
-#     # Wait a bit for API to start
-#     time.sleep(5)
-
-#     # Print initial dashboard
-#     print_dashboard()
-
-#     # Start periodic dashboard
-#     dashboard_thread = threading.Thread(target=periodic_dashboard, daemon=True)
-#     dashboard_thread.start()
-
-#     # Start batch ingestion via API automation
-#     batch_thread = threading.Thread(target=run_batch_on_startup, daemon=True)
-#     batch_thread.start()
-
-#     # Start IoT consumer in its own thread so production startup stays responsive
-#     iot_thread = threading.Thread(target=start_iot_consumer, daemon=True)
-#     iot_thread.start()
-
-#     # Run weather API ingestion every 2 minutes (matches source frequency policy)
-#     weather_thread = threading.Thread(target=run_periodic_weather_ingestion, daemon=True)
-#     weather_thread.start()
-
-#     # Run database ingestion every 2 minutes and persist telemetry records
-#     db_thread = threading.Thread(target=run_periodic_db_ingestion, daemon=True)
-#     db_thread.start()
-
-#     log.info(
-#         "Production startup complete. API, batch ingestion, IoT consumer, "
-#         "weather scheduler, DB ingestion scheduler, and dashboard are running."
-#     )
-#     try:
-#         while True:
-#             time.sleep(60)
-#     except KeyboardInterrupt:
-#         log.info("Shutting down production runner")
 def main():
     banner("PRODUCTION STARTUP", "Batch + Scheduler + Dashboard")
 

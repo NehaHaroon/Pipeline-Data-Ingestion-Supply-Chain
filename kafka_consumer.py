@@ -4,8 +4,12 @@ import json
 import logging
 import time
 import os
+import sys
 from typing import Callable, Dict, Any, List
+
+sys.path.insert(0, os.path.dirname(__file__))
 import config
+from common import build_bootstrap_candidates
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry
 
@@ -20,23 +24,9 @@ class IoTConsumer:
         self.contract = CONTRACT_REGISTRY[self.source_id]
         self.telemetry = JobTelemetry(job_id="streaming_job", source_id=self.source_id)
 
-    def _build_bootstrap_candidates(self, bootstrap_servers: str) -> List[str]:
-        raw_servers = [server.strip() for server in bootstrap_servers.split(",") if server.strip()]
-        candidates: List[str] = []
-        for server in raw_servers:
-            if server not in candidates:
-                candidates.append(server)
-
-        # If docker DNS host leaks into local runs, add host-network fallbacks.
-        if any(server.startswith("kafka:") for server in candidates):
-            for fallback in ["localhost:9092", "127.0.0.1:9092"]:
-                if fallback not in candidates:
-                    candidates.append(fallback)
-        return candidates
-
     def _connect_with_retry(self, topic: str, bootstrap_servers: str, group_id: str, max_retries: int):
         """Connect to Kafka with exponential backoff retry logic."""
-        bootstrap_candidates = self._build_bootstrap_candidates(bootstrap_servers)
+        bootstrap_candidates = build_bootstrap_candidates(bootstrap_servers)
         for attempt in range(max_retries):
             try:
                 log.info(

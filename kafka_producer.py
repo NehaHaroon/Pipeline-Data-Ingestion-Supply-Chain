@@ -4,9 +4,13 @@ import json
 import logging
 import time
 import os
+import sys
 from typing import Dict, Any
 from datetime import datetime
+
+sys.path.insert(0, os.path.dirname(__file__))
 import config
+from common import build_bootstrap_candidates
 
 log = logging.getLogger(__name__)
 
@@ -19,11 +23,13 @@ class IoTProducer:
 
     def _connect_with_retry(self, bootstrap_servers: str, max_retries: int):
         """Connect to Kafka with exponential backoff retry logic."""
+        bootstrap_candidates = build_bootstrap_candidates(bootstrap_servers)
+        
         for attempt in range(max_retries):
             try:
                 log.info(f"Attempting to connect to Kafka (attempt {attempt + 1}/{max_retries})...")
                 producer = KafkaProducer(
-                    bootstrap_servers=bootstrap_servers,
+                    bootstrap_servers=bootstrap_candidates,
                     value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                     key_serializer=lambda k: k.encode('utf-8') if k else None,
                     api_version=(3, 0, 0),

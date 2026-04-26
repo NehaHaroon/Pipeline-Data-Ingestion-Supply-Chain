@@ -1,4 +1,3 @@
-# Last Updated: 2026-04-05
 # Phase 2 — Task 2: Data Contracts for every ingestion endpoint.
 # A contract is an agreement between the data producer (source) and consumer (pipeline).
 # It prevents schema drift from silently breaking dashboards or ML models.
@@ -12,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────
-# VIOLATION POLICY
+# region: VIOLATION POLICY
 # ─────────────────────────────────────────────
 class ViolationPolicy(Enum):
     REJECT      = "reject"       # Discard record entirely; pipeline may raise an alert
@@ -21,7 +20,7 @@ class ViolationPolicy(Enum):
 
 
 # ─────────────────────────────────────────────
-# FIELD CONSTRAINT
+# region:FIELD CONSTRAINT
 # ─────────────────────────────────────────────
 @dataclass
 class FieldConstraint:
@@ -78,7 +77,7 @@ class FieldConstraint:
 
 
 # ─────────────────────────────────────────────
-# DATA CONTRACT
+# region: DATA CONTRACT
 # ─────────────────────────────────────────────
 @dataclass
 class DataContract:
@@ -175,7 +174,7 @@ def _auto_coerce(record: Dict[str, Any], constraints: Dict[str, FieldConstraint]
 
 
 # ─────────────────────────────────────────────
-# PROJECT CONTRACTS — one per source
+# region: PROJECT CONTRACTS — one per source
 # ─────────────────────────────────────────────
 
 WAREHOUSE_CONTRACT = DataContract(

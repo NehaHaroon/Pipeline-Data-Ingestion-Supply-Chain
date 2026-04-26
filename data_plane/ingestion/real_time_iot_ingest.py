@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import logging
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List
@@ -9,20 +8,21 @@ from typing import Dict, Any, List
 import pandas as pd
 import requests
 
+# Setup path and logging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
+from common import setup_logging, ensure_storage_directories, send_records_to_api, build_api_url
+
+log = setup_logging("real_time_iot_ingest")
 
 from control_plane.entities import OperationType, EventEnvelope
 from observability_plane.telemetry import JobTelemetry, Heartbeat
 from kafka_consumer import IoTConsumer
-from config import API_TOKEN, API_HOST, API_PORT
-
-log = logging.getLogger("real_time_iot_ingest")
+from config import API_TOKEN, INGESTION_API_URL
 
 # Storage
-STREAM_BUFFER_DIR = "storage/stream_buffer"
-QUARANTINE_DIR    = "storage/quarantine"
-os.makedirs(STREAM_BUFFER_DIR, exist_ok=True)
-os.makedirs(QUARANTINE_DIR, exist_ok=True)
+storage_paths = ensure_storage_directories()
+STREAM_BUFFER_DIR = storage_paths['stream_buffer']
+QUARANTINE_DIR = storage_paths['quarantine']
 
 # Config
 FLUSH_INTERVAL_EVENTS = 100
@@ -37,17 +37,8 @@ def send_to_api(records: List[Dict]):
     if not records:
         return
 
-    try:
-        headers = {
-            "Authorization": f"Bearer {API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        url = f"http://{API_HOST}:{API_PORT}/ingest/src_iot_rfid_stream"
-
-        response = requests.post(
-            url,
-            json={"records": records},
+    api_url = build_api_url(INGESTION_API_URL, "src_iot_rfid_stream")
+    return send_records_to_api(records, api_url, API_TOKEN)
             headers=headers,
             timeout=5
         )

@@ -1,4 +1,3 @@
-# Last Updated: 2026-04-05
 # Phase 1 — Task 1: Core entity classes for the Control Plane.
 # Defines the "what" and "how" of every data source, dataset, job, and record envelope.
 
@@ -12,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import config
 
 # ─────────────────────────────────────────────
-# ENUMERATIONS
+# region: ENUMERATIONS
 # ─────────────────────────────────────────────
 
 class SourceType(Enum):
@@ -61,7 +60,7 @@ class OperationType(Enum):
 
 
 # ─────────────────────────────────────────────
-# ENTITY: DataSource
+# region: ENTITY: DataSource
 # Justification: separating source metadata from job logic lets us reuse
 # the same source definition across multiple jobs and detect schema drift.
 # ─────────────────────────────────────────────
@@ -87,7 +86,7 @@ class DataSource:
 
 
 # ─────────────────────────────────────────────
-# ENTITY: Dataset
+# region: ENTITY: Dataset
 # Justification: explicit versioned dataset objects enforce schema
 # versioning and retention rules before data lands in storage.
 # ─────────────────────────────────────────────
@@ -108,7 +107,7 @@ class Dataset:
 
 
 # ─────────────────────────────────────────────
-# ENTITY: IngestionJob
+# region: ENTITY: IngestionJob
 # Justification: decoupling job config from execution lets us schedule,
 # retry, or replay jobs without touching business logic.
 # ─────────────────────────────────────────────
@@ -131,7 +130,7 @@ class IngestionJob:
 
 
 # ─────────────────────────────────────────────
-# ENTITY: EventEnvelope
+# region: ENTITY: EventEnvelope
 # Justification: every record gets a wrapper for lineage, auditability,
 # schema evolution, and replay. Without this the data lake becomes a swamp.
 # ─────────────────────────────────────────────
@@ -170,7 +169,7 @@ class EventEnvelope:
 
 
 # ─────────────────────────────────────────────
-# SOURCE REGISTRY — pre-configured for this project
+# region SOURCE REGISTRY — pre-configured for this project
 # ─────────────────────────────────────────────
 
 WAREHOUSE_SOURCE = DataSource(
@@ -255,11 +254,11 @@ INVENTORY_TRANSACTIONS_SOURCE = DataSource(
     source_type=SourceType.DB,
     extraction_mode=ExtractionMode.PULL,
     change_capture_mode=ChangeCaptureMode.CDC_LOG_BASED,
-    ingestion_frequency=IngestionFrequency.EVERY_2_MINUTES,
+    ingestion_frequency=IngestionFrequency.HOURLY,
     connection_info={
         "database": "supply_chain_db",
         "table": "inventory_transactions",
-        "host": os.getenv("POSTGRES_HOST", "postgres"),   # "postgres" inside Docker, "localhost" locally
+        "host": os.getenv("POSTGRES_HOST", "postgres"),
         "port": int(os.getenv("POSTGRES_PORT", "5432")),
         "user": os.getenv("POSTGRES_USER", "etl_user"),
         "password": os.getenv("POSTGRES_PASSWORD", "etl_password"),
@@ -280,7 +279,7 @@ WEATHER_API_SOURCE = DataSource(
     extraction_mode=ExtractionMode.PULL,
     change_capture_mode=ChangeCaptureMode.INCREMENTAL,
     ingestion_frequency=IngestionFrequency.EVERY_2_MINUTES,
-    connection_info={"url": "https://api.openweathermap.org/data/2.5/weather", "params": {"q": "Lahore", "appid": config.WEATHER_API_KEY}},
+    connection_info={"url": "https://api.openweathermap.org/data/2.5/weather", "params": {"q": "Lahore", "appid": config.API_TOKEN}},
     expected_schema={
         "city": "str", "temperature": "float", "humidity": "int", "weather_description": "str", "timestamp": "datetime"
     },
@@ -290,7 +289,7 @@ WEATHER_API_SOURCE = DataSource(
 ALL_SOURCES = [WAREHOUSE_SOURCE, MANUFACTURING_SOURCE, SALES_SOURCE, LEGACY_SOURCE, INVENTORY_TRANSACTIONS_SOURCE, IOT_SOURCE, WEATHER_API_SOURCE]
 
 # ─────────────────────────────────────────────
-# DATASET REGISTRY
+# region DATASET REGISTRY
 # ─────────────────────────────────────────────
 
 WAREHOUSE_DATASET = Dataset(

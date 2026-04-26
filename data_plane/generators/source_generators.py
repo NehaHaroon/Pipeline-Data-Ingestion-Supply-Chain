@@ -259,7 +259,7 @@ class WeatherAPIGenerator(BaseGenerator):
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__("src_weather_api")
-        self.api_key = api_key or os.getenv("WEATHER_API_KEY", "your_api_key_here")
+        self.api_key = api_key or os.getenv("API_TOKEN", "your_api_key_here")
         # Weather is API-based; no CSV to profile; use synthetic profiles
         self._profiles = {
             "city": {"type": "categorical", "values": self.CITIES, "probs": [0.4, 0.3, 0.15, 0.1, 0.05], "null_rate": 0.0},

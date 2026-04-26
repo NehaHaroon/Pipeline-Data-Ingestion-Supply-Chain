@@ -1,18 +1,23 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status, Request
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import glob
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 from datetime import datetime
 import uuid
 import os
+import sys
+
+# Setup path and logging
+sys.path.insert(0, os.path.dirname(__file__))
+from common import setup_logging, ensure_storage_directories
+
+log = setup_logging("api")
+
 import config
 from control_plane.entities import ALL_SOURCES, ALL_DATASETS, IngestionJob, ExecutionMode
 from control_plane.contracts import CONTRACT_REGISTRY
@@ -37,17 +42,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-os.makedirs("logs", exist_ok=True)
-app.mount("/logs", StaticFiles(directory="logs"), name="logs")
+# Ensure storage and log directories exist
+storage_paths = ensure_storage_directories()
+app.mount("/logs", StaticFiles(directory=storage_paths.get('logs', 'logs')), name="logs")
 
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-# app.add_middleware(SlowAPIMiddleware)
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Security
@@ -242,7 +243,7 @@ def list_datasets():
 # Ingestion
 # ---------------------------------------------------------------------------
 @app.post("/ingest/{source_id}")
-@limiter.limit("100/minute")
+@limiter.limit("10000/minute")
 def ingest_data(
     request: Request,
     source_id: str,

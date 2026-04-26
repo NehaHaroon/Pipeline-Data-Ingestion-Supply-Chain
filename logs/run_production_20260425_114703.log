@@ -4,7 +4,7 @@
 2026-04-25 11:47:03 [INFO] run_production — ======================================================================
 2026-04-25 11:47:03 [INFO] run_production — Starting Supply Chain Ingestion Pipeline (Batch Runner Mode)
 2026-04-25 11:47:03 [INFO] run_production — Registered sources: 7
-2026-04-25 11:47:03 [INFO] run_production — API expected at: http://ingestion-api:8000
+2026-04-25 11:47:03 [INFO] run_production — API expected at: http://localhost:8000
 2026-04-25 11:47:03 [INFO] run_production — 
 2026-04-25 11:47:03 [INFO] run_production — ======================================================================
 2026-04-25 11:47:03 [INFO] run_production —   PHASE: BATCH INGESTION: Load raw sources via API
