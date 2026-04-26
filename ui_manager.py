@@ -294,7 +294,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 <!-- ════════════ SIDEBAR ════════════ -->
 <aside class="sidebar">
   <div class="logo">
-    <div class="logo-mark"><div class="dot"></div>IngestOps</div>
+    <div class="logo-mark"><div class="dot"></div>DataOps</div>
     <div class="logo-sub">Supply Chain Pipeline</div>
   </div>
 
@@ -409,7 +409,12 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 <div class="main">
   <div class="topbar">
     <div class="topbar-l">
-      <div class="page-title">Ingestion Dashboard</div>
+      <!-- Page tabs for navigation -->
+      <div class="page-tabs" style="display:flex;gap:12px;margin-right:20px;">
+        <button class="page-tab active" data-page="ingestion" onclick="switchPage('ingestion')" style="padding:6px 14px;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:12px;border-bottom:2px solid var(--accent);font-weight:500">Ingestion</button>
+        <button class="page-tab" data-page="transformation" onclick="switchPage('transformation')" style="padding:6px 14px;background:transparent;border:none;color:var(--t2);cursor:pointer;font-size:12px;border-bottom:2px solid transparent;font-weight:500">Transformation</button>
+        <button class="page-tab" data-page="storage" onclick="switchPage('storage')" style="padding:6px 14px;background:transparent;border:none;color:var(--t2);cursor:pointer;font-size:12px;border-bottom:2px solid transparent;font-weight:500">Storage</button>
+      </div>
       <div class="pills" id="active-pills"></div>
     </div>
     <div class="topbar-r">
@@ -419,6 +424,8 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
     </div>
   </div>
 
+  <!-- INGESTION PAGE (existing content) -->
+  <div id="page-ingestion" class="page-content" style="display:block;">
   <div class="content">
 
     <!-- filter summary -->
@@ -562,7 +569,124 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
       </div>
     </div>
 
-  </div><!-- /content -->
+  </div><!-- /page-ingestion -->
+
+  <!-- TRANSFORMATION PAGE -->
+  <div id="page-transformation" class="page-content" style="display:none;">
+  <div class="content">
+    <div class="kpi-strip ai d1">
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
+        <div class="kpi-lbl">Total Runs</div><div class="kpi-val" id="txr-total">—</div>
+        <div class="kpi-sub"><span class="badge b-nt">all time</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
+        <div class="kpi-lbl">Avg Latency</div><div class="kpi-val" id="txr-latency">—</div>
+        <div class="kpi-sub"><span class="badge b-nt">seconds</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
+        <div class="kpi-lbl">Avg Quality</div><div class="kpi-val" id="txr-quality">—</div>
+        <div class="kpi-sub"><span class="badge b-up">cleaned %</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+        <div class="kpi-lbl">Duplicates Removed</div><div class="kpi-val" id="txr-dupes">—</div>
+        <div class="kpi-sub"><span class="badge b-nt">%</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+        <div class="kpi-lbl">Late Arrivals</div><div class="kpi-val" id="txr-late">—</div>
+        <div class="kpi-sub"><span class="badge b-up">detected</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
+        <div class="kpi-lbl">Silver Records</div><div class="kpi-val" id="txr-silver">—</div>
+        <div class="kpi-sub"><span class="badge b-up">total</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+        <div class="kpi-lbl">Gold Signals</div><div class="kpi-val" id="txr-gold">—</div>
+        <div class="kpi-sub"><span class="badge b-up">replenishment</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+        <div class="kpi-lbl">Schema Violations</div><div class="kpi-val" id="txr-violations">—</div>
+        <div class="kpi-sub"><span class="badge b-dn">count</span></div></div>
+    </div>
+    
+    <div class="row r-5050 ai d2">
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Transformation KPIs</div><div class="ph-meta">per-run details</div></div>
+        <div class="pb-np">
+          <div class="scroll-body" style="max-height:350px;padding:12px">
+            <table class="jt" style="font-size:10px">
+              <thead><tr>
+                <th>Source</th><th>Layer</th><th>Records</th><th>Cleaned</th><th>Latency(s)</th><th>Run Time</th>
+              </tr></thead>
+              <tbody id="txr-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Data Quality Trend</div><div class="ph-meta">records cleaned %</div></div>
+        <div class="pb">
+          <div style="position:relative;height:220px">
+            <canvas id="c-txr-quality" role="img" aria-label="Quality trend">No data.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /page-transformation -->
+
+  <!-- STORAGE PAGE -->
+  <div id="page-storage" class="page-content" style="display:none;">
+  <div class="content">
+    <div class="kpi-strip ai d1">
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
+        <div class="kpi-lbl">Total Files</div><div class="kpi-val" id="stor-files">—</div>
+        <div class="kpi-sub"><span class="badge b-nt">all tables</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
+        <div class="kpi-lbl">Total Storage</div><div class="kpi-val" id="stor-size">—</div>
+        <div class="kpi-sub"><span class="badge b-up">MB</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+        <div class="kpi-lbl">Avg File Size</div><div class="kpi-val" id="stor-avg">—</div>
+        <div class="kpi-sub"><span class="badge b-nt">MB</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
+        <div class="kpi-lbl">Small Files %</div><div class="kpi-val" id="stor-small">—</div>
+        <div class="kpi-sub"><span class="badge b-dn">needs compaction</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
+        <div class="kpi-lbl">Tables OK</div><div class="kpi-val" id="stor-healthy">—</div>
+        <div class="kpi-sub"><span class="badge b-up">count</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
+        <div class="kpi-lbl">Needing Compact</div><div class="kpi-val" id="stor-compact">—</div>
+        <div class="kpi-sub"><span class="badge b-dn">high priority</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+        <div class="kpi-lbl">Total Snapshots</div><div class="kpi-val" id="stor-snapshots">—</div>
+        <div class="kpi-sub"><span class="badge b-up">versions</span></div></div>
+      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
+        <div class="kpi-lbl">Storage Health</div><div class="kpi-val" id="stor-health">—</div>
+        <div class="kpi-sub"><span class="badge b-up" id="stor-health-badge">Good</span></div></div>
+    </div>
+    
+    <div class="row r-full ai d2">
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Iceberg Tables Health</div><div class="ph-meta">file metrics & compaction status</div></div>
+        <div class="pb-np">
+          <div class="scroll-body" style="max-height:400px;padding:12px">
+            <table class="jt" style="font-size:10px">
+              <thead><tr>
+                <th>Table</th><th>Files</th><th>Avg Size</th><th>Small %</th><th>Snapshots</th><th>Status</th>
+              </tr></thead>
+              <tbody id="stor-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row r-5050 ai d3">
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Storage Warnings</div><div class="ph-meta">health alerts</div></div>
+        <div class="pb"><div class="alert-list" id="stor-warnings"><div class="empty"><div class="ei">✓</div>All tables healthy</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Recommendations</div><div class="ph-meta">optimization suggestions</div></div>
+        <div class="pb"><div class="alert-list" id="stor-recs"><div class="empty"><div class="ei">✓</div>No actions needed</div></div></div>
+      </div>
+    </div>
+  </div>
+  </div><!-- /page-storage -->
+
+
 </div><!-- /main -->
 </div><!-- /shell -->
 
@@ -971,6 +1095,111 @@ function resetFilters() {
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
   document.querySelectorAll('[data-val="all"]').forEach(c=>c.classList.add('active'));
   applyFilters();
+}
+
+/* ══ PAGE NAVIGATION ═════════════════════════════════════════════════════ */
+function switchPage(page) {
+  // Hide all pages
+  document.querySelectorAll('.page-content').forEach(p=>p.style.display='none');
+  // Show selected page
+  document.getElementById('page-'+page).style.display='block';
+  // Update active tab
+  document.querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-page="'+page+'"]').classList.add('active');
+  document.querySelector('[data-page="'+page+'"]').style.borderBottomColor='var(--accent)';
+  document.querySelector('[data-page="'+page+'"]').style.color='var(--accent)';
+  
+  // Load page-specific data
+  if(page==='transformation') loadTransformationData();
+  if(page==='storage') loadStorageData();
+}
+
+function loadTransformationData() {
+  fetch(API+'/transformation/summary', {headers:HDR})
+    .then(r=>r.json())
+    .then(d=>{
+      const silver=d.silver||{}, gold=d.gold||{};
+      document.getElementById('txr-total').textContent=(silver.run_count||0)+(gold.run_count||0);
+      document.getElementById('txr-latency').textContent=((silver.avg_transformation_latency_sec||0)+(gold.avg_transformation_latency_sec||0)/2).toFixed(2);
+      document.getElementById('txr-quality').textContent=((silver.overall_quality_ratio||0)+(gold.overall_quality_ratio||0)/2).toFixed(0);
+      document.getElementById('txr-dupes').textContent=((silver.total_duplicates_removed||0)+(gold.total_duplicates_removed||0)).toString();
+      document.getElementById('txr-late').textContent=(silver.total_late_arrivals||0).toString();
+      document.getElementById('txr-silver').textContent=(silver.total_records_cleaned||0).toString();
+      document.getElementById('txr-gold').textContent=(gold.total_records_processed||0).toString();
+      document.getElementById('txr-violations').textContent='0';
+    }).catch(e=>log.error('Error loading transformation data:',e));
+  
+  // Load detailed KPIs
+  fetch(API+'/transformation/kpis?limit=10', {headers:HDR})
+    .then(r=>r.json())
+    .then(d=>{
+      const kpis=d.kpis||[];
+      const tbody=document.getElementById('txr-table');
+      if(!kpis.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No transformation data</td></tr>';return;}
+      tbody.innerHTML=kpis.map(k=>`<tr>
+        <td>${k.source_id.replace('src_','')}</td>
+        <td><span class="sp ${k.layer==='silver'?'s-run':' s-ok'}">${k.layer}</span></td>
+        <td>${k.records_read}</td>
+        <td class="ng">${k.records_cleaned}</td>
+        <td>${k.transformation_latency_sec.toFixed(2)}</td>
+        <td style="font-size:9px;color:var(--t3)">${k.run_at.slice(0,10)}</td>
+      </tr>`).join('');
+    }).catch(e=>console.error('Error loading KPIs:',e));
+}
+
+function loadStorageData() {
+  fetch(API+'/storage/summary', {headers:HDR})
+    .then(r=>r.json())
+    .then(d=>{
+      const kpis=d.kpis||{}, health=d.health||{};
+      let totalFiles=0, totalMB=0, totalSnapshots=0, smallRatio=0, cnt=0;
+      Object.values(kpis).forEach(k=>{
+        if(!k.error){
+          totalFiles+=k.file_count||0;
+          totalMB+=k.total_storage_mb||0;
+          totalSnapshots+=k.snapshot_count||0;
+          smallRatio+=(k.small_file_ratio||0);
+          cnt++;
+        }
+      });
+      const avgSmall=cnt>0?(smallRatio/cnt*100):0;
+      document.getElementById('stor-files').textContent=totalFiles.toString();
+      document.getElementById('stor-size').textContent=totalMB.toFixed(0);
+      document.getElementById('stor-avg').textContent=cnt>0?(totalMB*1024/totalFiles).toFixed(1):'0';
+      document.getElementById('stor-small').textContent=avgSmall.toFixed(0);
+      document.getElementById('stor-healthy').textContent=(cnt-health.tables_needing_compaction.length).toString();
+      document.getElementById('stor-compact').textContent=health.tables_needing_compaction.length.toString();
+      document.getElementById('stor-snapshots').textContent=totalSnapshots.toString();
+      const healthBadge=document.getElementById('stor-health-badge');
+      healthBadge.textContent=health.health_status||'Unknown';
+      healthBadge.style.background=health.health_status==='warning'?'rgba(240,75,75,.1)':'rgba(62,207,142,.15)';
+      document.getElementById('stor-health').textContent=health.health_status==='warning'?'⚠️':'✓';
+      
+      // Render tables
+      const tbody=document.getElementById('stor-table');
+      const tables=Object.entries(kpis).filter(([_,k])=>!k.error).slice(0,15);
+      if(!tables.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No storage data</td></tr>';return;}
+      tbody.innerHTML=tables.map(([name,k])=>`<tr>
+        <td style="font-size:9px">${name}</td>
+        <td>${k.file_count}</td>
+        <td>${k.avg_file_size_mb.toFixed(1)}</td>
+        <td class="${k.small_file_ratio>0.5?'nb':''}">${(k.small_file_ratio*100).toFixed(0)}</td>
+        <td>${k.snapshot_count}</td>
+        <td><span class="sp ${k.needs_compaction?'s-run':'s-ok'}">${k.needs_compaction?'compact':'ok'}</span></td>
+      </tr>`).join('');
+      
+      // Render warnings
+      const warns=document.getElementById('stor-warnings');
+      warns.innerHTML=(health.warnings||[]).length>0
+        ?(health.warnings.map(w=>`<div class="alert-item a-warn"><div class="a-dot"></div><div class="a-text">${w}</div></div>`).join(''))
+        :('<div class="empty"><div class="ei">✓</div>All tables healthy</div>');
+      
+      // Render recommendations
+      const recs=document.getElementById('stor-recs');
+      recs.innerHTML=(health.recommendations||[]).length>0
+        ?(health.recommendations.map(r=>`<div class="alert-item a-info"><div class="a-dot"></div><div class="a-text">${r}</div></div>`).join(''))
+        :('<div class="empty"><div class="ei">✓</div>No actions needed</div>');
+    }).catch(e=>console.error('Error loading storage data:',e));
 }
 
 /* ══ MAIN REFRESH ════════════════════════════════════════════════════════ */

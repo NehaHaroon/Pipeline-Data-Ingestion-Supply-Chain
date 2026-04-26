@@ -33,6 +33,13 @@ STORAGE_INGESTED = os.getenv("STORAGE_INGESTED", "storage/ingested")
 STORAGE_QUARANTINE = os.getenv("STORAGE_QUARANTINE", "storage/quarantine")
 STORAGE_CDC_LOG = os.getenv("STORAGE_CDC_LOG", "storage/cdc_log")
 STORAGE_CHECKPOINTS = os.getenv("STORAGE_CHECKPOINTS", "storage/checkpoints")
+STORAGE_SILVER = os.getenv("STORAGE_SILVER", "storage/silver")
+STORAGE_GOLD = os.getenv("STORAGE_GOLD", "storage/gold")
+STORAGE_ICEBERG_WAREHOUSE = os.getenv("STORAGE_ICEBERG_WAREHOUSE", "storage/iceberg_warehouse")
+STORAGE_ICEBERG_CATALOG_URI = os.getenv("STORAGE_ICEBERG_CATALOG_URI", "sqlite:///storage/iceberg_catalog.db")
+ICEBERG_NAMESPACE_BRONZE = os.getenv("ICEBERG_NAMESPACE_BRONZE", "bronze")
+ICEBERG_NAMESPACE_SILVER = os.getenv("ICEBERG_NAMESPACE_SILVER", "silver")
+ICEBERG_NAMESPACE_GOLD = os.getenv("ICEBERG_NAMESPACE_GOLD", "gold")
 
 # API settings
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
@@ -55,6 +62,7 @@ CDC_CHECKPOINT_INTERVAL = int(os.getenv("CDC_CHECKPOINT_INTERVAL", "500"))
 
 # Telemetry settings
 TELEMETRY_HEARTBEAT_INTERVAL = int(os.getenv("TELEMETRY_HEARTBEAT_INTERVAL", "5"))  # seconds
+TRANSFORMATION_KPI_LOG_PATH = os.getenv("TRANSFORMATION_KPI_LOG_PATH", "storage/ingested/detail_logs/transformation_kpis.jsonl")
 
 
 INGESTION_API_URL=os.getenv("INGESTION_API_URL","http://ingestion-api:8000")

@@ -46,4 +46,5 @@ def setup_logging(module_name: str, log_dir: str = "logs", log_level: str = "INF
     
     # Get module-specific logger
     logger = logging.getLogger(module_name)
+    logger.log_file = getattr(root_logger, "log_file", None)
     return logger

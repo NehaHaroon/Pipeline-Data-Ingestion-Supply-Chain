@@ -5,6 +5,8 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
+    networks:
+      - pipeline-net
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -14,13 +16,16 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
       - "29092:29092"
+    networks:
+      - pipeline-net
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "127.0.0.1:9092"]
       interval: 10s
@@ -34,7 +39,7 @@ services:
       - .env
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       API_HOST: 0.0.0.0
       API_PORT: 8000
@@ -45,6 +50,8 @@ services:
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
+    networks:
+      - pipeline-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -63,6 +70,8 @@ services:
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
+    networks:
+      - pipeline-net
 
   iot-producer:
     build: .
@@ -78,7 +87,8 @@ services:
       - ./logs:/app/logs
       - ./storage:/app/storage
     restart: unless-stopped
-    
+    networks:
+      - pipeline-net  
 
   iot-consumer:
     build: .
@@ -98,6 +108,9 @@ services:
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
+    networks:
+      - pipeline-net
+
   postgres:
     image: postgres:15
     environment:
@@ -110,6 +123,8 @@ services:
               -c max_wal_senders=10 
     ports:
       - "5432:5432"
+    networks:
+      - pipeline-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data_plane/databases/init/postgreSQL:/docker-entrypoint-initdb.d
@@ -118,6 +133,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    
   db-postgres-generator:
     build: .
     env_file:
@@ -131,6 +147,9 @@ services:
     volumes:
       - ./data_plane:/app/data_plane
     restart: unless-stopped
+    networks:
+      - pipeline-net
+  
   kafka-connect:
     image: debezium/connect:2.4
     depends_on:
@@ -160,6 +179,12 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       # INGESTION_API_URL: http://ingestion-api:8000
     command: ["python", "data_plane/cdc/cdc_consumer.py"]
+    networks:
+      - pipeline-net
 
 volumes:
   postgres_data:
+
+networks:
+  pipeline-net:
+    name: pipeline-net

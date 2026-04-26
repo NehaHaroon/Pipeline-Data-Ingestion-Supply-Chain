@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
 # run_production.py — Production runner for the supply chain ingestion pipeline.
-#
-# Usage:  python run_production.py
 
 import os
 import sys
@@ -21,6 +18,7 @@ log = setup_logging("run_production")
 from control_plane.entities import ALL_SOURCES, SourceType
 from config import API_HOST, API_PORT, API_TOKEN, LOCAL_API_HOST
 from observability_plane.telemetry import JobTelemetry
+from db_producer import produce_records
 
 INGESTION_SCALE_FACTOR = int(os.getenv("INGESTION_SCALE_FACTOR", "3"))
 
@@ -105,6 +103,26 @@ def print_dashboard():
         report_sources = sorted({r.get('source_id') for r in reports})
         log.info(f"  Telemetry sources: {report_sources}")
 
+    # DB Producer Status
+    log.info("")
+    log.info("  -- DB Producer Status --")
+    simulated_db_path = "storage/simulated_db/inventory_transactions.jsonl"
+    if os.path.exists(simulated_db_path):
+        with open(simulated_db_path, 'r', encoding='utf-8') as f:
+            record_count = sum(1 for _ in f)
+        log.info(f"  Simulated DB records: {record_count}")
+        if record_count > 0:
+            # Get the latest record timestamp
+            import json
+            with open(simulated_db_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    latest_record = json.loads(lines[-1])
+                    latest_ts = latest_record.get('created_at', 'unknown')
+                    log.info(f"  Latest record timestamp: {latest_ts}")
+    else:
+        log.info("  Simulated DB: File not found")
+
     # Source Configuration & Next Ingestion
     log.info("")
     log.info("  -- Source Configuration & Next Ingestion --")
@@ -141,7 +159,9 @@ def print_dashboard():
     # Log File Summary
     log.info("")
     log.info("  -- Log File Summary --")
-    if os.path.exists(log_file):
+    log_file = getattr(log, "log_file", None)
+
+    if log_file and os.path.exists(log_file):
         with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
             lines = f.readlines()
         total_lines = len(lines)
@@ -305,7 +325,7 @@ def run_batch_on_startup():
         log.info(f"Completed batch submission for {source_id}: {requests_sent} request(s)")
 
 def main():
-    banner("PRODUCTION STARTUP", "Batch + Scheduler + Dashboard")
+    banner("PRODUCTION STARTUP", "Batch + Scheduler + Dashboard + DB Producer")
 
     log.info("Starting Supply Chain Ingestion Pipeline (Batch Runner Mode)")
     log.info(f"Registered sources: {len(ALL_SOURCES)}")
@@ -316,6 +336,7 @@ def main():
     threading.Thread(target=run_batch_on_startup, daemon=True).start()
     threading.Thread(target=run_periodic_weather_ingestion, daemon=True).start()
     threading.Thread(target=run_periodic_db_ingestion, daemon=True).start()
+    threading.Thread(target=produce_records, daemon=True).start()
 
     # Initial dashboard
     time.sleep(5)

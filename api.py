@@ -23,7 +23,6 @@ from control_plane.entities import ALL_SOURCES, ALL_DATASETS, IngestionJob, Exec
 from control_plane.contracts import CONTRACT_REGISTRY
 from observability_plane.telemetry import JobTelemetry
 from ui_manager import (
-    # render_storage_summary, render_dataset_samples, generate_visualizations, DASHBOARD_HTML
     render_storage_summary, render_dataset_samples, DASHBOARD_HTML
 )
 
@@ -486,3 +485,255 @@ def dashboard():
     """
     html_body = DASHBOARD_HTML.replace("__API_TOKEN__", config.API_TOKEN)
     return HTMLResponse(content=html_body)
+
+
+# ---------------------------------------------------------------------------
+# region: Transformation Metrics
+# ---------------------------------------------------------------------------
+@app.get("/transformation/kpis")
+def get_transformation_kpis(
+    source_id: Optional[str] = None,
+    layer: Optional[str] = None,
+    limit: int = 100,
+    token: str = Depends(verify_token),
+):
+    """
+    Get transformation layer KPIs (Silver/Gold) with optional filtering.
+    
+    Query Parameters:
+    - source_id: Filter by source (e.g., "src_sales_history")
+    - layer: Filter by layer ("silver" or "gold")
+    - limit: Max records to return (default 100)
+    """
+    from data_plane.transformation.transformation_kpis import TransformationKPILogger
+    
+    kpis = TransformationKPILogger.load_kpis(
+        source_id=source_id,
+        layer=layer,
+        limit=limit,
+    )
+    
+    return {
+        "count": len(kpis),
+        "kpis": [kpi.to_dict() for kpi in kpis],
+        "aggregate_stats_silver": TransformationKPILogger.get_aggregate_stats("silver"),
+        "aggregate_stats_gold": TransformationKPILogger.get_aggregate_stats("gold"),
+    }
+
+
+@app.get("/transformation/summary")
+def get_transformation_summary(token: str = Depends(verify_token)):
+    """Get summary statistics for all transformation runs."""
+    from data_plane.transformation.transformation_kpis import TransformationKPILogger
+    
+    return {
+        "silver": TransformationKPILogger.get_aggregate_stats("silver"),
+        "gold": TransformationKPILogger.get_aggregate_stats("gold"),
+    }
+
+
+# ---------------------------------------------------------------------------
+# region: Storage/Iceberg Metrics
+# ---------------------------------------------------------------------------
+@app.get("/storage/iceberg-kpis")
+def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(verify_token)):
+    """
+    Get Iceberg table KPIs (file metrics, snapshots, compaction status).
+    
+    Query Parameters:
+    - table_name: Specific table (e.g., "bronze.iot_rfid_stream"). If None, returns all tables.
+    """
+    from storage_plane.storage_kpis import get_storage_kpis, get_all_tables_kpis
+    
+    if table_name:
+        return {"table": table_name, "kpis": get_storage_kpis(table_name)}
+    else:
+        return {"tables": get_all_tables_kpis()}
+
+
+@app.get("/storage/summary")
+def get_storage_summary_json(token: str = Depends(verify_token)):
+    """Get consolidated storage summary (file counts, sizes, compaction status)."""
+    from storage_plane.storage_kpis import get_all_tables_kpis, compute_storage_health
+    
+    all_kpis = get_all_tables_kpis()
+    health = compute_storage_health(all_kpis)
+    
+    return {"kpis": all_kpis, "health": health}
+
+
+# ---------------------------------------------------------------------------
+# region: Gold Layer / Replenishment Signals
+# ---------------------------------------------------------------------------
+@app.get("/gold/replenishment-signals")
+def get_replenishment_signals(
+    limit: int = 50,
+    min_urgency: float = 0.0,
+    token: str = Depends(verify_token),
+):
+    """
+    Get top replenishment signals from Gold layer.
+    
+    Query Parameters:
+    - limit: Max products to return
+    - min_urgency: Only return products with urgency_score >= this threshold
+    """
+    from storage_plane.iceberg_catalog import get_catalog
+    
+    try:
+        catalog = get_catalog()
+        if not catalog.table_exists("gold.replenishment_signals"):
+            return {"signals": [], "count": 0}
+        
+        df = catalog.load_table("gold.replenishment_signals").scan().to_pandas()
+        
+        # Filter by urgency
+        if min_urgency > 0:
+            df = df[df["urgency_score"] >= min_urgency]
+        
+        # Sort by urgency descending
+        df = df.sort_values("urgency_score", ascending=False)[:limit]
+        
+        signals = df.to_dict("records") if not df.empty else []
+        
+        return {
+            "count": len(signals),
+            "signals": signals,
+            "weather_risk_active": df["weather_risk"].any() if not df.empty else False,
+        }
+    except Exception as e:
+        log.error(f"Error fetching replenishment signals: {e}")
+        return {"signals": [], "count": 0, "error": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# region: Time-Range Filtering (for dashboard)
+# ---------------------------------------------------------------------------
+@app.get("/metrics/filtered")
+def get_metrics_filtered(
+    from_timestamp: Optional[str] = None,
+    to_timestamp: Optional[str] = None,
+    source_id: Optional[str] = None,
+    token: str = Depends(verify_token),
+):
+    """
+    Get metrics with time-range filtering.
+    
+    Query Parameters:
+    - from_timestamp: ISO datetime or relative (e.g., "1h ago", "6h ago", "24h ago", "7d ago")
+    - to_timestamp: ISO datetime (defaults to now)
+    - source_id: Filter by source
+    """
+    from datetime import datetime, timedelta
+    
+    # Parse time range
+    now = datetime.utcnow()
+    
+    if from_timestamp:
+        if from_timestamp in ("1h ago", "1h", "1hour"):
+            from_ts = now - timedelta(hours=1)
+        elif from_timestamp in ("6h ago", "6h", "6hours"):
+            from_ts = now - timedelta(hours=6)
+        elif from_timestamp in ("24h ago", "24h", "1d", "1day"):
+            from_ts = now - timedelta(days=1)
+        elif from_timestamp in ("7d ago", "7d", "7days", "1week"):
+            from_ts = now - timedelta(days=7)
+        else:
+            try:
+                from_ts = datetime.fromisoformat(from_timestamp.replace("Z", "+00:00"))
+            except ValueError:
+                from_ts = now - timedelta(days=1)  # default to 1 day
+    else:
+        from_ts = now - timedelta(days=7)  # default: last 7 days
+    
+    to_ts = now
+    if to_timestamp:
+        try:
+            to_ts = datetime.fromisoformat(to_timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            to_ts = now
+    
+    # Get all telemetry and filter by time range
+    persisted_telemetry = JobTelemetry.load_reports()
+    
+    filtered = []
+    for report in persisted_telemetry:
+        try:
+            run_ts = datetime.fromisoformat(report.get("run_at", "").replace("Z", "+00:00"))
+            if from_ts <= run_ts <= to_ts:
+                if source_id is None or report.get("source_id") == source_id:
+                    filtered.append(report)
+        except (ValueError, AttributeError):
+            continue
+    
+    # Aggregate
+    total_jobs = len(filtered)
+    total_records = sum(r.get("records_ingested", 0) for r in filtered)
+    total_quarantined = sum(r.get("records_quarantined", 0) for r in filtered)
+    total_failed = sum(r.get("records_failed", 0) for r in filtered)
+    
+    avg_throughput = (
+        sum(r.get("throughput_rec_sec", 0) for r in filtered) / len(filtered)
+        if filtered
+        else 0.0
+    )
+    
+    return {
+        "from_timestamp": from_ts.isoformat() + "Z",
+        "to_timestamp": to_ts.isoformat() + "Z",
+        "total_jobs": total_jobs,
+        "total_records_ingested": total_records,
+        "total_records_quarantined": total_quarantined,
+        "total_records_failed": total_failed,
+        "avg_throughput_rec_sec": round(avg_throughput, 2),
+        "job_count_by_source": _aggregate_by_source(filtered),
+    }
+
+
+def _aggregate_by_source(telemetry_records: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Helper to count jobs per source."""
+    breakdown = {}
+    for report in telemetry_records:
+        source_id = report.get("source_id", "unknown")
+        breakdown[source_id] = breakdown.get(source_id, 0) + 1
+    return breakdown
+
+
+# ---------------------------------------------------------------------------
+# region: Prometheus Metrics Endpoint (for Grafana integration)
+# ---------------------------------------------------------------------------
+@app.get("/metrics/prometheus")
+def metrics_prometheus(token: str = Depends(verify_token)):
+    """
+    Export metrics in Prometheus exposition format for Grafana scraping.
+    """
+    from io import StringIO
+    
+    metrics_data = metrics()  # Call the main /metrics endpoint
+    
+    output = StringIO()
+    output.write("# HELP ingest_total_jobs Total ingestion jobs\n")
+    output.write("# TYPE ingest_total_jobs counter\n")
+    output.write(f"ingest_total_jobs {metrics_data['total_jobs']}\n\n")
+    
+    output.write("# HELP ingest_running_jobs Currently running jobs\n")
+    output.write("# TYPE ingest_running_jobs gauge\n")
+    output.write(f"ingest_running_jobs {metrics_data['running_jobs']}\n\n")
+    
+    output.write("# HELP ingest_records_ingested Total records ingested\n")
+    output.write("# TYPE ingest_records_ingested counter\n")
+    output.write(f"ingest_records_ingested {metrics_data['total_records_ingested']}\n\n")
+    
+    output.write("# HELP ingest_records_quarantined Total records quarantined\n")
+    output.write("# TYPE ingest_records_quarantined counter\n")
+    output.write(f"ingest_records_quarantined {metrics_data['total_records_quarantined']}\n\n")
+    
+    output.write("# HELP ingest_records_failed Total records failed\n")
+    output.write("# TYPE ingest_records_failed counter\n")
+    output.write(f"ingest_records_failed {metrics_data['total_records_failed']}\n\n")
+    
+    output.write("# HELP ingest_avg_throughput Average throughput\n")
+    output.write("# TYPE ingest_avg_throughput gauge\n")
+    output.write(f"ingest_avg_throughput {metrics_data['avg_throughput_rec_sec']}\n\n")
+    
+    return output.getvalue()
