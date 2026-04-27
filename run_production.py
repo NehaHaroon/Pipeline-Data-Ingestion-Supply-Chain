@@ -7,6 +7,8 @@ import time
 import requests
 import pandas as pd
 import glob
+import subprocess
+import logging
 from datetime import datetime, timezone, timedelta
 
 # Setup path and logging
@@ -21,6 +23,11 @@ from observability_plane.telemetry import JobTelemetry
 from db_producer import produce_records
 
 INGESTION_SCALE_FACTOR = int(os.getenv("INGESTION_SCALE_FACTOR", "3"))
+
+# Docker Configuration - Use values from .env via config.py
+API_BASE_URL = f"http://{LOCAL_API_HOST}:{API_PORT}"
+AIRFLOW_URL = "http://localhost:8080"
+# API_TOKEN is imported from config
 
 # Get storage directories
 storage_paths = ensure_storage_directories()
@@ -240,41 +247,180 @@ def run_periodic_weather_ingestion():
         time.sleep(WEATHER_INGESTION_INTERVAL_SECONDS)
 
 
-def run_periodic_db_ingestion():
-    """Continuously execute DB ingestion and emit telemetry every interval."""
-    banner("PHASE: DB INGESTION SCHEDULER", f"Database ingestion every {DB_INGESTION_INTERVAL_SECONDS}s (from INVENTORY_TRANSACTIONS_SOURCE.ingestion_frequency)")
-    from data_plane.ingestion.db_ingest import ingest_db_source
+def run_command(command: str, description: str) -> bool:
+    """Run a shell command and return success status."""
+    log.info(f" {description}")
+    try:
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        log.info(f" {description} completed")
+        return True
+    except subprocess.CalledProcessError as e:
+        log.error(f" {description} failed: {e}")
+        log.error(f"STDOUT: {e.stdout}")
+        log.error(f"STDERR: {e.stderr}")
+        return False
 
-    run_count = 0
-    while True:
-        run_count += 1
-        log.info(f"[SCHEDULER][DB] Starting DB ingestion run #{run_count}")
+def wait_for_service(url: str, service_name: str, timeout: int = 60) -> bool:
+    """Wait for a service to become available."""
+    log.info(f"⏳ Waiting for {service_name} at {url}")
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
         try:
-            tel = ingest_db_source()
-            log.info(
-                "[SCHEDULER][DB] Completed run #%s | ingested=%s failed=%s "
-                "quarantined=%s coerced=%s",
-                run_count,
-                tel.records_ingested,
-                tel.records_failed,
-                tel.records_quarantined,
-                tel.records_coerced,
-            )
-        except Exception as exc:
-            log.error(f"[SCHEDULER][DB] Run #{run_count} failed: {exc}")
-        log.info(f"[SCHEDULER][DB] Next run in {DB_INGESTION_INTERVAL_SECONDS}s")
-        time.sleep(DB_INGESTION_INTERVAL_SECONDS)
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                log.info(f" {service_name} is ready")
+                return True
+        except requests.RequestException:
+            pass
+
+        time.sleep(5)
+
+    log.error(f" {service_name} failed to start within {timeout}s")
+    return False
+
+def start_docker_infrastructure() -> bool:
+    """Start the Docker infrastructure (Kafka, Zookeeper, API)."""
+    log.info(" Starting Docker infrastructure...")
+
+    # Build containers first
+    if not run_command("docker compose build", "Building Docker containers"):
+        return False
+
+    # Start main services
+    if not run_command("docker compose up -d", "Starting main services (Kafka, API)"):
+        return False
+
+    # Wait for services
+    if not wait_for_service(f"{API_BASE_URL}/health", "Ingestion API"):
+        return False
+
+    if not wait_for_service("http://localhost:9092", "Kafka"):
+        return False
+
+    return True
+
+def start_docker_airflow() -> bool:
+    """Start Airflow services."""
+    log.info("✈️ Starting Airflow...")
+
+    if not run_command("docker compose -f docker-compose.airflow.yml up -d", "Starting Airflow services"):
+        return False
+
+    if not wait_for_service(f"{AIRFLOW_URL}/health", "Airflow"):
+        return False
+
+    return True
+
+def trigger_airflow_dag(dag_id: str) -> bool:
+    """Trigger an Airflow DAG."""
+    log.info(f" Triggering Airflow DAG: {dag_id}")
+
+    try:
+        response = requests.post(
+            f"{AIRFLOW_URL}/api/v1/dags/{dag_id}/dagRuns",
+            json={"conf": {}},
+            auth=("admin", "admin"),
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            log.info(f" DAG {dag_id} triggered successfully")
+            return True
+        else:
+            log.error(f" Failed to trigger DAG {dag_id}: {response.text}")
+            return False
+
+    except Exception as e:
+        log.error(f" Error triggering DAG {dag_id}: {e}")
+        return False
+
+def run_docker_transformations() -> bool:
+    """Run transformations using Airflow DAGs."""
+    log.info(" Running transformations via Airflow...")
+
+    # Trigger transformation DAG
+    if not trigger_airflow_dag("supply_chain_transformation"):
+        return False
+
+    # Wait for completion (simplified - in production you'd monitor DAG runs)
+    log.info(" Waiting for transformation DAG to complete...")
+    time.sleep(60)  # Give it time to start
+
+    return True
+
+def validate_docker_pipeline() -> bool:
+    """Validate that the pipeline ran successfully."""
+    log.info(" Validating pipeline execution...")
+
+    try:
+        # Check transformation summary
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        response = requests.get(
+            f"{API_BASE_URL}/transformation/summary",
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            silver = data.get("silver", {})
+            gold = data.get("gold", {})
+
+            if silver.get("run_count", 0) > 0 or gold.get("run_count", 0) > 0:
+                log.info(" Transformation data found")
+                return True
+            else:
+                log.warning(" No transformation data found")
+                return False
+        else:
+            log.error(f" Failed to get transformation summary: {response.text}")
+            return False
+
+    except Exception as e:
+        log.error(f" Failed to validate pipeline: {e}")
+        return False
+
+def check_docker_dashboard_data() -> bool:
+    """Check if dashboard has data."""
+    log.info(" Checking dashboard data...")
+
+    try:
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        response = requests.get(
+            f"{API_BASE_URL}/dashboard/json",
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            storage = data.get("storage_summary", {})
+
+            if storage.get("ingested", 0) > 0:
+                log.info(" Dashboard has data")
+                return True
+            else:
+                log.warning(" Dashboard appears empty")
+                return False
+        else:
+            log.error(f" Failed to get dashboard data: {response.text}")
+            return False
+
+    except Exception as e:
+        log.error(f" Failed to check dashboard: {e}")
+        return False
 
 
 def run_batch_on_startup():
     """Trigger batch ingestion via API automation."""
-    banner("PHASE: BATCH INGESTION", "Load raw sources via API")
+    banner("PHASE: BATCH INGESTION", "Load raw sources via Docker API")
     batch_sources = [source for source in ALL_SOURCES if source.source_type.value == "file"]
     log.info(f"Preparing batch ingestion for {len(batch_sources)} file-based source(s)")
 
     headers = {"Authorization": f"Bearer {API_TOKEN}"}
-    base_url = f"http://{API_HOST}:{API_PORT}"
-    log.info(f"Using local API endpoint for ingestion: {base_url}")
+    base_url = API_BASE_URL
+    log.info(f"Using Docker API endpoint for ingestion: {base_url}")
 
     if not wait_for_api_ready(base_url=base_url):
         log.error("Batch ingestion startup aborted because API health check failed")
@@ -325,30 +471,89 @@ def run_batch_on_startup():
         log.info(f"Completed batch submission for {source_id}: {requests_sent} request(s)")
 
 def main():
-    banner("PRODUCTION STARTUP", "Batch + Scheduler + Dashboard + DB Producer")
+    banner("DOCKER PRODUCTION STARTUP", "Complete Pipeline with Container Orchestration")
 
-    log.info("Starting Supply Chain Ingestion Pipeline (Batch Runner Mode)")
-    log.info(f"Registered sources: {len(ALL_SOURCES)}")
-    log.info("API expected at: http://ingestion-api:8000")
+    log.info(" Starting Supply Chain Data Engineering Pipeline")
+    log.info("=" * 70)
+    log.info("This will:")
+    log.info("  1. Build and start Docker containers (Kafka, API, Airflow)")
+    log.info("  2. Run batch ingestion to Iceberg bronze tables")
+    log.info("  3. Execute Silver → Gold transformations")
+    log.info("  4. Start continuous ingestion schedulers")
+    log.info("  5. Launch real-time dashboard")
+    log.info("=" * 70)
 
-    # Start ONLY ONCE
+    pipeline_start = time.time()
+
+    # Step 1: Start Docker Infrastructure
+    log.info("\n Step 1: Building and Starting Docker Infrastructure")
+    if not start_docker_infrastructure():
+        log.error(" Failed to start Docker infrastructure")
+        return 1
+
+    # Step 2: Start Airflow
+    log.info("\n📋 Step 2: Starting Airflow Services")
+    if not start_docker_airflow():
+        log.error(" Failed to start Airflow")
+        return 1
+
+    # Step 3: Run Batch Ingestion
+    log.info("\n Step 3: Running Batch Ingestion")
+    run_batch_on_startup()
+
+    # Step 4: Run Transformations
+    log.info("\n Step 4: Running Transformations")
+    if not run_docker_transformations():
+        log.error(" Failed to run transformations")
+        return 1
+
+    # Step 5: Validate Pipeline
+    log.info("\n Step 5: Validating Pipeline")
+    if not validate_docker_pipeline():
+        log.warning(" Pipeline validation failed - continuing with schedulers")
+
+    # Step 6: Check Dashboard
+    log.info("\n Step 6: Checking Dashboard Data")
+    if not check_docker_dashboard_data():
+        log.warning(" Dashboard validation failed - continuing with schedulers")
+
+    pipeline_duration = time.time() - pipeline_start
+    # log.info(".2f"
+    # Step 7: Start Continuous Schedulers
+    log.info("\n Step 7: Starting Continuous Schedulers")
+    log.info("Starting background threads for real-time ingestion...")
+
+    # Start ONLY ONCE - continuous schedulers
     threading.Thread(target=periodic_dashboard, daemon=True).start()
-    threading.Thread(target=run_batch_on_startup, daemon=True).start()
     threading.Thread(target=run_periodic_weather_ingestion, daemon=True).start()
     threading.Thread(target=run_periodic_db_ingestion, daemon=True).start()
     threading.Thread(target=produce_records, daemon=True).start()
 
-    # Initial dashboard
+    # Initial dashboard after setup
     time.sleep(5)
     print_dashboard()
 
-    log.info("Batch runner started successfully")
+    log.info("\n🎉 DOCKER PIPELINE STARTUP COMPLETED!")
+    log.info("=" * 70)
+    log.info("🌐 Access Points:")
+    log.info("   - API: http://localhost:8000")
+    log.info("   - Airflow: http://localhost:8080 (admin/admin)")
+    log.info("   - Dashboard: Open ui_manager.py in browser")
+    log.info("=" * 70)
+    log.info("Continuous ingestion schedulers are now running in background")
+    log.info("Press Ctrl+C to stop all services")
 
     try:
         while True:
             time.sleep(60)
     except KeyboardInterrupt:
+        log.info("\n🛑 Shutdown requested by user")
+        log.info("Stopping Docker services...")
+        run_command("docker compose down", "Stopping main services")
+        run_command("docker compose -f docker-compose.airflow.yml down", "Stopping Airflow services")
+        log.info(" All services stopped")
+        return 0
         log.info("Shutting down batch runner")
 
 if __name__ == "__main__":
-    main() 
+    main()

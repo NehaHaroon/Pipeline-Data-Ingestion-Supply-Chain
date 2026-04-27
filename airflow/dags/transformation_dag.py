@@ -24,13 +24,11 @@ import logging
 import sys
 import os
 
-# Add project root to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 log = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# DAG CONFIGURATION
+# region  DAG CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════════
 
 default_args = {
@@ -51,37 +49,37 @@ dag = DAG(
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# SILVER LAYER TRANSFORMATIONS (one task per source)
+# region  SILVER LAYER TRANSFORMATIONS (one task per source)
 # ═══════════════════════════════════════════════════════════════════════════════════
 
 def transform_silver(source_id: str) -> dict:
     """
     Execute Silver transformation for a single source.
-    
+
     Args:
         source_id: Source identifier (e.g., "src_sales_history")
-    
+
     Returns:
         Dictionary with transformation results and KPIs
-    
+
     Raises:
         AirflowException: If transformation fails
     """
     try:
         from data_plane.transformation.silver_transformer import SilverTransformer
         from data_plane.transformation.transformation_kpis import TransformationKPILogger
-        
+
         log.info(f"Starting Silver transformation for {source_id}")
-        
+
         transformer = SilverTransformer(source_id)
         result = transformer.transform()
-        
+
         log.info(
             f"Silver transformation completed for {source_id}: "
             f"read={result.records_read}, cleaned={result.records_cleaned}, "
             f"rejected={result.records_rejected}, latency={result.transformation_latency_sec}s"
         )
-        
+
         return {
             "source_id": source_id,
             "layer": "silver",
@@ -91,7 +89,7 @@ def transform_silver(source_id: str) -> dict:
             "latency_sec": result.transformation_latency_sec,
             "status": "success",
         }
-    
+
     except Exception as e:
         log.error(f"Silver transformation failed for {source_id}: {e}", exc_info=True)
         raise AirflowException(f"Silver transformation failed for {source_id}: {e}")
@@ -100,36 +98,36 @@ def transform_silver(source_id: str) -> dict:
 def transform_gold() -> dict:
     """
     Execute Gold layer aggregations (joins Silver tables).
-    
+
     Gold operations:
     - Daily sales aggregations
     - 7-day rolling defect rates
     - Current shelf stock (latest per product)
     - Replenishment urgency scoring
     - Weather risk flagging
-    
+
     Returns:
         Dictionary with aggregation results
-    
+
     Raises:
         AirflowException: If aggregation fails
     """
     try:
         from data_plane.transformation.gold_aggregator import GoldAggregator
         from data_plane.transformation.transformation_kpis import TransformationKPILogger
-        
+
         log.info("Starting Gold aggregation")
-        
+
         aggregator = GoldAggregator()
         result = aggregator.run()
-        
+
         log.info(
             f"Gold aggregation completed: "
             f"products_checked={result.get('products_checked', 0)}, "
             f"replenishment_signals={result.get('records_written', 0)}, "
             f"weather_risk={result.get('weather_risk_active', False)}"
         )
-        
+
         return {
             "layer": "gold",
             "products_checked": result.get("products_checked", 0),
@@ -137,14 +135,34 @@ def transform_gold() -> dict:
             "weather_risk_active": result.get("weather_risk_active", False),
             "status": "success",
         }
-    
+
     except Exception as e:
         log.error(f"Gold aggregation failed: {e}", exc_info=True)
         raise AirflowException(f"Gold aggregation failed: {e}")
 
 
+def emit_transformation_summary(**context) -> dict:
+    """
+    Emit a summary of the transformation run for monitoring/alerting.
+    Runs regardless of upstream task success or failure (trigger_rule="all_done").
+    """
+    from data_plane.transformation.transformation_kpis import TransformationKPILogger
+
+    silver_stats = TransformationKPILogger.get_aggregate_stats("silver")
+    gold_stats = TransformationKPILogger.get_aggregate_stats("gold")
+
+    summary = {
+        "run_date": context["execution_date"].isoformat(),
+        "silver": silver_stats,
+        "gold": gold_stats,
+    }
+
+    log.info(f"Transformation summary: {summary}")
+    return summary
+
+
 # ═══════════════════════════════════════════════════════════════════════════════════
-# TASK GROUPS & TASK DEFINITIONS
+# region  TASK GROUPS & TASK DEFINITIONS
 # ═══════════════════════════════════════════════════════════════════════════════════
 
 # Define all sources that need Silver transformation
@@ -158,69 +176,35 @@ SOURCES_FOR_SILVER = [
     "src_weather_api",
 ]
 
-with TaskGroup(
-    "silver_transformations",
-    tooltip="Bronze → Silver for all sources",
-    parent_dag=dag,
-) as silver_tasks:
-    """
-    Parallel Silver transformations, one per source.
-    Each task reads from Bronze, applies cleaning rules, writes to Silver.
-    Tasks run in parallel since they're independent.
-    """
-    silver_results = {}
-    for source_id in SOURCES_FOR_SILVER:
-        task = PythonOperator(
-            task_id=f"transform_silver_{source_id.replace('src_', '')}",
-            python_callable=transform_silver,
-            op_kwargs={"source_id": source_id},
-            provide_context=True,
-            pool="default_pool",
-            pool_slots=1,
-        )
-        silver_results[source_id] = task
+with dag:
+    # Parallel Silver transformations, one per source.
+    # Each task reads from Bronze, applies cleaning rules, writes to Silver.
+    # Tasks run in parallel since they're independent.
+    with TaskGroup("silver_transformations") as silver_tasks:
+        for source_id in SOURCES_FOR_SILVER:
+            PythonOperator(
+                task_id=f"transform_silver_{source_id.replace('src_', '')}",
+                python_callable=transform_silver,
+                op_kwargs={"source_id": source_id},
+            )
 
+    # Gold aggregation task (depends on all Silver tasks completing first)
+    gold_task = PythonOperator(
+        task_id="transform_gold",
+        python_callable=transform_gold,
+        pool="default_pool",
+    )
 
-# Gold aggregation task (depends on all Silver tasks)
-gold_task = PythonOperator(
-    task_id="transform_gold",
-    python_callable=transform_gold,
-    provide_context=True,
-    pool="default_pool",
-)
+    # Summary task runs even if some upstream tasks failed
+    summary_task = PythonOperator(
+        task_id="emit_summary",
+        python_callable=emit_transformation_summary,
+        provide_context=True,
+        trigger_rule="all_done",
+    )
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# TASK DEPENDENCIES
+# region  TASK DEPENDENCIES
 # ═══════════════════════════════════════════════════════════════════════════════════
 
-# All Silver tasks must complete before Gold aggregation
-silver_tasks >> gold_task
-
-# Optional: Emit summary metrics
-def emit_transformation_summary(**context) -> dict:
-    """
-    Emit a summary of the transformation run for monitoring/alerting.
-    """
-    from data_plane.transformation.transformation_kpis import TransformationKPILogger
-    
-    silver_stats = TransformationKPILogger.get_aggregate_stats("silver")
-    gold_stats = TransformationKPILogger.get_aggregate_stats("gold")
-    
-    summary = {
-        "run_date": context["execution_date"].isoformat(),
-        "silver": silver_stats,
-        "gold": gold_stats,
-    }
-    
-    log.info(f"Transformation summary: {summary}")
-    return summary
-
-
-summary_task = PythonOperator(
-    task_id="emit_summary",
-    python_callable=emit_transformation_summary,
-    provide_context=True,
-    trigger_rule="all_done",  # Run even if some tasks fail
-)
-
-gold_task >> summary_task
+    silver_tasks >> gold_task >> summary_task

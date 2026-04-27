@@ -28,6 +28,7 @@ from control_plane.entities import (
     WAREHOUSE_DATASET, MANUFACTURING_DATASET, SALES_DATASET, LEGACY_DATASET
 )
 from control_plane.contracts import CONTRACT_REGISTRY, ViolationPolicy
+from data_plane.transformation.bronze_writer import BronzeWriter
 from observability_plane.telemetry import JobTelemetry, Heartbeat
 
 # ── Logging setup ──────────────────────────────────────────────────────────────
@@ -208,6 +209,7 @@ def ingest_source(
     good_records:      List[Dict] = []
     quarantine_records: List[Dict] = []
     detail_log:        List[Dict] = []
+    good_envelopes:    List[EventEnvelope] = []
 
     log.info(f"")
     log.info(f"{'═'*70}")
@@ -317,6 +319,7 @@ def ingest_source(
                     ),
                 )
                 good_records.append(envelope.to_dict())
+                good_envelopes.append(envelope)
                 tel.record_ok()
             except Exception as e:
                 log.error(f"  [RECORD ERROR] Row {row_num}: {e}")
@@ -332,6 +335,15 @@ def ingest_source(
                 tel.file_count_per_partition += 1
                 tel.snapshot_count += 1
                 log.info(f"  [WRITE]  {len(good_records)} records → {out_path}")
+                
+                # Write to Iceberg Bronze layer
+                try:
+                    bronze_writer = BronzeWriter(source_id)
+                    bronze_result = bronze_writer.write_batch(good_envelopes)
+                    log.info(f"  [BRONZE] {len(good_envelopes)} records → Iceberg table bronze.{source_id.replace('src_', '')}")
+                    log.info(f"  [BRONZE] Snapshot ID: {bronze_result.get('snapshot_id', 'N/A')}, Files added: {bronze_result.get('files_added', 0)}")
+                except Exception as e:
+                    log.error(f"  [BRONZE] Failed to write to Iceberg: {e}")
         except Exception as e:
             log.error(f"  [WRITE] Failed to write good records: {e}")
             tel.record_fail()
@@ -359,7 +371,7 @@ def ingest_source(
             log.info(f"  [DEDUP] Dropped {dup_count} duplicate rows (dedup_key={dedup_col})")
 
     except Exception as exc:
-        log.error(f"  [FATAL] ❌ source={source_id} | error={exc}", exc_info=True)
+        log.error(f"  [FATAL]  source={source_id} | error={exc}", exc_info=True)
         tel.record_fail()
 
     finally:

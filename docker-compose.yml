@@ -16,7 +16,6 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -66,10 +65,11 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    command: ["python", "run_production.py"]
+    # command: ["python", "run_production.py"]
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - pipeline-net
 
@@ -165,6 +165,8 @@ services:
       CONFIG_STORAGE_TOPIC: debezium_configs
       OFFSET_STORAGE_TOPIC: debezium_offsets
       STATUS_STORAGE_TOPIC: debezium_status
+    networks:
+    - pipeline-net
 
   cdc-consumer:
     build: .

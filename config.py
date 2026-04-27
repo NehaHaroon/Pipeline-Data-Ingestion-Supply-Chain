@@ -42,7 +42,7 @@ ICEBERG_NAMESPACE_SILVER = os.getenv("ICEBERG_NAMESPACE_SILVER", "silver")
 ICEBERG_NAMESPACE_GOLD = os.getenv("ICEBERG_NAMESPACE_GOLD", "gold")
 
 # API settings
-API_HOST = os.getenv("API_HOST", "0.0.0.0")
+API_HOST = os.getenv("API_HOST", "localhost")
 API_PORT = int(os.getenv("API_PORT", "8000"))
 API_TOKEN = os.getenv("API_TOKEN", "ee910d618e617c559f1ca41a3a48c3c7")
 LOCAL_API_HOST = os.getenv("LOCAL_API_HOST","localhost")
@@ -50,8 +50,7 @@ LOCAL_API_HOST = os.getenv("LOCAL_API_HOST","localhost")
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-# Database settings (for production, replace with real DB)
-DB_TYPE = os.getenv("DB_TYPE", "parquet")  # parquet, postgres, etc.
+DB_TYPE = os.getenv("DB_TYPE", "parquet")
 
 # Batch settings
 BATCH_SIZE_DEFAULT = int(os.getenv("BATCH_SIZE_DEFAULT", "1000"))

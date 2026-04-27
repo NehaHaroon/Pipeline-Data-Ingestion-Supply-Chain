@@ -1,0 +1,25 @@
+2026-04-27 12:04:39 [INFO] run_production — 
+2026-04-27 12:04:39 [INFO] run_production — ======================================================================
+2026-04-27 12:04:39 [INFO] run_production —   DOCKER PRODUCTION STARTUP: Complete Pipeline with Container Orchestration
+2026-04-27 12:04:39 [INFO] run_production — ======================================================================
+2026-04-27 12:04:39 [INFO] run_production —  Starting Supply Chain Data Engineering Pipeline
+2026-04-27 12:04:39 [INFO] run_production — ======================================================================
+2026-04-27 12:04:39 [INFO] run_production — This will:
+2026-04-27 12:04:39 [INFO] run_production —   1. Build and start Docker containers (Kafka, API, Airflow)
+2026-04-27 12:04:39 [INFO] run_production —   2. Run batch ingestion to Iceberg bronze tables
+2026-04-27 12:04:39 [INFO] run_production —   3. Execute Silver → Gold transformations
+2026-04-27 12:04:39 [INFO] run_production —   4. Start continuous ingestion schedulers
+2026-04-27 12:04:39 [INFO] run_production —   5. Launch real-time dashboard
+2026-04-27 12:04:39 [INFO] run_production — ======================================================================
+2026-04-27 12:04:39 [INFO] run_production — 
+ Step 1: Building and Starting Docker Infrastructure
+2026-04-27 12:04:39 [INFO] run_production —  Starting Docker infrastructure...
+2026-04-27 12:04:39 [INFO] run_production —  Building Docker containers
+2026-04-27 12:04:50 [INFO] run_production —  Building Docker containers completed
+2026-04-27 12:04:50 [INFO] run_production —  Starting main services (Kafka, API)
+2026-04-27 12:05:15 [INFO] run_production —  Starting main services (Kafka, API) completed
+2026-04-27 12:05:15 [INFO] run_production — ⏳ Waiting for Ingestion API at http://localhost:8000/health
+2026-04-27 12:05:15 [INFO] run_production —  Ingestion API is ready
+2026-04-27 12:05:15 [INFO] run_production — ⏳ Waiting for Kafka at http://localhost:9092
+2026-04-27 12:06:16 [ERROR] run_production —  Kafka failed to start within 60s
+2026-04-27 12:06:16 [ERROR] run_production —  Failed to start Docker infrastructure

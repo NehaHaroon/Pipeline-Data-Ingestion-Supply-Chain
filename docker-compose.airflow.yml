@@ -8,10 +8,13 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: M2_WZ23Uv_JbvzdMpAX6Y0_Q66ioO30W47-Fp_8JzI8
     INGESTION_API_URL: http://ingestion-api:8000
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    PYTHONPATH: /opt/airflow/project
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./storage:/opt/airflow/storage
     - ./logs:/opt/airflow/logs
+    - ./:/opt/airflow/project
+    - ./requirements.txt:/requirements.txt
   networks:
     - pipeline-net
 

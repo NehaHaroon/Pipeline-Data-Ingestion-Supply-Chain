@@ -1,12 +1,168 @@
-{"record": 1, "key": "TXN-003-2026-10001", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'CORRECTION', 'RETURN', 'ADJUSTMENT', 'IN', 'OUT'}."]}
-{"record": 2, "key": "TXN-003-2026-10002", "status": "PASS"}
-{"record": 3, "key": "TXN-002-2026-10003", "status": "PASS"}
-{"record": 4, "key": "TXN-002-2026-10004", "status": "PASS"}
-{"record": 5, "key": "TXN-003-2026-10005", "status": "PASS"}
-{"record": 6, "key": "TXN-002-2026-10006", "status": "PASS"}
-{"record": 7, "key": "TXN-002-2026-10007", "status": "PASS"}
-{"record": 8, "key": "TXN-001-2026-10008", "status": "PASS"}
-{"record": 9, "key": "TXN-001-2026-10009", "status": "PASS"}
-{"record": 10, "key": "TXN-002-2026-10010", "status": "PASS"}
-{"record": 11, "key": "TXN-003-2026-10011", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'CORRECTION', 'RETURN', 'ADJUSTMENT', 'IN', 'OUT'}."]}
-{"record": 12, "key": "TXN-001-2026-10012", "status": "PASS"}
+{"record": 1, "key": "TXN-001-2026-10002", "status": "PASS"}
+{"record": 2, "key": "TXN-003-2026-10003", "status": "PASS"}
+{"record": 3, "key": "TXN-002-2026-10004", "status": "PASS"}
+{"record": 4, "key": "TXN-003-2026-10005", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 5, "key": "TXN-003-2026-10006", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 6, "key": "TXN-003-2026-10007", "status": "PASS"}
+{"record": 7, "key": "TXN-001-2026-10008", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 8, "key": "TXN-001-2026-10009", "status": "PASS"}
+{"record": 9, "key": "TXN-003-2026-10010", "status": "PASS"}
+{"record": 10, "key": "TXN-003-2026-10011", "status": "PASS"}
+{"record": 11, "key": "TXN-003-2026-10012", "status": "PASS"}
+{"record": 12, "key": "TXN-001-2026-10013", "status": "PASS"}
+{"record": 13, "key": "TXN-001-2026-10014", "status": "PASS"}
+{"record": 14, "key": "TXN-003-2026-10015", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 15, "key": "TXN-003-2026-10016", "status": "PASS"}
+{"record": 16, "key": "TXN-001-2026-10017", "status": "PASS"}
+{"record": 17, "key": "TXN-002-2026-10018", "status": "PASS"}
+{"record": 18, "key": "TXN-001-2026-10019", "status": "PASS"}
+{"record": 19, "key": "TXN-002-2026-10020", "status": "PASS"}
+{"record": 20, "key": "TXN-001-2026-10021", "status": "PASS"}
+{"record": 21, "key": "TXN-003-2026-10022", "status": "PASS"}
+{"record": 22, "key": "TXN-003-2026-10023", "status": "PASS"}
+{"record": 23, "key": "TXN-003-2026-10024", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 24, "key": "TXN-003-2026-10025", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 25, "key": "TXN-001-2026-10026", "status": "PASS"}
+{"record": 26, "key": "TXN-003-2026-10027", "status": "PASS"}
+{"record": 27, "key": "TXN-002-2026-10028", "status": "PASS"}
+{"record": 28, "key": "TXN-002-2026-10029", "status": "PASS"}
+{"record": 29, "key": "TXN-002-2026-10030", "status": "PASS"}
+{"record": 30, "key": "TXN-002-2026-10031", "status": "PASS"}
+{"record": 31, "key": "TXN-003-2026-10032", "status": "PASS"}
+{"record": 32, "key": "TXN-001-2026-10033", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 33, "key": "TXN-001-2026-10034", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 34, "key": "TXN-001-2026-10035", "status": "PASS"}
+{"record": 35, "key": "TXN-003-2026-10036", "status": "PASS"}
+{"record": 36, "key": "TXN-003-2026-10037", "status": "PASS"}
+{"record": 37, "key": "TXN-001-2026-10038", "status": "PASS"}
+{"record": 38, "key": "TXN-001-2026-10039", "status": "PASS"}
+{"record": 39, "key": "TXN-001-2026-10040", "status": "PASS"}
+{"record": 40, "key": "TXN-002-2026-10041", "status": "PASS"}
+{"record": 41, "key": "TXN-003-2026-10042", "status": "PASS"}
+{"record": 42, "key": "TXN-003-2026-10043", "status": "PASS"}
+{"record": 43, "key": "TXN-002-2026-10044", "status": "PASS"}
+{"record": 44, "key": "TXN-003-2026-10045", "status": "PASS"}
+{"record": 45, "key": "TXN-003-2026-10046", "status": "PASS"}
+{"record": 46, "key": "TXN-001-2026-10047", "status": "PASS"}
+{"record": 47, "key": "TXN-002-2026-10048", "status": "PASS"}
+{"record": 48, "key": "TXN-003-2026-10049", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 49, "key": "TXN-001-2026-10050", "status": "PASS"}
+{"record": 50, "key": "TXN-001-2026-10051", "status": "PASS"}
+{"record": 51, "key": "TXN-001-2026-10052", "status": "PASS"}
+{"record": 52, "key": "TXN-003-2026-10053", "status": "PASS"}
+{"record": 53, "key": "TXN-001-2026-10054", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 54, "key": "TXN-001-2026-10055", "status": "PASS"}
+{"record": 55, "key": "TXN-003-2026-10056", "status": "PASS"}
+{"record": 56, "key": "TXN-003-2026-10057", "status": "PASS"}
+{"record": 57, "key": "TXN-002-2026-10058", "status": "PASS"}
+{"record": 58, "key": "TXN-002-2026-10059", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 59, "key": "TXN-001-2026-10060", "status": "PASS"}
+{"record": 60, "key": "TXN-003-2026-10061", "status": "PASS"}
+{"record": 61, "key": "TXN-001-2026-10062", "status": "PASS"}
+{"record": 62, "key": "TXN-002-2026-10063", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 63, "key": "TXN-001-2026-10064", "status": "PASS"}
+{"record": 64, "key": "TXN-001-2026-10065", "status": "PASS"}
+{"record": 65, "key": "TXN-002-2026-10066", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 66, "key": "TXN-003-2026-10067", "status": "PASS"}
+{"record": 67, "key": "TXN-003-2026-10068", "status": "PASS"}
+{"record": 68, "key": "TXN-003-2026-10069", "status": "PASS"}
+{"record": 69, "key": "TXN-001-2026-10070", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 70, "key": "TXN-003-2026-10071", "status": "PASS"}
+{"record": 71, "key": "TXN-001-2026-10072", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 72, "key": "TXN-002-2026-10073", "status": "PASS"}
+{"record": 73, "key": "TXN-002-2026-10074", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 74, "key": "TXN-002-2026-10075", "status": "PASS"}
+{"record": 75, "key": "TXN-002-2026-10076", "status": "PASS"}
+{"record": 76, "key": "TXN-003-2026-10077", "status": "PASS"}
+{"record": 77, "key": "TXN-001-2026-10078", "status": "PASS"}
+{"record": 78, "key": "TXN-001-2026-10079", "status": "PASS"}
+{"record": 79, "key": "TXN-003-2026-10080", "status": "PASS"}
+{"record": 80, "key": "TXN-002-2026-10081", "status": "PASS"}
+{"record": 81, "key": "TXN-002-2026-10082", "status": "PASS"}
+{"record": 82, "key": "TXN-001-2026-10083", "status": "PASS"}
+{"record": 83, "key": "TXN-003-2026-10084", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 84, "key": "TXN-003-2026-10085", "status": "PASS"}
+{"record": 85, "key": "TXN-001-2026-10086", "status": "PASS"}
+{"record": 86, "key": "TXN-003-2026-10087", "status": "PASS"}
+{"record": 87, "key": "TXN-001-2026-10088", "status": "PASS"}
+{"record": 88, "key": "TXN-001-2026-10089", "status": "PASS"}
+{"record": 89, "key": "TXN-003-2026-10090", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 90, "key": "TXN-003-2026-10091", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 91, "key": "TXN-001-2026-10092", "status": "PASS"}
+{"record": 92, "key": "TXN-001-2026-10093", "status": "PASS"}
+{"record": 93, "key": "TXN-003-2026-10094", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 94, "key": "TXN-002-2026-10095", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 95, "key": "TXN-002-2026-10096", "status": "PASS"}
+{"record": 96, "key": "TXN-001-2026-10097", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 97, "key": "TXN-001-2026-10098", "status": "PASS"}
+{"record": 98, "key": "TXN-002-2026-10099", "status": "PASS"}
+{"record": 99, "key": "TXN-003-2026-10100", "status": "PASS"}
+{"record": 100, "key": "TXN-002-2026-10101", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 101, "key": "TXN-002-2026-10102", "status": "PASS"}
+{"record": 102, "key": "TXN-003-2026-10103", "status": "PASS"}
+{"record": 103, "key": "TXN-002-2026-10104", "status": "PASS"}
+{"record": 104, "key": "TXN-003-2026-10105", "status": "PASS"}
+{"record": 105, "key": "TXN-003-2026-10106", "status": "PASS"}
+{"record": 106, "key": "TXN-002-2026-10107", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 107, "key": "TXN-002-2026-10108", "status": "PASS"}
+{"record": 108, "key": "TXN-002-2026-10109", "status": "PASS"}
+{"record": 109, "key": "TXN-002-2026-10110", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 110, "key": "TXN-002-2026-10111", "status": "PASS"}
+{"record": 111, "key": "TXN-002-2026-10112", "status": "PASS"}
+{"record": 112, "key": "TXN-003-2026-10113", "status": "PASS"}
+{"record": 113, "key": "TXN-003-2026-10114", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 114, "key": "TXN-001-2026-10115", "status": "PASS"}
+{"record": 115, "key": "TXN-003-2026-10116", "status": "PASS"}
+{"record": 116, "key": "TXN-003-2026-10117", "status": "PASS"}
+{"record": 117, "key": "TXN-001-2026-10118", "status": "PASS"}
+{"record": 118, "key": "TXN-003-2026-10119", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 119, "key": "TXN-002-2026-10120", "status": "PASS"}
+{"record": 120, "key": "TXN-001-2026-10121", "status": "PASS"}
+{"record": 121, "key": "TXN-002-2026-10122", "status": "PASS"}
+{"record": 122, "key": "TXN-003-2026-10123", "status": "PASS"}
+{"record": 123, "key": "TXN-001-2026-10124", "status": "PASS"}
+{"record": 124, "key": "TXN-003-2026-10125", "status": "PASS"}
+{"record": 125, "key": "TXN-002-2026-10126", "status": "PASS"}
+{"record": 126, "key": "TXN-003-2026-10127", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 127, "key": "TXN-003-2026-10128", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 128, "key": "TXN-003-2026-10129", "status": "PASS"}
+{"record": 129, "key": "TXN-002-2026-10130", "status": "PASS"}
+{"record": 130, "key": "TXN-001-2026-10131", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 131, "key": "TXN-001-2026-10132", "status": "PASS"}
+{"record": 132, "key": "TXN-003-2026-10133", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 133, "key": "TXN-003-2026-10134", "status": "PASS"}
+{"record": 134, "key": "TXN-003-2026-10135", "status": "PASS"}
+{"record": 135, "key": "TXN-003-2026-10136", "status": "PASS"}
+{"record": 136, "key": "TXN-002-2026-10137", "status": "PASS"}
+{"record": 137, "key": "TXN-003-2026-10138", "status": "PASS"}
+{"record": 138, "key": "TXN-003-2026-10139", "status": "PASS"}
+{"record": 139, "key": "TXN-001-2026-10140", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 140, "key": "TXN-003-2026-10141", "status": "PASS"}
+{"record": 141, "key": "TXN-002-2026-10142", "status": "PASS"}
+{"record": 142, "key": "TXN-003-2026-10143", "status": "PASS"}
+{"record": 143, "key": "TXN-002-2026-10144", "status": "PASS"}
+{"record": 144, "key": "TXN-003-2026-10145", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 145, "key": "TXN-003-2026-10146", "status": "PASS"}
+{"record": 146, "key": "TXN-002-2026-10147", "status": "PASS"}
+{"record": 147, "key": "TXN-002-2026-10148", "status": "PASS"}
+{"record": 148, "key": "TXN-003-2026-10149", "status": "PASS"}
+{"record": 149, "key": "TXN-002-2026-10150", "status": "PASS"}
+{"record": 150, "key": "TXN-002-2026-10151", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 151, "key": "TXN-003-2026-10152", "status": "PASS"}
+{"record": 152, "key": "TXN-001-2026-10153", "status": "PASS"}
+{"record": 153, "key": "TXN-003-2026-10154", "status": "PASS"}
+{"record": 154, "key": "TXN-002-2026-10155", "status": "PASS"}
+{"record": 155, "key": "TXN-002-2026-10156", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 156, "key": "TXN-001-2026-10157", "status": "PASS"}
+{"record": 157, "key": "TXN-002-2026-10158", "status": "PASS"}
+{"record": 158, "key": "TXN-003-2026-10159", "status": "QUARANTINE", "violations": ["Field 'transaction_type' value 'WRITE_OFF' not in allowed set {'IN', 'OUT', 'RETURN', 'ADJUSTMENT', 'CORRECTION'}."]}
+{"record": 159, "key": "TXN-001-2026-10160", "status": "PASS"}
+{"record": 160, "key": "TXN-002-2026-10161", "status": "PASS"}
+{"record": 161, "key": "TXN-002-2026-10162", "status": "PASS"}
+{"record": 162, "key": "TXN-003-2026-10163", "status": "PASS"}
+{"record": 163, "key": "TXN-001-2026-10164", "status": "PASS"}
+{"record": 164, "key": "TXN-001-2026-10165", "status": "PASS"}
+{"record": 165, "key": "TXN-001-2026-10166", "status": "PASS"}
+{"record": 166, "key": "TXN-002-2026-10167", "status": "PASS"}
+{"record": 167, "key": "TXN-002-2026-10168", "status": "PASS"}
+{"record": 168, "key": "TXN-002-2026-10001", "status": "PASS"}
