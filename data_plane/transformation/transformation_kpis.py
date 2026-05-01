@@ -212,6 +212,7 @@ class TransformationKPILogger:
         limit: int = 100,
     ) -> List[TransformationKPIs]:
         """Load KPI records from disk with optional filtering."""
+        log.info("@@@@ KPIS_LOG_PATH: {TransformationKPILogger.KPIS_LOG_PATH}")
         if not os.path.exists(TransformationKPILogger.KPIS_LOG_PATH):
             return []
         

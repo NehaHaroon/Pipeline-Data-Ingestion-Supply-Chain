@@ -1224,7 +1224,6 @@ async function refresh() {
 /* ══ BOOT ════════════════════════════════════════════════════════════════ */
 initCharts();
 refresh();
-setInterval(refresh, 120000);
 </script>
 </body>
 </html>"""

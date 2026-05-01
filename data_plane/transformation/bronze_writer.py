@@ -1,6 +1,5 @@
 
 import pyarrow as pa
-from pyiceberg.schema import Schema
 from storage_plane.iceberg_catalog import get_catalog
 from control_plane.entities import EventEnvelope
 
@@ -21,13 +20,13 @@ class BronzeWriter:
         rows = [e.to_dict() for e in envelopes]
         arrow_table = pa.Table.from_pylist(rows)
 
-        if not self.catalog.table_exists(self.table_name):
+        try:
+            iceberg_table = self.catalog.load_table(self.table_name)
+        except:
             iceberg_table = self.catalog.create_table(
                 self.table_name,
                 schema=arrow_table.schema,
             )
-        else:
-            iceberg_table = self.catalog.load_table(self.table_name)
 
         iceberg_table.append(arrow_table)
 

@@ -1,0 +1,16 @@
+FROM apache/airflow:2.9.1-python3.11
+
+# Install system build tools
+USER root
+RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+
+COPY requirements-airflow.txt /
+
+USER airflow
+
+# upgrade pip safely under airflow user
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# install dependencies with constraints
+RUN pip install --no-cache-dir -r /requirements-airflow.txt \
+    --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.11.txt

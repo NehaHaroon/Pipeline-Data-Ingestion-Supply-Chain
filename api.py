@@ -248,12 +248,13 @@ def ingest_data(
     request: Request,
     source_id: str,
     request_data: IngestRequest,
-    background_tasks: BackgroundTasks,
-    token: str = Depends(verify_token),
+    background_tasks: BackgroundTasks
+    # token: str = Depends(verify_token),
 ):
+
     if source_id not in CONTRACT_REGISTRY:
         raise HTTPException(status_code=404, detail="Source not found")
-
+    print(request_data.dict())
     dataset_id = f"ds_{source_id.replace('src_', '')}"
     job_id = str(uuid.uuid4())
     job = IngestionJob(
@@ -269,13 +270,30 @@ def ingest_data(
 
 def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]):
     try:
+        from data_plane.transformation.bronze_writer import BronzeWriter
+        from control_plane.entities import EventEnvelope, OperationType
+        import time
+
         telemetry = JobTelemetry(job_id=job_id, source_id=source_id)
         telemetry.mark_start()
+
+        bronze_writer = BronzeWriter(source_id)
+        envelopes = []
 
         for idx, record in enumerate(records, start=1):
             result = CONTRACT_REGISTRY[source_id].enforce(record)
             rec_status = result["status"]
             if rec_status in ["ok", "coerced"]:
+                # Create EventEnvelope for Bronze layer
+                envelope = EventEnvelope(
+                    payload=result["record"],
+                    source_id=source_id,
+                    dataset_id=f"ds_{source_id.replace('src_', '')}",
+                    schema_version="v1",
+                    operation_type=OperationType.INSERT,
+                    event_timestamp=time.time(),
+                )
+                envelopes.append(envelope)
                 datasets_db.setdefault(source_id, []).append(result["record"])
                 telemetry.records_ingested += 1
             elif rec_status == "quarantine":
@@ -289,6 +307,13 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
                 f"records_quarantined={telemetry.records_quarantined} "
                 f"records_failed={telemetry.records_failed}"
             )
+
+        # Write to Bronze Iceberg table
+        if envelopes:
+            bronze_result = bronze_writer.write_batch(envelopes)
+            log.info(f"[BRONZE-WRITE] job={job_id} source={source_id} "
+                    f"records_written={bronze_result['records_written']} "
+                    f"snapshot_id={bronze_result['snapshot_id']}")
 
         telemetry.mark_end()
         telemetry.log_report()
@@ -506,7 +531,7 @@ def get_transformation_kpis(
     - limit: Max records to return (default 100)
     """
     from data_plane.transformation.transformation_kpis import TransformationKPILogger
-    
+    log.info("@@@@@@@@@@@ source_id: {source_id} layer {layer} limit {limit}")
     kpis = TransformationKPILogger.load_kpis(
         source_id=source_id,
         layer=layer,
@@ -536,7 +561,8 @@ def get_transformation_summary(token: str = Depends(verify_token)):
 # region: Storage/Iceberg Metrics
 # ---------------------------------------------------------------------------
 @app.get("/storage/iceberg-kpis")
-def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(verify_token)):
+# def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(verify_token)):
+def get_iceberg_kpis(table_name: Optional[str] = None):
     """
     Get Iceberg table KPIs (file metrics, snapshots, compaction status).
     
@@ -552,7 +578,8 @@ def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(veri
 
 
 @app.get("/storage/summary")
-def get_storage_summary_json(token: str = Depends(verify_token)):
+# def get_storage_summary_json(token: str = Depends(verify_token)):
+def get_storage_summary_json():
     """Get consolidated storage summary (file counts, sizes, compaction status)."""
     from storage_plane.storage_kpis import get_all_tables_kpis, compute_storage_health
     
@@ -582,7 +609,12 @@ def get_replenishment_signals(
     
     try:
         catalog = get_catalog()
-        if not catalog.table_exists("gold.replenishment_signals"):
+        try:
+            catalog.load_table("gold.replenishment_signals")
+            table_exists = True
+        except:
+            table_exists = False
+        if not table_exists:
             return {"signals": [], "count": 0}
         
         df = catalog.load_table("gold.replenishment_signals").scan().to_pandas()

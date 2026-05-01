@@ -115,10 +115,10 @@ class SilverTransformer:
         # 8. Write to Silver Iceberg table
         if not df.empty:
             arrow_table = pa.Table.from_pandas(df, preserve_index=False)
-            if not self.catalog.table_exists(self.silver_table):
-                silver = self.catalog.create_table(self.silver_table, schema=arrow_table.schema)
-            else:
+            try:
                 silver = self.catalog.load_table(self.silver_table)
+            except:
+                silver = self.catalog.create_table(self.silver_table, schema=arrow_table.schema)
             silver.overwrite(arrow_table)  # overwrite for idempotency
 
         latency = time.time() - t0

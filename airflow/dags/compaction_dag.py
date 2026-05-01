@@ -1,27 +1,27 @@
-"""
-Compaction Pipeline DAG: Iceberg table maintenance
+# """
+# Compaction Pipeline DAG: Iceberg table maintenance
 
-This DAG runs scheduled compaction on Iceberg tables to:
-1. Consolidate small files into optimally-sized files (128 MB target)
-2. Improve query performance (fewer files = fewer seeks)
-3. Reduce metadata overhead
-4. Reclaim storage space from deleted records
+# This DAG runs scheduled compaction on Iceberg tables to:
+# 1. Consolidate small files into optimally-sized files (128 MB target)
+# 2. Improve query performance (fewer files = fewer seeks)
+# 3. Reduce metadata overhead
+# 4. Reclaim storage space from deleted records
 
-Schedule:
-- Bronze streaming tables (IoT, CDC): Every 30 minutes
-- Bronze batch tables: Daily at 2 AM
-- Silver: Every 4 hours
-- Gold: Every 2 hours (most read traffic)
+# Schedule:
+# - Bronze streaming tables (IoT, CDC): Every 30 minutes
+# - Bronze batch tables: Daily at 2 AM
+# - Silver: Every 4 hours
+# - Gold: Every 2 hours (most read traffic)
 
-Compaction strategy: Bin-packing (combine small files, preserve large files)
-Compaction monitoring: Track files_before/after, duration, and compaction lag
+# Compaction strategy: Bin-packing (combine small files, preserve large files)
+# Compaction monitoring: Track files_before/after, duration, and compaction lag
 
-Design notes:
-- Compaction is a maintenance task (low priority, can be delayed)
-- Idempotent: re-running compaction is safe
-- Runs post-transformation to consolidate fresh data
-- Respects CompactionPolicy from storage_plane/iceberg_entities.py
-"""
+# Design notes:
+# - Compaction is a maintenance task (low priority, can be delayed)
+# - Idempotent: re-running compaction is safe
+# - Runs post-transformation to consolidate fresh data
+# - Respects CompactionPolicy from storage_plane/iceberg_entities.py
+# """
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -33,7 +33,7 @@ import sys
 import os
 
 # Add project root to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, '/opt/airflow/project')
 
 log = logging.getLogger(__name__)
 
@@ -62,24 +62,24 @@ dag = DAG(
 # COMPACTION TASKS
 # ═══════════════════════════════════════════════════════════════════════════════════
 
+# """
+# Run bin-pack compaction on an Iceberg table.
+
+# Args:
+#     table_name: Fully qualified table name (e.g., "bronze.iot_rfid_stream")
+
+# Returns:
+#     Dictionary with compaction metrics:
+#     - table: table name
+#     - files_before: number of files before
+#     - files_after: number of files after
+#     - files_compacted: how many files were merged
+#     - duration_sec: how long compaction took
+
+# Raises:
+#     AirflowException: If compaction fails
+# """
 def compact_table(table_name: str) -> dict:
-    """
-    Run bin-pack compaction on an Iceberg table.
-    
-    Args:
-        table_name: Fully qualified table name (e.g., "bronze.iot_rfid_stream")
-    
-    Returns:
-        Dictionary with compaction metrics:
-        - table: table name
-        - files_before: number of files before
-        - files_after: number of files after
-        - files_compacted: how many files were merged
-        - duration_sec: how long compaction took
-    
-    Raises:
-        AirflowException: If compaction fails
-    """
     try:
         from storage_plane.compaction import CompactionRunner
         import time
@@ -109,10 +109,10 @@ def compact_table(table_name: str) -> dict:
         raise AirflowException(f"Compaction failed for {table_name}: {e}")
 
 
+# """
+# Collect and log compaction metrics for monitoring.
+# """
 def collect_compaction_metrics(**context) -> dict:
-    """
-    Collect and log compaction metrics for monitoring.
-    """
     from storage_plane.iceberg_catalog import get_catalog
     from storage_plane.storage_kpis import get_all_tables_kpis
     
@@ -178,74 +178,73 @@ GOLD_TABLES = [
 # ═══════════════════════════════════════════════════════════════════════════════════
 
 # Compaction metrics check
+# """
+# Compact all Bronze tables. Bronze accumulates files from:
+# - Batch ingestion (daily)
+# - Streaming ingestion (continuous)
+
+# Streaming Bronze tables are more prone to small files due to high event volume.
+# """
 metrics_task = PythonOperator(
     task_id="check_compaction_health",
     python_callable=collect_compaction_metrics,
-    provide_context=True,
+    provide_context=True
 )
 
-# Bronze table compaction group
-with TaskGroup(
-    "compact_bronze_tables",
-    tooltip="Bin-pack consolidation for Bronze tables",
-    parent_dag=dag,
-) as bronze_compact_tasks:
-    """
-    Compact all Bronze tables. Bronze accumulates files from:
-    - Batch ingestion (daily)
-    - Streaming ingestion (continuous)
-    
-    Streaming Bronze tables are more prone to small files due to high event volume.
-    """
-    for table_name in STREAMING_TABLES + BATCH_TABLES:
-        PythonOperator(
-            task_id=f"compact_{table_name.replace('.', '_')}",
-            python_callable=compact_table,
-            op_kwargs={"table_name": table_name},
-        )
+with dag:
+    with TaskGroup(
+        "compact_bronze_tables",
+        tooltip="Bin-pack consolidation for Bronze tables"
+    ) as bronze_compact_tasks:
+        for table_name in STREAMING_TABLES + BATCH_TABLES:
+            PythonOperator(
+                task_id=f"compact_{table_name.replace('.', '_')}",
+                python_callable=compact_table,
+                op_kwargs={"table_name": table_name},
+            )
 
 # Silver table compaction group
-with TaskGroup(
-    "compact_silver_tables",
-    tooltip="Consolidation for Silver tables",
-    parent_dag=dag,
-) as silver_compact_tasks:
-    """
-    Silver tables grow as Silver transformations append deduplicated data.
-    Less prone to small files than Bronze, but still need periodic compaction.
-    """
-    # Auto-detect Silver tables from catalog
-    try:
-        from storage_plane.iceberg_catalog import get_catalog
-        catalog = get_catalog()
-        silver_table_ids = catalog.list_tables("silver")
-        SILVER_TABLES = [f"silver.{tid[1]}" for tid in silver_table_ids]
-    except Exception as e:
-        log.warning(f"Could not auto-detect Silver tables: {e}")
-    
-    for table_name in SILVER_TABLES:
-        PythonOperator(
-            task_id=f"compact_{table_name.replace('.', '_')}",
-            python_callable=compact_table,
-            op_kwargs={"table_name": table_name},
-        )
+# """
+# Silver tables grow as Silver transformations append deduplicated data.
+# Less prone to small files than Bronze, but still need periodic compaction.
+# """
+# Auto-detect Silver tables from catalog
+with dag:
+    with TaskGroup(
+        "compact_silver_tables",
+        tooltip="Consolidation for Silver tables"   
+    ) as silver_compact_tasks:
+        try:
+            from storage_plane.iceberg_catalog import get_catalog
+            catalog = get_catalog()
+            silver_table_ids = catalog.list_tables("silver")
+            SILVER_TABLES = [f"silver.{tid[1]}" for tid in silver_table_ids]
+        except Exception as e:
+            log.warning(f"Could not auto-detect Silver tables: {e}")
+        
+        for table_name in SILVER_TABLES:
+            PythonOperator(
+                task_id=f"compact_{table_name.replace('.', '_')}",
+                python_callable=compact_table,
+                op_kwargs={"table_name": table_name},
+            )
 
 # Gold table compaction group
-with TaskGroup(
-    "compact_gold_tables",
-    tooltip="Consolidation for Gold tables",
-    parent_dag=dag,
-) as gold_compact_tasks:
-    """
-    Gold tables are the primary read tables (dashboards, APIs).
-    Frequent compaction ensures fast query performance.
-    """
-    for table_name in GOLD_TABLES:
-        PythonOperator(
-            task_id=f"compact_{table_name.replace('.', '_')}",
-            python_callable=compact_table,
-            op_kwargs={"table_name": table_name},
-        )
+# """
+# Gold tables are the primary read tables (dashboards, APIs).
+# Frequent compaction ensures fast query performance.
+# """
+with dag:
+    with TaskGroup(
+        "compact_gold_tables",
+        tooltip="Consolidation for Gold tables"
+    ) as gold_compact_tasks:
+        for table_name in GOLD_TABLES:
+            PythonOperator(
+                task_id=f"compact_{table_name.replace('.', '_')}",
+                python_callable=compact_table,
+                op_kwargs={"table_name": table_name},
+            )
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # TASK DEPENDENCIES

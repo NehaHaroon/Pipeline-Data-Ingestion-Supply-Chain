@@ -15,9 +15,10 @@ class GoldAggregator:
 
     def _load_silver(self, source_id: str) -> pd.DataFrame:
         tbl_name = f"silver.{source_id.replace('src_', '')}"
-        if not self.catalog.table_exists(tbl_name):
+        try:
+            return self.catalog.load_table(tbl_name).scan().to_pandas()
+        except:
             return pd.DataFrame()
-        return self.catalog.load_table(tbl_name).scan().to_pandas()
 
     def run(self) -> dict:
         warehouse = self._load_silver("src_warehouse_master")
@@ -73,9 +74,11 @@ class GoldAggregator:
 
         arrow_table = pa.Table.from_pandas(replenishment_signals, preserve_index=False)
         gold_tbl_name = "gold.replenishment_signals"
-        if not self.catalog.table_exists(gold_tbl_name):
-            self.catalog.create_table(gold_tbl_name, schema=arrow_table.schema)
-        self.catalog.load_table(gold_tbl_name).overwrite(arrow_table)
+        try:
+            gold_tbl = self.catalog.load_table(gold_tbl_name)
+        except:
+            gold_tbl = self.catalog.create_table(gold_tbl_name, schema=arrow_table.schema)
+        gold_tbl.overwrite(arrow_table)
 
         return {
             "records_written": len(replenishment_signals),

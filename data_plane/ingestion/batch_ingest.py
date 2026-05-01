@@ -332,6 +332,16 @@ def ingest_source(
                 tel.file_count_per_partition += 1
                 tel.snapshot_count += 1
                 log.info(f"  [WRITE]  {len(good_records)} records → {out_path}")
+
+                # Write to Bronze Iceberg table
+                from data_plane.transformation.bronze_writer import BronzeWriter
+                from control_plane.entities import EventEnvelope
+                envelopes = [EventEnvelope.from_dict(rec) for rec in good_records]
+                bronze_writer = BronzeWriter(source_id)
+                bronze_result = bronze_writer.write_batch(envelopes)
+                log.info(f"  [BRONZE-WRITE] {bronze_result['records_written']} records → "
+                        f"{source_id.replace('src_', '')} table | "
+                        f"snapshot_id={bronze_result['snapshot_id']}")
         except Exception as e:
             log.error(f"  [WRITE] Failed to write good records: {e}")
             tel.record_fail()

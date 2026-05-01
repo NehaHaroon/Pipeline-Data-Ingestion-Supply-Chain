@@ -1,52 +1,136 @@
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.9.1
+  build:
+    context: .
+    dockerfile: Dockerfile.airflow
+  image: custom-airflow:latest
+
   env_file: .env
+
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+
     AIRFLOW__CORE__FERNET_KEY: HVOKFHsSX9zF4J4ilYwoXfyQsh7Z33KueV1jKmpN1GI=
     AIRFLOW__WEBSERVER__SECRET_KEY: M2_WZ23Uv_JbvzdMpAX6Y0_Q66ioO30W47-Fp_8JzI8
+
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+
     INGESTION_API_URL: http://ingestion-api:8000
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+    PYTHONPATH: /opt/airflow/project
+
   volumes:
     - ./airflow/dags:/opt/airflow/dags
+    - ./:/opt/airflow/project
     - ./storage:/opt/airflow/storage
     - ./logs:/opt/airflow/logs
+
   networks:
     - pipeline-net
 
+
 services:
+
+  # ─────────────────────────────
+  # POSTGRES DB
+  # ─────────────────────────────
   airflow-postgres:
     image: postgres:15
+    container_name: airflow-postgres
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+
     ports:
       - "5433:5432"
+
     networks:
       - pipeline-net
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ─────────────────────────────
+  # AIRFLOW INIT
+  # ─────────────────────────────
   airflow-init:
     <<: *airflow-common
-    entrypoint: >
-      bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev"
-    depends_on:
-      - airflow-postgres
 
+    entrypoint: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev || true
+      "
+
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+
+
+  # ─────────────────────────────
+  # SCHEDULER
+  # ─────────────────────────────
   airflow-scheduler:
     <<: *airflow-common
-    command: scheduler
-    depends_on:
-      - airflow-init
 
+    command: scheduler
+
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+    restart: unless-stopped
+
+
+  # ─────────────────────────────
+  # WEBSERVER
+  # ─────────────────────────────
   airflow-webserver:
     <<: *airflow-common
+
     command: webserver
+
     ports:
       - "8080:8080"
+
     depends_on:
-      - airflow-scheduler
+      airflow-scheduler:
+        condition: service_started
+
+    restart: unless-stopped
+
+
+  # ─────────────────────────────
+  # TRANSFORM SERVICE
+  # ─────────────────────────────
+  transform-service:
+    build: .
+    working_dir: /app
+
+    volumes:
+      - ./:/app
+
+    ports:
+      - "8001:8001"
+
+    command: ["uvicorn", "transform_service:app", "--host", "0.0.0.0", "--port", "8001"]
+
+    # depends_on:
+    #   ingestion-api:
+    #     condition: service_healthy
+
+    networks:
+      - pipeline-net
+
+    restart: unless-stopped
+
 
 networks:
   pipeline-net:
