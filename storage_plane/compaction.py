@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import logging
 
+from pyiceberg.exceptions import NoSuchTableError
+
 from storage_plane.iceberg_catalog import get_catalog
 from storage_plane.iceberg_session_lock import iceberg_catalog_session, retry_catalog_mutation
 
@@ -19,10 +21,10 @@ class CompactionRunner:
     def run_table(self, table_name: str) -> dict:
         def _compact() -> dict:
             catalog = get_catalog()
-            if not catalog.table_exists(table_name):
+            try:
+                table = catalog.load_table(table_name)
+            except NoSuchTableError:
                 return {"skipped": True, "reason": "table does not exist"}
-
-            table = catalog.load_table(table_name)
             files_before = len(table.inspect.files().to_pydict().get("file_path", []))
 
             table.rewrite_data_files(

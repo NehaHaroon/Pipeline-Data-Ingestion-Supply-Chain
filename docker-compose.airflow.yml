@@ -16,6 +16,12 @@ x-airflow-common: &airflow-common
 
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 
+    # apache/airflow entrypoint maps the airflow user to this UID so bind-mounted ./storage is writable.
+    # Add to .env: AIRFLOW_UID and AIRFLOW_GID from `id -u` / `id -g` on Linux/macOS WSL if you see
+    # PermissionError on storage/.iceberg_pyiceberg_catalog.lock (see storage_plane/iceberg_session_lock.py).
+    AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+    AIRFLOW_GID: ${AIRFLOW_GID:-0}
+
     INGESTION_API_URL: http://ingestion-api:8000
     API_TOKEN: ${API_TOKEN}
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092

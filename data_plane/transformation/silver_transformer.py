@@ -1,7 +1,7 @@
 import traceback
 import pandas as pd
 import pyarrow as pa
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from common.arrow_iceberg_utils import prepare_arrow_table_for_iceberg
 from storage_plane.iceberg_catalog import get_catalog
 from storage_plane.iceberg_session_lock import iceberg_catalog_session, retry_catalog_mutation
 from control_plane.contracts import CONTRACT_REGISTRY
-from data_plane.transformation.transformation_kpis import TransformationKPITracker
+from data_plane.transformation.transformation_kpis import TransformationKPILogger, TransformationKPITracker
 from control_plane.service_registry import StorageLayer, table_name_for_layer
 from observability_plane.structured_logging import get_logger, log_pipeline_event
 
@@ -87,6 +87,14 @@ class SilverTransformer:
                 exception_message=str(exc),
                 traceback=traceback.format_exc(),
             )
+            self.kpi.start_time = t0
+            self.kpi.end_time = time.time()
+            kpi_row = replace(
+                self.kpi.finalize(),
+                status="skipped",
+                error_message=f"bronze_unavailable: {exc}",
+            )
+            TransformationKPILogger.log_kpi(kpi_row)
             return SilverTransformResult(
                 source_id=self.source_id,
                 records_read=0,
@@ -236,6 +244,18 @@ class SilverTransformer:
                 retry_catalog_mutation(_silver_catalog_write)
 
         latency = time.time() - t0
+        self.kpi.records_read = records_read
+        self.kpi.records_cleaned = len(df)
+        self.kpi.records_rejected = len(rejected_rows)
+        self.kpi.null_imputations = null_imputations
+        self.kpi.duplicates_removed = duplicates_removed
+        self.kpi.late_arrivals = late_arriving_count
+        self.kpi.schema_violations = violations
+        self.kpi.records_written = len(df)
+        self.kpi.start_time = t0
+        self.kpi.end_time = latency + t0
+        TransformationKPILogger.log_kpi(self.kpi.finalize())
+
         log_pipeline_event(
             self.log,
             "info",

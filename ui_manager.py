@@ -150,7 +150,9 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 .reset-btn:hover{background:var(--bg3);color:var(--t1)}
 
 /* ── Main ── */
-.main{background:var(--bg);overflow-x:hidden}
+.main{background:var(--bg);overflow-x:hidden;min-height:100vh}
+.page-content{color:var(--t1);min-height:calc(100vh - 52px)}
+.page-content .content{background:var(--bg)}
 .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-l{display:flex;align-items:center;gap:16px}
@@ -421,144 +423,145 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 
   <!-- INGESTION PAGE (existing content) -->
   <div id="page-ingestion" class="page-content" style="display:block;">
-  <div class="content">
+    <div class="content">
 
-    <!-- filter summary -->
-    <div class="fsummary hidden ai" id="fsummary">
-      Showing <strong id="f-cnt">—</strong> of <strong id="t-cnt">—</strong> jobs &nbsp;
-      <span style="color:var(--t3)" id="f-desc"></span>
-    </div>
+      <!-- filter summary -->
+      <div class="fsummary hidden ai" id="fsummary">
+        Showing <strong id="f-cnt">—</strong> of <strong id="t-cnt">—</strong> jobs &nbsp;
+        <span style="color:var(--t3)" id="f-desc"></span>
+      </div>
 
-    <!-- KPI strip -->
-    <div class="kpi-strip ai d1">
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
-        <div class="kpi-lbl">Total Jobs</div><div class="kpi-val" id="kv-total">—</div>
-        <div class="kpi-sub"><span class="badge b-nt" id="kv-total-s">filtered</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
-        <div class="kpi-lbl">Running</div><div class="kpi-val" id="kv-run">—</div>
-        <div class="kpi-sub"><span class="badge b-nt" id="kv-run-s">—</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
-        <div class="kpi-lbl">Completed</div><div class="kpi-val" id="kv-ok">—</div>
-        <div class="kpi-sub"><span class="badge b-up" id="kv-ok-s">—</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
-        <div class="kpi-lbl">Failed</div><div class="kpi-val" id="kv-fail">—</div>
-        <div class="kpi-sub"><span class="badge b-dn" id="kv-fail-s">—</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
-        <div class="kpi-lbl">Records In</div><div class="kpi-val" id="kv-ing">—</div>
-        <div class="kpi-sub"><span class="badge b-up">ingested</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
-        <div class="kpi-lbl">Quarantined</div><div class="kpi-val" id="kv-q">—</div>
-        <div class="kpi-sub"><span class="badge b-nt" id="kv-q-s">—</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
-        <div class="kpi-lbl">Rec. Failed</div><div class="kpi-val" id="kv-rf">—</div>
-        <div class="kpi-sub"><span class="badge b-dn">schema errors</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
-        <div class="kpi-lbl">Avg Throughput</div><div class="kpi-val" id="kv-thr">—</div>
-        <div class="kpi-sub"><span class="badge b-up">rec/sec</span></div></div>
-    </div>
+      <!-- KPI strip -->
+      <div class="kpi-strip ai d1">
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
+          <div class="kpi-lbl">Total Jobs</div><div class="kpi-val" id="kv-total">—</div>
+          <div class="kpi-sub"><span class="badge b-nt" id="kv-total-s">filtered</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+          <div class="kpi-lbl">Running</div><div class="kpi-val" id="kv-run">—</div>
+          <div class="kpi-sub"><span class="badge b-nt" id="kv-run-s">—</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
+          <div class="kpi-lbl">Completed</div><div class="kpi-val" id="kv-ok">—</div>
+          <div class="kpi-sub"><span class="badge b-up" id="kv-ok-s">—</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
+          <div class="kpi-lbl">Failed</div><div class="kpi-val" id="kv-fail">—</div>
+          <div class="kpi-sub"><span class="badge b-dn" id="kv-fail-s">—</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+          <div class="kpi-lbl">Records In</div><div class="kpi-val" id="kv-ing">—</div>
+          <div class="kpi-sub"><span class="badge b-up">ingested</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+          <div class="kpi-lbl">Quarantined</div><div class="kpi-val" id="kv-q">—</div>
+          <div class="kpi-sub"><span class="badge b-nt" id="kv-q-s">—</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
+          <div class="kpi-lbl">Rec. Failed</div><div class="kpi-val" id="kv-rf">—</div>
+          <div class="kpi-sub"><span class="badge b-dn">schema errors</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
+          <div class="kpi-lbl">Avg Throughput</div><div class="kpi-val" id="kv-thr">—</div>
+          <div class="kpi-sub"><span class="badge b-up">rec/sec</span></div></div>
+      </div>
 
-    <!-- Row 1: throughput line + donut -->
-    <div class="row r-6040 ai d2">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Throughput over time</div><div class="ph-meta" id="thr-meta">rec/sec</div></div>
-        <div class="pb">
-          <div class="legend">
-            <div class="leg-item"><div class="leg-sw" style="background:#3d8bff"></div>Throughput (r/s)</div>
-            <div class="leg-item"><div class="leg-sw" style="background:#9b7fff;border:1px dashed #9b7fff"></div>Quarantine %</div>
+      <!-- Row 1: throughput line + donut -->
+      <div class="row r-6040 ai d2">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Throughput over time</div><div class="ph-meta" id="thr-meta">rec/sec</div></div>
+          <div class="pb">
+            <div class="legend">
+              <div class="leg-item"><div class="leg-sw" style="background:#3d8bff"></div>Throughput (r/s)</div>
+              <div class="leg-item"><div class="leg-sw" style="background:#9b7fff;border:1px dashed #9b7fff"></div>Quarantine %</div>
+            </div>
+            <div style="position:relative;height:200px">
+              <canvas id="c-thr" role="img" aria-label="Throughput and quarantine rate line chart">No data.</canvas>
+            </div>
           </div>
-          <div style="position:relative;height:200px">
-            <canvas id="c-thr" role="img" aria-label="Throughput and quarantine rate line chart">No data.</canvas>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Record outcome mix</div><div class="ph-meta">filtered jobs</div></div>
+          <div class="pb">
+            <div class="legend" id="donut-leg"></div>
+            <div style="position:relative;height:190px">
+              <canvas id="c-donut" role="img" aria-label="Donut chart of record outcomes">No data.</canvas>
+            </div>
           </div>
         </div>
       </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Record outcome mix</div><div class="ph-meta">filtered jobs</div></div>
-        <div class="pb">
-          <div class="legend" id="donut-leg"></div>
-          <div style="position:relative;height:190px">
-            <canvas id="c-donut" role="img" aria-label="Donut chart of record outcomes">No data.</canvas>
-          </div>
+
+      <!-- Row 2: SLA + sources -->
+      <div class="row r-5050 ai d3">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Data quality SLA</div><div class="ph-meta">ingestion success % per source</div></div>
+          <div class="pb"><div class="sla-list" id="sla-panel"><div class="empty"><div class="ei">◎</div>Loading…</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Source health</div><div class="ph-meta">classification &amp; frequency</div></div>
+          <div class="pb-np"><div class="scroll-body" style="padding:12px">
+            <div class="src-rows" id="src-rows"><div class="empty"><div class="ei">◎</div>Loading…</div></div>
+          </div></div>
         </div>
       </div>
-    </div>
 
-    <!-- Row 2: SLA + sources -->
-    <div class="row r-5050 ai d3">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Data quality SLA</div><div class="ph-meta">ingestion success % per source</div></div>
-        <div class="pb"><div class="sla-list" id="sla-panel"><div class="empty"><div class="ei">◎</div>Loading…</div></div></div>
-      </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Source health</div><div class="ph-meta">classification &amp; frequency</div></div>
-        <div class="pb-np"><div class="scroll-body" style="padding:12px">
-          <div class="src-rows" id="src-rows"><div class="empty"><div class="ei">◎</div>Loading…</div></div>
-        </div></div>
-      </div>
-    </div>
-
-    <!-- Row 3: duration + storage + gauge -->
-    <div class="row r-333 ai d4">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Job duration</div><div class="ph-meta">seconds per job</div></div>
-        <div class="pb">
-          <div style="position:relative;height:180px">
-            <canvas id="c-dur" role="img" aria-label="Job duration bar chart">No data.</canvas>
+      <!-- Row 3: duration + storage + gauge -->
+      <div class="row r-333 ai d4">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Job duration</div><div class="ph-meta">seconds per job</div></div>
+          <div class="pb">
+            <div style="position:relative;height:180px">
+              <canvas id="c-dur" role="img" aria-label="Job duration bar chart">No data.</canvas>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Storage utilisation</div><div class="ph-meta">files per area</div></div>
-        <div class="pb"><div class="stor-grid" id="stor-grid"><div class="empty">Loading…</div></div></div>
-      </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Pipeline throughput</div><div class="ph-meta">aggregate performance</div></div>
-        <div class="pb">
-          <div class="gauge-wrap">
-            <div class="gauge-ring">
-              <svg width="120" height="120">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#1a1e28" stroke-width="10"/>
-                <circle id="garc" cx="60" cy="60" r="50" fill="none" stroke="#3d8bff" stroke-width="10"
-                  stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
-                  transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s ease"/>
-              </svg>
-              <div class="gauge-val">
-                <div class="gauge-num" id="g-num">—</div>
-                <div class="gauge-unit">rec/s</div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Storage utilisation</div><div class="ph-meta">files per area</div></div>
+          <div class="pb"><div class="stor-grid" id="stor-grid"><div class="empty">Loading…</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Pipeline throughput</div><div class="ph-meta">aggregate performance</div></div>
+          <div class="pb">
+            <div class="gauge-wrap">
+              <div class="gauge-ring">
+                <svg width="120" height="120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#1a1e28" stroke-width="10"/>
+                  <circle id="garc" cx="60" cy="60" r="50" fill="none" stroke="#3d8bff" stroke-width="10"
+                    stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+                    transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s ease"/>
+                </svg>
+                <div class="gauge-val">
+                  <div class="gauge-num" id="g-num">—</div>
+                  <div class="gauge-unit">rec/s</div>
+                </div>
+              </div>
+              <div class="gauge-stats">
+                <div class="gstat"><span class="gstat-l">Peak</span><span class="gstat-v" id="g-peak">—</span></div>
+                <div class="gstat"><span class="gstat-l">Min</span><span class="gstat-v" id="g-min">—</span></div>
+                <div class="gstat"><span class="gstat-l">P95</span><span class="gstat-v" id="g-p95">—</span></div>
+                <div class="gstat"><span class="gstat-l">Jobs</span><span class="gstat-v" id="g-jobs">—</span></div>
+                <div class="gstat"><span class="gstat-l">Avg dur.</span><span class="gstat-v" id="g-dur">—</span></div>
               </div>
             </div>
-            <div class="gauge-stats">
-              <div class="gstat"><span class="gstat-l">Peak</span><span class="gstat-v" id="g-peak">—</span></div>
-              <div class="gstat"><span class="gstat-l">Min</span><span class="gstat-v" id="g-min">—</span></div>
-              <div class="gstat"><span class="gstat-l">P95</span><span class="gstat-v" id="g-p95">—</span></div>
-              <div class="gstat"><span class="gstat-l">Jobs</span><span class="gstat-v" id="g-jobs">—</span></div>
-              <div class="gstat"><span class="gstat-l">Avg dur.</span><span class="gstat-v" id="g-dur">—</span></div>
-            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Row 4: alerts -->
-    <div class="row r-full ai d4">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Pipeline alerts</div><div class="ph-meta" id="a-cnt">scanning…</div></div>
-        <div class="pb"><div class="alert-list" id="alert-list"><div class="empty"><div class="ei">◎</div>Loading…</div></div></div>
+      <!-- Row 4: alerts -->
+      <div class="row r-full ai d4">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Pipeline alerts</div><div class="ph-meta" id="a-cnt">scanning…</div></div>
+          <div class="pb"><div class="alert-list" id="alert-list"><div class="empty"><div class="ei">◎</div>Loading…</div></div></div>
+        </div>
       </div>
-    </div>
 
-    <!-- Row 5: jobs table -->
-    <div class="row r-full ai d5">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Active &amp; recent jobs</div><div class="ph-meta" id="j-cnt">—</div></div>
-        <div class="pb-np">
-          <div class="scroll-body" style="max-height:400px">
-            <table class="jt">
-              <thead><tr>
-                <th>Job ID</th><th>Source</th><th>Dataset</th><th>Status</th>
-                <th>Ingested</th><th>Failed</th><th>Quarantined</th><th>Throughput</th><th>Duration</th>
-              </tr></thead>
-              <tbody id="j-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
-            </table>
+      <!-- Row 5: jobs table -->
+      <div class="row r-full ai d5">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Active &amp; recent jobs</div><div class="ph-meta" id="j-cnt">—</div></div>
+          <div class="pb-np">
+            <div class="scroll-body" style="max-height:400px">
+              <table class="jt">
+                <thead><tr>
+                  <th>Job ID</th><th>Source</th><th>Dataset</th><th>Status</th>
+                  <th>Ingested</th><th>Failed</th><th>Quarantined</th><th>Throughput</th><th>Duration</th>
+                </tr></thead>
+                <tbody id="j-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -568,117 +571,117 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 
   <!-- TRANSFORMATION PAGE -->
   <div id="page-transformation" class="page-content" style="display:none;">
-  <div class="content">
-    <div class="kpi-strip ai d1">
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
-        <div class="kpi-lbl">Total Runs</div><div class="kpi-val" id="txr-total">—</div>
-        <div class="kpi-sub"><span class="badge b-nt">all time</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
-        <div class="kpi-lbl">Avg Latency</div><div class="kpi-val" id="txr-latency">—</div>
-        <div class="kpi-sub"><span class="badge b-nt">seconds</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
-        <div class="kpi-lbl">Avg Quality</div><div class="kpi-val" id="txr-quality">—</div>
-        <div class="kpi-sub"><span class="badge b-up">cleaned %</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
-        <div class="kpi-lbl">Duplicates Removed</div><div class="kpi-val" id="txr-dupes">—</div>
-        <div class="kpi-sub"><span class="badge b-nt">%</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
-        <div class="kpi-lbl">Late Arrivals</div><div class="kpi-val" id="txr-late">—</div>
-        <div class="kpi-sub"><span class="badge b-up">detected</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
-        <div class="kpi-lbl">Silver Records</div><div class="kpi-val" id="txr-silver">—</div>
-        <div class="kpi-sub"><span class="badge b-up">total</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
-        <div class="kpi-lbl">Gold Signals</div><div class="kpi-val" id="txr-gold">—</div>
-        <div class="kpi-sub"><span class="badge b-up">replenishment</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
-        <div class="kpi-lbl">Schema Violations</div><div class="kpi-val" id="txr-violations">—</div>
-        <div class="kpi-sub"><span class="badge b-dn">count</span></div></div>
-    </div>
-    
-    <div class="row r-5050 ai d2">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Transformation KPIs</div><div class="ph-meta">per-run details</div></div>
-        <div class="pb-np">
-          <div class="scroll-body" style="max-height:350px;padding:12px">
-            <table class="jt" style="font-size:10px">
-              <thead><tr>
-                <th>Source</th><th>Layer</th><th>Records</th><th>Cleaned</th><th>Latency(s)</th><th>Run Time</th>
-              </tr></thead>
-              <tbody id="txr-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
-            </table>
+    <div class="content">
+      <div class="kpi-strip ai d1">
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
+          <div class="kpi-lbl">Total Runs</div><div class="kpi-val" id="txr-total">—</div>
+          <div class="kpi-sub"><span class="badge b-nt">all time</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
+          <div class="kpi-lbl">Avg Latency</div><div class="kpi-val" id="txr-latency">—</div>
+          <div class="kpi-sub"><span class="badge b-nt">seconds</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
+          <div class="kpi-lbl">Avg Quality</div><div class="kpi-val" id="txr-quality">—</div>
+          <div class="kpi-sub"><span class="badge b-up">cleaned %</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+          <div class="kpi-lbl">Duplicates Removed</div><div class="kpi-val" id="txr-dupes">—</div>
+          <div class="kpi-sub"><span class="badge b-nt">%</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+          <div class="kpi-lbl">Late Arrivals</div><div class="kpi-val" id="txr-late">—</div>
+          <div class="kpi-sub"><span class="badge b-up">detected</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
+          <div class="kpi-lbl">Silver Records</div><div class="kpi-val" id="txr-silver">—</div>
+          <div class="kpi-sub"><span class="badge b-up">total</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+          <div class="kpi-lbl">Gold Signals</div><div class="kpi-val" id="txr-gold">—</div>
+          <div class="kpi-sub"><span class="badge b-up">replenishment</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+          <div class="kpi-lbl">Schema Violations</div><div class="kpi-val" id="txr-violations">—</div>
+          <div class="kpi-sub"><span class="badge b-dn">count</span></div></div>
+      </div>
+      
+      <div class="row r-5050 ai d2">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Transformation KPIs</div><div class="ph-meta">per-run details</div></div>
+          <div class="pb-np">
+            <div class="scroll-body" style="max-height:350px;padding:12px">
+              <table class="jt" style="font-size:10px">
+                <thead><tr>
+                  <th>Source</th><th>Layer</th><th>Records</th><th>Cleaned</th><th>Latency(s)</th><th>Run Time</th>
+                </tr></thead>
+                <tbody id="txr-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Data Quality Trend</div><div class="ph-meta">records cleaned %</div></div>
+          <div class="pb">
+            <div style="position:relative;height:220px">
+              <canvas id="c-txr-quality" role="img" aria-label="Quality trend">No data.</canvas>
+            </div>
           </div>
         </div>
       </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Data Quality Trend</div><div class="ph-meta">records cleaned %</div></div>
-        <div class="pb">
-          <div style="position:relative;height:220px">
-            <canvas id="c-txr-quality" role="img" aria-label="Quality trend">No data.</canvas>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
   </div><!-- /page-transformation -->
 
   <!-- STORAGE PAGE -->
   <div id="page-storage" class="page-content" style="display:none;">
-  <div class="content">
-    <div class="kpi-strip ai d1">
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
-        <div class="kpi-lbl">Total Files</div><div class="kpi-val" id="stor-files">—</div>
-        <div class="kpi-sub"><span class="badge b-nt">all tables</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
-        <div class="kpi-lbl">Total Storage</div><div class="kpi-val" id="stor-size">—</div>
-        <div class="kpi-sub"><span class="badge b-up">MB</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
-        <div class="kpi-lbl">Avg File Size</div><div class="kpi-val" id="stor-avg">—</div>
-        <div class="kpi-sub"><span class="badge b-nt">MB</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
-        <div class="kpi-lbl">Small Files %</div><div class="kpi-val" id="stor-small">—</div>
-        <div class="kpi-sub"><span class="badge b-dn">needs compaction</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
-        <div class="kpi-lbl">Tables OK</div><div class="kpi-val" id="stor-healthy">—</div>
-        <div class="kpi-sub"><span class="badge b-up">count</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
-        <div class="kpi-lbl">Needing Compact</div><div class="kpi-val" id="stor-compact">—</div>
-        <div class="kpi-sub"><span class="badge b-dn">high priority</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
-        <div class="kpi-lbl">Total Snapshots</div><div class="kpi-val" id="stor-snapshots">—</div>
-        <div class="kpi-sub"><span class="badge b-up">versions</span></div></div>
-      <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
-        <div class="kpi-lbl">Storage Health</div><div class="kpi-val" id="stor-health">—</div>
-        <div class="kpi-sub"><span class="badge b-up" id="stor-health-badge">Good</span></div></div>
-    </div>
-    
-    <div class="row r-full ai d2">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Iceberg Tables Health</div><div class="ph-meta">file metrics & compaction status</div></div>
-        <div class="pb-np">
-          <div class="scroll-body" style="max-height:400px;padding:12px">
-            <table class="jt" style="font-size:10px">
-              <thead><tr>
-                <th>Table</th><th>Files</th><th>Avg Size</th><th>Small %</th><th>Snapshots</th><th>Status</th>
-              </tr></thead>
-              <tbody id="stor-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
-            </table>
+    <div class="content">
+      <div class="kpi-strip ai d1">
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3d8bff,#5ba8ff)"></div>
+          <div class="kpi-lbl">Total Files</div><div class="kpi-val" id="stor-files">—</div>
+          <div class="kpi-sub"><span class="badge b-nt">all tables</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#9b7fff,#c4aaff)"></div>
+          <div class="kpi-lbl">Total Storage</div><div class="kpi-val" id="stor-size">—</div>
+          <div class="kpi-sub"><span class="badge b-up">MB</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
+          <div class="kpi-lbl">Avg File Size</div><div class="kpi-val" id="stor-avg">—</div>
+          <div class="kpi-sub"><span class="badge b-nt">MB</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
+          <div class="kpi-lbl">Small Files %</div><div class="kpi-val" id="stor-small">—</div>
+          <div class="kpi-sub"><span class="badge b-dn">needs compaction</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#3ecf8e,#69f0ae)"></div>
+          <div class="kpi-lbl">Tables OK</div><div class="kpi-val" id="stor-healthy">—</div>
+          <div class="kpi-sub"><span class="badge b-up">count</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f04b4b,#ff7070)"></div>
+          <div class="kpi-lbl">Needing Compact</div><div class="kpi-val" id="stor-compact">—</div>
+          <div class="kpi-sub"><span class="badge b-dn">high priority</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
+          <div class="kpi-lbl">Total Snapshots</div><div class="kpi-val" id="stor-snapshots">—</div>
+          <div class="kpi-sub"><span class="badge b-up">versions</span></div></div>
+        <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#ff7056,#ff9a8b)"></div>
+          <div class="kpi-lbl">Storage Health</div><div class="kpi-val" id="stor-health">—</div>
+          <div class="kpi-sub"><span class="badge b-up" id="stor-health-badge">Good</span></div></div>
+      </div>
+      
+      <div class="row r-full ai d2">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Iceberg Tables Health</div><div class="ph-meta">file metrics & compaction status</div></div>
+          <div class="pb-np">
+            <div class="scroll-body" style="max-height:400px;padding:12px">
+              <table class="jt" style="font-size:10px">
+                <thead><tr>
+                  <th>Table</th><th>Files</th><th>Avg Size</th><th>Small %</th><th>Snapshots</th><th>Status</th>
+                </tr></thead>
+                <tbody id="stor-table"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    
-    <div class="row r-5050 ai d3">
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Storage Warnings</div><div class="ph-meta">health alerts</div></div>
-        <div class="pb"><div class="alert-list" id="stor-warnings"><div class="empty"><div class="ei">✓</div>All tables healthy</div></div></div>
+      
+      <div class="row r-5050 ai d3">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Storage Warnings</div><div class="ph-meta">health alerts</div></div>
+          <div class="pb"><div class="alert-list" id="stor-warnings"><div class="empty"><div class="ei">✓</div>All tables healthy</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Recommendations</div><div class="ph-meta">optimization suggestions</div></div>
+          <div class="pb"><div class="alert-list" id="stor-recs"><div class="empty"><div class="ei">✓</div>No actions needed</div></div></div>
+        </div>
       </div>
-      <div class="panel">
-        <div class="ph"><div class="ph-title">Recommendations</div><div class="ph-meta">optimization suggestions</div></div>
-        <div class="pb"><div class="alert-list" id="stor-recs"><div class="empty"><div class="ei">✓</div>No actions needed</div></div></div>
-      </div>
     </div>
-  </div>
   </div><!-- /page-storage -->
 
 
@@ -687,7 +690,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 
 <script>
 /* ══ CONFIG ══════════════════════════════════════════════════════════════ */
-const API  = 'http://localhost:8000';
+const API  = window.location.origin || 'http://localhost:8000';
 const TOK  = '__API_TOKEN__';      /* injected by FastAPI at request time */
 const HDR  = { 'Authorization': `Bearer ${TOK}` };
 const CD   = { color:'#9ba3b8', grid:'rgba(255,255,255,0.05)' };
@@ -697,7 +700,7 @@ let allJobs=[], allTel=[], allSrc=[];
 let F = { status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'1h' };
 
 /* ══ CHARTS ══════════════════════════════════════════════════════════════ */
-let cDonut, cThr, cDur;
+let cDonut, cThr, cDur, cTxr;
 
 function initCharts() {
   cDonut = new Chart(document.getElementById('c-donut'), {
@@ -735,6 +738,22 @@ function initCharts() {
       scales:{
         x:{ ticks:{font:{size:9},color:CD.color,maxRotation:30}, grid:{display:false} },
         y:{ ticks:{font:{size:9},color:CD.color}, grid:{color:CD.grid}, beginAtZero:true }
+      }, animation:{duration:400} }
+  });
+}
+function initTxrChart() {
+  const ctxTxr = document.getElementById('c-txr-quality');
+  if (!ctxTxr || cTxr) return;
+  cTxr = new Chart(ctxTxr, {
+    type:'line',
+    data:{ labels:[], datasets:[{
+      label:'Quality %', data:[], borderColor:'#3ecf8e', backgroundColor:'rgba(62,207,142,.12)',
+      fill:true, tension:.35, pointRadius:3, pointBackgroundColor:'#3ecf8e', borderWidth:1.5
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{
+        x:{ ticks:{font:{size:9,family:'DM Mono'},color:CD.color}, grid:{color:CD.grid} },
+        y:{ min:0, max:100, ticks:{font:{size:9},color:CD.color, callback:v=>v+'%'}, grid:{color:CD.grid} }
       }, animation:{duration:400} }
   });
 }
@@ -1099,105 +1118,126 @@ function resetFilters() {
 
 /* ══ PAGE NAVIGATION ═════════════════════════════════════════════════════ */
 function switchPage(page) {
-  // Hide all pages
   document.querySelectorAll('.page-content').forEach(p=>p.style.display='none');
-  // Show selected page
-  document.getElementById('page-'+page).style.display='block';
-  // Update active tab
-  document.querySelectorAll('.page-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector('[data-page="'+page+'"]').classList.add('active');
-  document.querySelector('[data-page="'+page+'"]').style.borderBottomColor='var(--accent)';
-  document.querySelector('[data-page="'+page+'"]').style.color='var(--accent)';
-  
-  // Load page-specific data
-  if(page==='transformation') loadTransformationData();
+  const pg=document.getElementById('page-'+page);
+  if(pg) pg.style.display='block';
+  document.querySelectorAll('.page-tab').forEach(t=>{
+    t.classList.remove('active');
+    t.style.borderBottom='2px solid transparent';
+    t.style.color='var(--t2)';
+  });
+  const tab=document.querySelector('.page-tab[data-page="'+page+'"]');
+  if(tab){
+    tab.classList.add('active');
+    tab.style.borderBottomColor='var(--accent)';
+    tab.style.color='var(--accent)';
+  }
+  if(page==='transformation') {
+    if(!cTxr) initTxrChart();
+    loadTransformationData();
+    setTimeout(()=>{ if(cTxr) cTxr.resize(); }, 60);
+  }
   if(page==='storage') loadStorageData();
 }
 
 function loadTransformationData() {
+  const qPct=(rr,rc)=>{ const r=Number(rr)||0, c=Number(rc)||0; return r>0 ? Math.min(100, Math.round(100*c/r)) : 0; };
+
   fetch(API+'/transformation/summary', {headers:HDR})
-    .then(r=>r.json())
+    .then(r=>{ if(!r.ok) throw new Error('summary '+r.status); return r.json(); })
     .then(d=>{
       const silver=d.silver||{}, gold=d.gold||{};
-      document.getElementById('txr-total').textContent=(silver.run_count||0)+(gold.run_count||0);
-      document.getElementById('txr-latency').textContent=(((silver.avg_transformation_latency_sec||0)+(gold.avg_transformation_latency_sec||0))/2).toFixed(2);
-      document.getElementById('txr-quality').textContent=Math.round((((silver.overall_quality_ratio||0)+(gold.overall_quality_ratio||0))/2)*100).toString();
-      document.getElementById('txr-dupes').textContent=((silver.total_duplicates_removed||0)+(gold.total_duplicates_removed||0)).toString();
-      document.getElementById('txr-late').textContent=(silver.total_late_arrivals||0).toString();
-      document.getElementById('txr-silver').textContent=(silver.total_records_cleaned||0).toString();
-      document.getElementById('txr-gold').textContent=(gold.total_records_processed||0).toString();
-      document.getElementById('txr-violations').textContent=(silver.total_schema_violations||0).toString();
+      document.getElementById('txr-total').textContent=String((silver.run_count||0)+(gold.run_count||0));
+      document.getElementById('txr-latency').textContent=(((Number(silver.avg_transformation_latency_sec)||0)+(Number(gold.avg_transformation_latency_sec)||0))/2).toFixed(2);
+      document.getElementById('txr-quality').textContent=String(Math.round(((Number(silver.overall_quality_ratio)||0)+(Number(gold.overall_quality_ratio)||0))/2));
+      document.getElementById('txr-dupes').textContent=String((silver.total_duplicates_removed||0)+(gold.total_duplicates_removed||0));
+      document.getElementById('txr-late').textContent=String(silver.total_late_arrivals||0);
+      document.getElementById('txr-silver').textContent=String(silver.total_records_cleaned||0);
+      document.getElementById('txr-gold').textContent=String((gold.total_records_cleaned!=null?gold.total_records_cleaned:gold.total_records_processed)||0);
+      document.getElementById('txr-violations').textContent='0';
     }).catch(e=>console.error('Error loading transformation data:',e));
   
-  // Load detailed KPIs
   fetch(API+'/transformation/kpis?limit=10', {headers:HDR})
-    .then(r=>r.json())
+    .then(r=>{ if(!r.ok) throw new Error('kpis '+r.status); return r.json(); })
     .then(d=>{
       const kpis=d.kpis||[];
       const tbody=document.getElementById('txr-table');
-      if(!kpis.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No transformation data</td></tr>';return;}
+      if(!tbody) return;
+      if(!kpis.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No transformation data</td></tr>'; if(cTxr){ cTxr.data.labels=[]; cTxr.data.datasets[0].data=[]; cTxr.update(); } return;}
+      const sid=x=>String(x||'').replace(/^src_/,'');
       tbody.innerHTML=kpis.map(k=>`<tr>
-        <td>${k.source_id.replace('src_','')}</td>
-        <td><span class="sp ${k.layer==='silver'?'s-run':' s-ok'}">${k.layer}</span></td>
-        <td>${k.records_read}</td>
-        <td class="ng">${k.records_cleaned}</td>
-        <td>${k.transformation_latency_sec.toFixed(2)}</td>
-        <td style="font-size:9px;color:var(--t3)">${k.run_at.slice(0,10)}</td>
+        <td>${sid(k.source_id)}</td>
+        <td><span class="sp ${k.layer==='silver'?'s-run':'s-ok'}">${k.layer||'—'}</span></td>
+        <td>${k.records_read!=null?k.records_read:'—'}</td>
+        <td class="ng">${k.records_cleaned!=null?k.records_cleaned:'—'}</td>
+        <td>${(Number(k.transformation_latency_sec)||0).toFixed(2)}</td>
+        <td style="font-size:9px;color:var(--t3)">${(k.run_at||'').slice(0,10)}</td>
       </tr>`).join('');
+      if(cTxr){
+        const slice=kpis.slice().reverse().slice(-12);
+        cTxr.data.labels=slice.map((k,i)=>'#'+(i+1));
+        cTxr.data.datasets[0].data=slice.map(k=>qPct(k.records_read,k.records_cleaned));
+        cTxr.update();
+      }
     }).catch(e=>console.error('Error loading KPIs:',e));
 }
 
 function loadStorageData() {
   fetch(API+'/storage/summary', {headers:HDR})
-    .then(r=>r.json())
+    .then(r=>{ if(!r.ok) throw new Error('storage summary '+r.status); return r.json(); })
     .then(d=>{
       const kpis=d.kpis||{}, health=d.health||{};
+      const needCompact=health.tables_needing_compaction||[];
       let totalFiles=0, totalMB=0, totalSnapshots=0, smallRatio=0, cnt=0;
       Object.values(kpis).forEach(k=>{
-        if(!k.error){
+        if(k && !k.error){
           totalFiles+=k.file_count||0;
-          totalMB+=k.total_storage_mb||0;
+          totalMB+=Number(k.total_storage_mb)||0;
           totalSnapshots+=k.snapshot_count||0;
-          smallRatio+=(k.small_file_ratio||0);
+          smallRatio+=Number(k.small_file_ratio)||0;
           cnt++;
         }
       });
       const avgSmall=cnt>0?(smallRatio/cnt*100):0;
-      document.getElementById('stor-files').textContent=totalFiles.toString();
+      const avgSzMb=cnt>0 && totalFiles>0 ? (totalMB/totalFiles) : 0;
+      document.getElementById('stor-files').textContent=String(totalFiles);
       document.getElementById('stor-size').textContent=totalMB.toFixed(0);
-      document.getElementById('stor-avg').textContent=cnt>0?(totalMB*1024/totalFiles).toFixed(1):'0';
+      document.getElementById('stor-avg').textContent=avgSzMb.toFixed(1);
       document.getElementById('stor-small').textContent=avgSmall.toFixed(0);
-      document.getElementById('stor-healthy').textContent=(cnt-health.tables_needing_compaction.length).toString();
-      document.getElementById('stor-compact').textContent=health.tables_needing_compaction.length.toString();
-      document.getElementById('stor-snapshots').textContent=totalSnapshots.toString();
+      document.getElementById('stor-healthy').textContent=String(Math.max(0, cnt-needCompact.length));
+      document.getElementById('stor-compact').textContent=String(needCompact.length);
+      document.getElementById('stor-snapshots').textContent=String(totalSnapshots);
       const healthBadge=document.getElementById('stor-health-badge');
-      healthBadge.textContent=health.health_status||'Unknown';
-      healthBadge.style.background=health.health_status==='warning'?'rgba(240,75,75,.1)':'rgba(62,207,142,.15)';
-      document.getElementById('stor-health').textContent=health.health_status==='warning'?'⚠️':'✓';
+      const hstat=health.health_status||'unknown';
+      healthBadge.textContent=hstat;
+      healthBadge.style.background=(hstat==='warning')?'rgba(240,75,75,.1)':'rgba(62,207,142,.15)';
+      document.getElementById('stor-health').textContent=(hstat==='warning')?'⚠️':'✓';
       
-      // Render tables
       const tbody=document.getElementById('stor-table');
-      const tables=Object.entries(kpis).filter(([_,k])=>!k.error).slice(0,15);
+      if(!tbody) return;
+      const tables=Object.entries(kpis).filter(([_,k])=>k && !k.error).slice(0,15);
       if(!tables.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No storage data</td></tr>';return;}
-      tbody.innerHTML=tables.map(([name,k])=>`<tr>
+      tbody.innerHTML=tables.map(([name,k])=>{
+        const avg=Number(k.avg_file_size_mb);
+        const sr=Number(k.small_file_ratio)||0;
+        const need=k.needs_compaction===true || sr>0.5;
+        return `<tr>
         <td style="font-size:9px">${name}</td>
-        <td>${k.file_count}</td>
-        <td>${k.avg_file_size_mb.toFixed(1)}</td>
-        <td class="${k.small_file_ratio>0.5?'nb':''}">${(k.small_file_ratio*100).toFixed(0)}</td>
-        <td>${k.snapshot_count}</td>
-        <td><span class="sp ${k.needs_compaction?'s-run':'s-ok'}">${k.needs_compaction?'compact':'ok'}</span></td>
-      </tr>`).join('');
+        <td>${k.file_count!=null?k.file_count:'—'}</td>
+        <td>${isNaN(avg)?'0.0':avg.toFixed(1)}</td>
+        <td class="${sr>0.5?'nb':''}">${(sr*100).toFixed(0)}</td>
+        <td>${k.snapshot_count!=null?k.snapshot_count:'—'}</td>
+        <td><span class="sp ${need?'s-run':'s-ok'}">${need?'compact':'ok'}</span></td>
+      </tr>`;}).join('');
       
-      // Render warnings
       const warns=document.getElementById('stor-warnings');
       warns.innerHTML=(health.warnings||[]).length>0
-        ?(health.warnings.map(w=>`<div class="alert-item a-warn"><div class="a-dot"></div><div class="a-text">${w}</div></div>`).join(''))
+        ?(health.warnings.map(w=>`<div class="alert-item a-warn"><div class="a-dot"></div><div class="a-text">${String(w)}</div></div>`).join(''))
         :('<div class="empty"><div class="ei">✓</div>All tables healthy</div>');
       
-      // Render recommendations
       const recs=document.getElementById('stor-recs');
       recs.innerHTML=(health.recommendations||[]).length>0
-        ?(health.recommendations.map(r=>`<div class="alert-item a-info"><div class="a-dot"></div><div class="a-text">${r}</div></div>`).join(''))
+        ?(health.recommendations.map(r=>`<div class="alert-item a-info"><div class="a-dot"></div><div class="a-text">${String(r)}</div></div>`).join(''))
         :('<div class="empty"><div class="ei">✓</div>No actions needed</div>');
     }).catch(e=>console.error('Error loading storage data:',e));
 }
@@ -1215,6 +1255,9 @@ async function refresh() {
       ...j, domain:allSrc.find(s=>s.source_id===j.source_id)?.domain||'unknown'
     }));
     renderStorage(data.dashboard?.storage_summary);
+    // Keep secondary tabs warm even before the user clicks them.
+    loadTransformationData();
+    loadStorageData();
     applyFilters();
     document.getElementById('last-upd').textContent=new Date().toLocaleTimeString();
   } catch(e){ console.error(e); }

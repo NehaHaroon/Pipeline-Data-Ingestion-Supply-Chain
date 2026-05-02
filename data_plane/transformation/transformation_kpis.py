@@ -212,7 +212,7 @@ class TransformationKPILogger:
         limit: int = 100,
     ) -> List[TransformationKPIs]:
         """Load KPI records from disk with optional filtering."""
-        log.info("@@@@ KPIS_LOG_PATH: {TransformationKPILogger.KPIS_LOG_PATH}")
+        log.debug("Loading KPIs from %s", TransformationKPILogger.KPIS_LOG_PATH)
         if not os.path.exists(TransformationKPILogger.KPIS_LOG_PATH):
             return []
         
@@ -242,30 +242,18 @@ class TransformationKPILogger:
         return sorted(records, key=lambda x: x.run_at, reverse=True)[:limit]
     
     @staticmethod
-    def get_latest_kpi(source_id: str, layer: str) -> Optional[TransformationKPIs]:
-        """Get most recent KPI for a source/layer combination."""
-        records = TransformationKPILogger.load_kpis(source_id=source_id, layer=layer, limit=1)
-        return records[0] if records else None
-    
-    @staticmethod
-    def get_aggregate_stats(layer: str = "silver") -> Dict[str, Any]:
-        """Get aggregate statistics across all transformation runs."""
-        records = TransformationKPILogger.load_kpis(layer=layer)
-        
+    def _aggregate_records(records: List[TransformationKPIs]) -> Dict[str, Any]:
         if not records:
             return {}
-        
         total_read = sum(r.records_read for r in records)
         total_cleaned = sum(r.records_cleaned for r in records)
         total_rejected = sum(r.records_rejected for r in records)
         total_duped = sum(r.duplicate_records_detected for r in records)
         total_late = sum(r.late_arriving_records for r in records)
-        
         avg_latency = sum(r.transformation_latency_sec for r in records) / len(records)
         avg_throughput = sum(r.records_transformed_per_sec for r in records) / len(records)
-        
         return {
-            "layer": layer,
+            "layer": records[0].layer if records else "",
             "run_count": len(records),
             "total_records_processed": total_read,
             "total_records_cleaned": total_cleaned,
@@ -277,3 +265,91 @@ class TransformationKPILogger:
             "avg_throughput_rec_sec": round(avg_throughput, 2),
             "last_run_at": records[0].run_at if records else None,
         }
+    
+    @staticmethod
+    def get_latest_kpi(source_id: str, layer: str) -> Optional[TransformationKPIs]:
+        """Get most recent KPI for a source/layer combination."""
+        records = TransformationKPILogger.load_kpis(source_id=source_id, layer=layer, limit=1)
+        return records[0] if records else None
+    
+    @staticmethod
+    def get_aggregate_stats(layer: str = "silver") -> Dict[str, Any]:
+        """Get aggregate statistics across all transformation runs (JSONL only)."""
+        records = TransformationKPILogger.load_kpis(layer=layer, limit=5000)
+        return TransformationKPILogger._aggregate_records(records)
+    
+    @staticmethod
+    def get_aggregate_stats_with_iceberg_fallback(layer: str = "silver") -> Dict[str, Any]:
+        """Like get_aggregate_stats but fills from current Iceberg snapshots when JSONL is empty."""
+        records = TransformationKPILogger.load_kpis(layer=layer, limit=5000)
+        if not records:
+            records = build_fallback_kpis_from_iceberg(layer=layer, limit=500)
+        return TransformationKPILogger._aggregate_records(records)
+
+
+def build_fallback_kpis_from_iceberg(
+    source_id: Optional[str] = None,
+    layer: Optional[str] = None,
+    limit: int = 100,
+) -> List[TransformationKPIs]:
+    """
+    When transformation_kpis.jsonl has no rows, synthesize one KPI per Silver/Gold table
+    from Iceberg snapshot stats so dashboards stay aligned with storage metrics.
+    """
+    from storage_plane.storage_kpis import get_all_tables_kpis
+
+    run_at = datetime.utcnow().isoformat() + "Z"
+    all_tbl = get_all_tables_kpis()
+    out: List[TransformationKPIs] = []
+    for tbl_name, sk in all_tbl.items():
+        if sk.get("error"):
+            continue
+        if not tbl_name.startswith("silver.") and not tbl_name.startswith("gold."):
+            continue
+        ns, short = tbl_name.split(".", 1)
+        if layer and ns != layer:
+            continue
+        if ns == "gold" and short == "replenishment_signals":
+            sid = "gold_replenishment_signals"
+        else:
+            sid = f"src_{short}"
+        if source_id and sid != source_id:
+            continue
+        rc = int(sk.get("records_in_snapshot") or sk.get("record_count") or 0)
+        if rc <= 0:
+            continue
+        out.append(
+            TransformationKPIs(
+                run_id=f"iceberg_snapshot_{tbl_name}",
+                source_id=sid,
+                layer=ns,
+                run_at=run_at,
+                records_read=rc,
+                records_cleaned=rc,
+                records_rejected=0,
+                records_written=rc,
+                records_transformed_per_sec=0.0,
+                transformation_latency_sec=0.0,
+                null_imputation_count=0,
+                status="iceberg_snapshot",
+                error_message=None,
+            )
+        )
+    out.sort(key=lambda x: (x.layer, x.source_id), reverse=True)
+    return out[:limit]
+
+
+def load_transformation_kpis_for_dashboard(
+    source_id: Optional[str] = None,
+    layer: Optional[str] = None,
+    limit: int = 100,
+) -> List[TransformationKPIs]:
+    """Prefer JSONL run history; if empty, derive KPI rows from Iceberg table stats."""
+    records = TransformationKPILogger.load_kpis(
+        source_id=source_id, layer=layer, limit=limit
+    )
+    if records:
+        return records
+    return build_fallback_kpis_from_iceberg(
+        source_id=source_id, layer=layer, limit=limit
+    )

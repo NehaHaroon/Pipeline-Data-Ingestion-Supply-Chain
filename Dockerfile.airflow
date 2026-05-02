@@ -5,6 +5,7 @@ USER root
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-airflow.txt /
+COPY requirements-iceberg-toolkit.txt /
 
 USER airflow
 
@@ -16,6 +17,15 @@ RUN python -m pip install --no-cache-dir --upgrade pip wheel "setuptools>=69,<81
 # install dependencies with constraints
 RUN python -m pip install --no-cache-dir -r /requirements-airflow.txt \
     --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.11.txt
+
+# PyIceberg SqlCatalog requires SQLAlchemy 2.0+; Airflow 2.9.x ORM is pinned to SQLAlchemy 1.4.x.
+# A separate venv runs compaction / Iceberg scripts so the webserver and Airflow DB stay on SA 1.4.
+RUN python -m venv /opt/airflow/iceberg-toolkit && \
+    /opt/airflow/iceberg-toolkit/bin/python -m pip install --no-cache-dir --upgrade pip wheel && \
+    /opt/airflow/iceberg-toolkit/bin/pip install --no-cache-dir -r /requirements-iceberg-toolkit.txt && \
+    /opt/airflow/iceberg-toolkit/bin/python -c "from sqlalchemy.orm import DeclarativeBase; from pyiceberg.catalog.sql import SqlCatalog; print('iceberg_toolkit_ok')"
+
+ENV ICEBERG_TOOLKIT_PYTHON=/opt/airflow/iceberg-toolkit/bin/python
 
 # Re-verify pkg_resources after all installs (constraints can alter dependency graph).
 RUN python -c "import pkg_resources; print('pkg_resources_post_install_ok')"

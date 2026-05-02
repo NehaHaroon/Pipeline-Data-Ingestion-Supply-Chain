@@ -4,7 +4,6 @@
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
 from airflow.exceptions import AirflowException
 from datetime import datetime, timedelta
@@ -24,27 +23,112 @@ log = logging.getLogger(__name__)
 _TRANSFORM_HTTP_TIMEOUT = int(os.getenv("TRANSFORM_POST_TIMEOUT_SECONDS", "3600"))
 
 
-def _ingestion_dag_run_logical_date(logical_date, **kwargs):
+def wait_for_ingestion_completed(**context):
     """
-    Align transformation runs with ``supply_chain_ingestion`` (@hourly).
+    Wait until ``supply_chain_ingestion`` has a **successful** DagRun whose logical date
+    falls in a UTC window around this run's ``logical_date``.
 
-    Manual DAG triggers use a logical time like 11:23; ingestion runs use hour-aligned
-    intervals. Without this, ExternalTaskSensor looks for an ingestion run at 11:23 and
-    never finds it.
+    ``ExternalTaskSensor`` + exact logical-date equality breaks for manual triggers and for
+    Airflow 2 hourly timetables (ingestion run may be keyed at H or H-1). This polls the
+    metadata DB instead.
+
+    Env:
+      WAIT_INGESTION_TIMEOUT_SEC (default 3600)
+      WAIT_INGESTION_POLL_SEC (default 60)
+      WAIT_INGESTION_WINDOW_BEFORE_HOURS — window start = floor(logical_date to hour) minus this (default 3)
+      WAIT_INGESTION_WINDOW_AFTER_HOURS — window end = floor + this (default 2)
     """
-    if logical_date is None:
-        return None
+    import time
+
+    from airflow.models import DagRun
+    from airflow.utils.session import create_session
+    from airflow.utils.state import DagRunState
+
     try:
         import pendulum
+    except ImportError:
+        pendulum = None
 
-        return pendulum.instance(logical_date).start_of("hour")
-    except Exception:
-        from datetime import timezone as tz
+    logical = context.get("logical_date")
+    if logical is None:
+        raise AirflowException("logical_date missing from task context")
 
-        dt = logical_date
+    timeout_sec = int(os.getenv("WAIT_INGESTION_TIMEOUT_SEC", "3600"))
+    poll_sec = int(os.getenv("WAIT_INGESTION_POLL_SEC", "60"))
+    before_h = int(os.getenv("WAIT_INGESTION_WINDOW_BEFORE_HOURS", "3"))
+    after_h = int(os.getenv("WAIT_INGESTION_WINDOW_AFTER_HOURS", "2"))
+
+    if pendulum:
+        ref = pendulum.instance(logical).in_timezone("UTC")
+        window_lo = ref.start_of("hour").subtract(hours=before_h)
+        window_hi = ref.start_of("hour").add(hours=after_h)
+    else:
+        from datetime import timedelta, timezone as tz
+
+        dt = logical
         if getattr(dt, "tzinfo", None) is not None:
             dt = dt.astimezone(tz.utc)
-        return dt.replace(minute=0, second=0, microsecond=0)
+        floored = dt.replace(minute=0, second=0, microsecond=0)
+        window_lo = floored - timedelta(hours=before_h)
+        window_hi = floored + timedelta(hours=after_h)
+
+    deadline = time.time() + timeout_sec
+
+    while time.time() < deadline:
+        with create_session() as session:
+            recent = (
+                session.query(DagRun)
+                .filter(DagRun.dag_id == "supply_chain_ingestion")
+                .filter(DagRun.state == DagRunState.SUCCESS)
+                .order_by(DagRun.execution_date.desc())
+                .limit(50)
+                .all()
+            )
+            for dr in recent:
+                ld = getattr(dr, "logical_date", None) or getattr(dr, "execution_date", None)
+                if ld is None:
+                    continue
+                if pendulum:
+                    ldp = pendulum.instance(ld).in_timezone("UTC")
+                    if window_lo <= ldp < window_hi:
+                        log.info(
+                            "Ingestion gate OK | run_id=%s logical_date=%s window=[%s,%s)",
+                            dr.run_id,
+                            ldp,
+                            window_lo,
+                            window_hi,
+                        )
+                        return {
+                            "ingestion_run_id": dr.run_id,
+                            "ingestion_logical_date": str(ldp),
+                            "window_lo": str(window_lo),
+                            "window_hi": str(window_hi),
+                        }
+                else:
+                    if window_lo <= ld < window_hi:
+                        log.info(
+                            "Ingestion gate OK | run_id=%s logical_date=%s",
+                            dr.run_id,
+                            ld,
+                        )
+                        return {
+                            "ingestion_run_id": dr.run_id,
+                            "ingestion_logical_date": str(ld),
+                        }
+
+        log.info(
+            "No successful supply_chain_ingestion DagRun in [%s, %s); sleeping %ss",
+            window_lo,
+            window_hi,
+            poll_sec,
+        )
+        time.sleep(poll_sec)
+
+    raise AirflowException(
+        f"Timed out after {timeout_sec}s waiting for successful supply_chain_ingestion "
+        f"with logical_date in [{window_lo}, {window_hi}). "
+        "Confirm ingestion DAG finished green and widen WAIT_INGESTION_WINDOW_*_HOURS if needed."
+    )
 
 
 def _transform_service_error_text(response: requests.Response) -> str:
@@ -254,16 +338,11 @@ with DAG(
 ) as dag:
 
     # ─────────────────────────────────────────────────────────────
-    # WAIT FOR INGESTION
+    # WAIT FOR INGESTION (DB poll — avoids ExternalTaskSensor logical-date mismatch)
     # ─────────────────────────────────────────────────────────────
-    wait_for_ingestion = ExternalTaskSensor(
+    wait_for_ingestion = PythonOperator(
         task_id="wait_for_ingestion",
-        external_dag_id="supply_chain_ingestion",
-        external_task_id=None,  # Wait for entire DAG
-        execution_date_fn=_ingestion_dag_run_logical_date,
-        timeout=3600,  # 1 hour timeout
-        poke_interval=60,  # Check every minute
-        mode="reschedule",
+        python_callable=wait_for_ingestion_completed,
     )
 
     # ─────────────────────────────────────────────────────────────

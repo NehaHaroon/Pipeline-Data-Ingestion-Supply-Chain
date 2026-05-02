@@ -595,9 +595,12 @@ def get_transformation_kpis(
     - layer: Filter by layer ("silver" or "gold")
     - limit: Max records to return (default 100)
     """
-    from data_plane.transformation.transformation_kpis import TransformationKPILogger
-    log.info("@@@@@@@@@@@ source_id: {source_id} layer {layer} limit {limit}")
-    kpis = TransformationKPILogger.load_kpis(
+    from data_plane.transformation.transformation_kpis import (
+        TransformationKPILogger,
+        load_transformation_kpis_for_dashboard,
+    )
+    log.debug("transformation/kpis source_id=%s layer=%s limit=%s", source_id, layer, limit)
+    kpis = load_transformation_kpis_for_dashboard(
         source_id=source_id,
         layer=layer,
         limit=limit,
@@ -606,8 +609,12 @@ def get_transformation_kpis(
     return {
         "count": len(kpis),
         "kpis": [kpi.to_dict() for kpi in kpis],
-        "aggregate_stats_silver": TransformationKPILogger.get_aggregate_stats("silver"),
-        "aggregate_stats_gold": TransformationKPILogger.get_aggregate_stats("gold"),
+        "aggregate_stats_silver": TransformationKPILogger.get_aggregate_stats_with_iceberg_fallback(
+            "silver"
+        ),
+        "aggregate_stats_gold": TransformationKPILogger.get_aggregate_stats_with_iceberg_fallback(
+            "gold"
+        ),
     }
 
 
@@ -617,8 +624,8 @@ def get_transformation_summary(token: str = Depends(verify_token)):
     from data_plane.transformation.transformation_kpis import TransformationKPILogger
     
     return {
-        "silver": TransformationKPILogger.get_aggregate_stats("silver"),
-        "gold": TransformationKPILogger.get_aggregate_stats("gold"),
+        "silver": TransformationKPILogger.get_aggregate_stats_with_iceberg_fallback("silver"),
+        "gold": TransformationKPILogger.get_aggregate_stats_with_iceberg_fallback("gold"),
     }
 
 

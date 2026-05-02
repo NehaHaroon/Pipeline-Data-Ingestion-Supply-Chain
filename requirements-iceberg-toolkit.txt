@@ -1,0 +1,9 @@
+# Isolated venv for Airflow DAG tasks that need PyIceberg SqlCatalog (requires SQLAlchemy 2.x).
+# Airflow's image stays on SQLAlchemy 1.4 per official constraints — do not install these into the main env.
+sqlalchemy>=2.0.28,<3
+pyiceberg[pyarrow,sql-sqlite]==0.6.1
+pyarrow>=14,<17
+pandas>=2,<3
+numpy>=1.26
+cachetools==5.3.3
+filelock>=3.13.0

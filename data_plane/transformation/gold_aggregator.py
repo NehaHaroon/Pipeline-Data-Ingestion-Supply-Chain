@@ -1,3 +1,5 @@
+import time
+from dataclasses import replace
 
 import pandas as pd
 import pyarrow as pa
@@ -5,6 +7,7 @@ from common.arrow_iceberg_utils import prepare_arrow_table_for_iceberg
 from storage_plane.iceberg_catalog import get_catalog
 from storage_plane.iceberg_session_lock import iceberg_catalog_session, retry_catalog_mutation
 from control_plane.service_registry import StorageLayer, table_name_for_layer
+from data_plane.transformation.transformation_kpis import TransformationKPILogger, TransformationKPITracker
 from observability_plane.structured_logging import get_logger, log_pipeline_event
 
 class GoldAggregator:
@@ -26,6 +29,10 @@ class GoldAggregator:
             return pd.DataFrame()
 
     def run(self) -> dict:
+        t0 = time.time()
+        kpi = TransformationKPITracker("gold_replenishment_signals", layer="gold")
+        kpi.start_time = t0
+
         log_pipeline_event(
             self.log,
             "info",
@@ -52,6 +59,14 @@ class GoldAggregator:
                 skip_reason=reason,
                 warehouse_rows=len(warehouse),
                 iot_rows=len(iot),
+            )
+            kpi.end_time = time.time()
+            TransformationKPILogger.log_kpi(
+                replace(
+                    kpi.finalize(),
+                    status="skipped",
+                    error_message=reason,
+                )
             )
             return {
                 "records_written": 0,
@@ -118,6 +133,13 @@ class GoldAggregator:
 
         with iceberg_catalog_session():
             retry_catalog_mutation(_gold_write)
+
+        kpi.records_read = len(warehouse) + len(iot) + len(sales) + len(weather)
+        kpi.records_cleaned = len(gold)
+        kpi.records_rejected = 0
+        kpi.records_written = len(replenishment_signals)
+        kpi.end_time = time.time()
+        TransformationKPILogger.log_kpi(kpi.finalize())
 
         return {
             "records_written": len(replenishment_signals),

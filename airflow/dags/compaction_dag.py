@@ -28,14 +28,65 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.exceptions import AirflowException
 from datetime import datetime, timedelta
+import json
 import logging
-import sys
 import os
+import subprocess
+import sys
 
-# Add project root to Python path
-sys.path.insert(0, '/opt/airflow/project')
+from control_plane.service_registry import StorageLayer, table_name_for_layer
+
+# Add project root to Python path (tasks that import project code directly)
+sys.path.insert(0, "/opt/airflow/project")
 
 log = logging.getLogger(__name__)
+
+PROJECT_ROOT = os.environ.get("PIPELINE_PROJECT_ROOT", "/opt/airflow/project")
+ICEBERG_SCRIPT = os.path.join(PROJECT_ROOT, "scripts", "run_iceberg_task.py")
+ICEBERG_PY = os.environ.get("ICEBERG_TOOLKIT_PYTHON", "/opt/airflow/iceberg-toolkit/bin/python")
+
+
+def _invoke_iceberg_toolkit(args: list[str], timeout_sec: int = 7200) -> dict:
+    """
+    Run Iceberg work in the toolkit venv (SQLAlchemy 2.x). Airflow's interpreter stays on SQLAlchemy 1.4.
+    """
+    if not os.path.isfile(ICEBERG_SCRIPT):
+        raise AirflowException(f"Missing {ICEBERG_SCRIPT} — mount project into the Airflow container.")
+    if not os.path.isfile(ICEBERG_PY):
+        raise AirflowException(
+            f"Missing Iceberg toolkit at {ICEBERG_PY}. Rebuild Dockerfile.airflow (iceberg-toolkit venv)."
+        )
+    env = {**os.environ, "PYTHONPATH": PROJECT_ROOT}
+    cmd = [ICEBERG_PY, ICEBERG_SCRIPT, *args]
+    proc = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout_sec,
+        cwd=PROJECT_ROOT,
+        env=env,
+    )
+    if proc.returncode != 0:
+        raise AirflowException(
+            f"Iceberg toolkit failed ({proc.returncode}): {proc.stderr or proc.stdout}"
+        )
+    line = (proc.stdout or "").strip().splitlines()
+    payload = line[-1] if line else "{}"
+    return json.loads(payload)
+
+
+# Same Silver sources as transformation_dag (avoid importing PyIceberg at DAG parse time).
+_SILVER_SOURCE_IDS = [
+    "src_warehouse_master",
+    "src_sales_history",
+    "src_manufacturing_logs",
+    "src_legacy_trends",
+    "src_iot_rfid_stream",
+    "src_weather_api",
+]
+SILVER_TABLES = [
+    table_name_for_layer(StorageLayer.SILVER, sid) for sid in _SILVER_SOURCE_IDS
+]
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # DAG CONFIGURATION
@@ -80,71 +131,50 @@ dag = DAG(
 #     AirflowException: If compaction fails
 # """
 def compact_table(table_name: str) -> dict:
+    import time
+
     try:
-        from storage_plane.compaction import CompactionRunner
-        import time
-        
-        log.info(f"Starting compaction for {table_name}")
+        log.info("Starting compaction for %s (iceberg toolkit)", table_name)
         t0 = time.time()
-        
-        runner = CompactionRunner()
-        result = runner.run_table(table_name)
-        
+        result = _invoke_iceberg_toolkit(["compact", table_name])
         duration = time.time() - t0
         result["duration_sec"] = round(duration, 2)
-        
+
         if result.get("skipped"):
-            log.info(f"Skipped compaction for {table_name}: {result.get('reason')}")
+            log.info("Skipped compaction for %s: %s", table_name, result.get("reason"))
         else:
             log.info(
-                f"Compaction completed for {table_name}: "
-                f"{result.get('files_before', 0)} → {result.get('files_after', 0)} files, "
-                f"duration={duration:.1f}s"
+                "Compaction completed for %s: %s → %s files, duration=%ss",
+                table_name,
+                result.get("files_before", 0),
+                result.get("files_after", 0),
+                duration,
             )
-        
         return result
-    
+    except AirflowException:
+        raise
     except Exception as e:
-        log.error(f"Compaction failed for {table_name}: {e}", exc_info=True)
-        raise AirflowException(f"Compaction failed for {table_name}: {e}")
+        log.error("Compaction failed for %s: %s", table_name, e, exc_info=True)
+        raise AirflowException(f"Compaction failed for {table_name}: {e}") from e
 
 
 # """
 # Collect and log compaction metrics for monitoring.
 # """
 def collect_compaction_metrics(**context) -> dict:
-    from storage_plane.iceberg_catalog import get_catalog
-    from storage_plane.storage_kpis import get_all_tables_kpis
-    
     try:
-        all_kpis = get_all_tables_kpis()
-        
-        # Find tables that need compaction (small_file_ratio > 0.5)
-        tables_needing_compaction = [
-            (name, kpis.get("small_file_ratio", 0))
-            for name, kpis in all_kpis.items()
-            if not "error" in kpis and kpis.get("small_file_ratio", 0) > 0.5
-        ]
-        
-        log.info(
-            f"Compaction health check: {len(tables_needing_compaction)} tables "
-            f"need attention (small_file_ratio > 0.5)"
-        )
-        
-        for table_name, ratio in tables_needing_compaction:
+        summary = _invoke_iceberg_toolkit(["compaction-health"], timeout_sec=600)
+        n = summary.get("tables_needing_compaction", 0)
+        log.info("Compaction health check: %s tables need attention (small_file_ratio > 0.5)", n)
+        for table_name, ratio in summary.get("tables", []) or []:
             log.warning(
-                f"Table {table_name} has small_file_ratio={ratio:.1%}, "
-                f"consider running compaction"
+                "Table %s has small_file_ratio=%s — consider compaction",
+                table_name,
+                ratio,
             )
-        
-        return {
-            "total_tables": len(all_kpis),
-            "tables_needing_compaction": len(tables_needing_compaction),
-            "tables": tables_needing_compaction,
-        }
-    
+        return summary
     except Exception as e:
-        log.error(f"Failed to collect compaction metrics: {e}")
+        log.error("Failed to collect compaction metrics: %s", e)
         return {"error": str(e)}
 
 
@@ -167,8 +197,7 @@ BATCH_TABLES = [
     "bronze.weather_api",
 ]
 
-# Silver and Gold (already relatively well-formed)
-SILVER_TABLES = []  # Will be auto-detected
+# Silver: module-level SILVER_TABLES (same sources as transformation_dag).
 GOLD_TABLES = [
     "gold.replenishment_signals",
 ]
@@ -214,14 +243,6 @@ with dag:
         "compact_silver_tables",
         tooltip="Consolidation for Silver tables"   
     ) as silver_compact_tasks:
-        try:
-            from storage_plane.iceberg_catalog import get_catalog
-            catalog = get_catalog()
-            silver_table_ids = catalog.list_tables("silver")
-            SILVER_TABLES = [f"silver.{tid[1]}" for tid in silver_table_ids]
-        except Exception as e:
-            log.warning(f"Could not auto-detect Silver tables: {e}")
-        
         for table_name in SILVER_TABLES:
             PythonOperator(
                 task_id=f"compact_{table_name.replace('.', '_')}",
