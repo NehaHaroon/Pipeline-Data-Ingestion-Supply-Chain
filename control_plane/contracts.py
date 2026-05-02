@@ -49,8 +49,15 @@ class FieldConstraint:
                 errors.append(f"Field '{self.name}' is NULL but not nullable.")
             return errors   # No further checks if null
 
-        # Type check — attempt soft type matching
+        # Type check — attempt soft type matching (pandas/numpy use numpy scalar types)
         type_map = {"str": str, "int": (int, float), "float": float}
+        try:
+            import numpy as np
+
+            type_map["int"] = (int, float, np.integer, np.floating)
+            type_map["float"] = (float, np.floating, np.integer)
+        except ImportError:
+            pass
         expected = type_map.get(self.dtype)
         if expected and not isinstance(value, expected):
             errors.append(f"Field '{self.name}' expected {self.dtype}, got {type(value).__name__} (value={value!r}).")

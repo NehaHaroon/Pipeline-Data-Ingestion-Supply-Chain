@@ -8,9 +8,14 @@ COPY requirements-airflow.txt /
 
 USER airflow
 
-# upgrade pip safely under airflow user
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+# Upgrade packaging toolchain and guarantee pkg_resources availability.
+# Some Airflow providers (e.g., google/gcloud-aio stack) still import pkg_resources.
+RUN python -m pip install --no-cache-dir --upgrade pip wheel "setuptools>=69,<81" && \
+    python -c "import pkg_resources; print('pkg_resources_ok')"
 
 # install dependencies with constraints
-RUN pip install --no-cache-dir -r /requirements-airflow.txt \
+RUN python -m pip install --no-cache-dir -r /requirements-airflow.txt \
     --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.11.txt
+
+# Re-verify pkg_resources after all installs (constraints can alter dependency graph).
+RUN python -c "import pkg_resources; print('pkg_resources_post_install_ok')"

@@ -1,7 +1,11 @@
 
 import pandas as pd
 import pyarrow as pa
+from common.arrow_iceberg_utils import prepare_arrow_table_for_iceberg
 from storage_plane.iceberg_catalog import get_catalog
+from storage_plane.iceberg_session_lock import iceberg_catalog_session, retry_catalog_mutation
+from control_plane.service_registry import StorageLayer, table_name_for_layer
+from observability_plane.structured_logging import get_logger, log_pipeline_event
 
 class GoldAggregator:
     """
@@ -12,22 +16,50 @@ class GoldAggregator:
 
     def __init__(self):
         self.catalog = get_catalog()
+        self.log = get_logger("gold_aggregator")
 
     def _load_silver(self, source_id: str) -> pd.DataFrame:
-        tbl_name = f"silver.{source_id.replace('src_', '')}"
+        tbl_name = table_name_for_layer(StorageLayer.SILVER, source_id)
         try:
             return self.catalog.load_table(tbl_name).scan().to_pandas()
         except:
             return pd.DataFrame()
 
     def run(self) -> dict:
+        log_pipeline_event(
+            self.log,
+            "info",
+            "Starting Gold aggregation run",
+            layer=StorageLayer.GOLD.value,
+        )
         warehouse = self._load_silver("src_warehouse_master")
         iot       = self._load_silver("src_iot_rfid_stream")
         sales     = self._load_silver("src_sales_history")
         weather   = self._load_silver("src_weather_api")
 
         if warehouse.empty or iot.empty:
-            return {"records_written": 0}
+            reason = (
+                "silver_warehouse_master_empty"
+                if warehouse.empty
+                else "silver_iot_rfid_stream_empty"
+            )
+            log_pipeline_event(
+                self.log,
+                "warning",
+                f"Gold skipped — need non-empty Silver warehouse and IoT ({reason}). "
+                "Ensure transformation DAG runs Silver for src_iot_rfid_stream (and Bronze has IoT data).",
+                layer=StorageLayer.GOLD.value,
+                skip_reason=reason,
+                warehouse_rows=len(warehouse),
+                iot_rows=len(iot),
+            )
+            return {
+                "records_written": 0,
+                "skipped": True,
+                "skip_reason": reason,
+                "silver_warehouse_rows": int(len(warehouse)),
+                "silver_iot_rows": int(len(iot)),
+            }
 
         # Latest shelf stock per product (streaming)
         latest_stock = (iot.sort_values("timestamp")
@@ -72,13 +104,20 @@ class GoldAggregator:
 
         replenishment_signals = gold[gold["needs_replenishment"]]
 
-        arrow_table = pa.Table.from_pandas(replenishment_signals, preserve_index=False)
+        arrow_table = prepare_arrow_table_for_iceberg(
+            pa.Table.from_pandas(replenishment_signals, preserve_index=False, safe=False)
+        )
         gold_tbl_name = "gold.replenishment_signals"
-        try:
-            gold_tbl = self.catalog.load_table(gold_tbl_name)
-        except:
-            gold_tbl = self.catalog.create_table(gold_tbl_name, schema=arrow_table.schema)
-        gold_tbl.overwrite(arrow_table)
+
+        def _gold_write() -> None:
+            try:
+                gold_tbl = self.catalog.load_table(gold_tbl_name)
+            except Exception:
+                gold_tbl = self.catalog.create_table(gold_tbl_name, schema=arrow_table.schema)
+            gold_tbl.overwrite(arrow_table)
+
+        with iceberg_catalog_session():
+            retry_catalog_mutation(_gold_write)
 
         return {
             "records_written": len(replenishment_signals),

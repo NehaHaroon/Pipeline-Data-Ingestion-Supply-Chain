@@ -20,8 +20,18 @@ log = setup_logging("api")
 
 import config
 from control_plane.entities import ALL_SOURCES, ALL_DATASETS, IngestionJob, ExecutionMode
-from control_plane.contracts import CONTRACT_REGISTRY
+from control_plane.service_registry import (
+    StorageLayer,
+    dataset_id_from_source,
+    get_contract,
+    source_id_from_dataset,
+)
 from observability_plane.telemetry import JobTelemetry
+from observability_plane.structured_logging import log_pipeline_event
+from observability_plane.layer_metrics import (
+    build_layer_summaries,
+    layer_summaries_to_prometheus,
+)
 from ui_manager import (
     render_storage_summary, render_dataset_samples, DASHBOARD_HTML
 )
@@ -127,23 +137,12 @@ def metrics():
     session_completed = sum(1 for j in jobs_db.values() if j["status"] == "completed")
     session_failed    = sum(1 for j in jobs_db.values() if j["status"] == "failed")
 
-    # ── persisted telemetry (all sessions including current) ─────────────
-    persisted_telemetry   = JobTelemetry.load_reports()
-    persisted_total       = len(persisted_telemetry)
-
-    # Persisted records that belong to THIS session (already counted above).
-    # We identify them by job_id membership in jobs_db.
-    current_session_ids   = set(jobs_db.keys())
-    historic_only         = [
-        r for r in persisted_telemetry
-        if r.get("job_id") not in current_session_ids
-    ]
-    historic_total        = len(historic_only)
-
-    # ── aggregate record-level telemetry (de-duped, historic only) ────────
-    hist_ingested     = sum(r.get("records_ingested",    0) for r in historic_only)
-    hist_quarantined  = sum(r.get("records_quarantined", 0) for r in historic_only)
-    hist_failed_recs  = sum(r.get("records_failed",      0) for r in historic_only)
+    # ── persisted summary (fast O(1), suited for million-row telemetry) ───
+    persisted_summary = JobTelemetry.load_summary()
+    historic_total = int(persisted_summary.get("jobs_completed", 0))
+    hist_ingested = int(persisted_summary.get("records_ingested", 0))
+    hist_quarantined = int(persisted_summary.get("records_quarantined", 0))
+    hist_failed_recs = int(persisted_summary.get("records_failed", 0))
 
     # Current-session record counts come from jobs_db telemetry payloads
     sess_ingested     = sum(
@@ -160,14 +159,8 @@ def metrics():
     total_records_quarantined = hist_quarantined + sess_quarantined
     total_records_failed      = hist_failed_recs + sess_failed_recs
 
-    # ── throughput (average across all completed jobs with telemetry) ─────
-    all_thr = [
-        r.get("throughput_rec_sec", 0)
-        for r in persisted_telemetry
-        if r.get("throughput_rec_sec")
-    ]
-    avg_throughput = round(sum(all_thr) / len(all_thr), 2) if all_thr else 0.0
-    peak_throughput = round(max(all_thr), 2) if all_thr else 0.0
+    avg_throughput = float(persisted_summary.get("avg_throughput_rec_sec", 0.0) or 0.0)
+    peak_throughput = float(persisted_summary.get("peak_throughput_rec_sec", 0.0) or 0.0)
 
     # ── totals (no double-counting) ───────────────────────────────────────
     true_total     = session_running + session_failed + historic_total + session_completed
@@ -179,9 +172,9 @@ def metrics():
     # called after mark_end).  Failed jobs that crashed before mark_end are
     # only in jobs_db, so session_failed is the correct delta.
 
-    # Per-source breakdown (from persisted telemetry only – most complete)
+    # Per-source breakdown over recent telemetry window for responsiveness.
     source_breakdown: Dict[str, Dict[str, Any]] = {}
-    for r in persisted_telemetry:
+    for r in JobTelemetry.load_reports(limit=2000):
         sid = r.get("source_id", "unknown")
         if sid not in source_breakdown:
             source_breakdown[sid] = {
@@ -248,14 +241,16 @@ def ingest_data(
     request: Request,
     source_id: str,
     request_data: IngestRequest,
-    background_tasks: BackgroundTasks
-    # token: str = Depends(verify_token),
+    background_tasks: BackgroundTasks,
+    token: str = Depends(verify_token),
 ):
-
-    if source_id not in CONTRACT_REGISTRY:
+    if token is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        get_contract(source_id)
+    except KeyError:
         raise HTTPException(status_code=404, detail="Source not found")
-    print(request_data.dict())
-    dataset_id = f"ds_{source_id.replace('src_', '')}"
+    dataset_id = dataset_id_from_source(source_id)
     job_id = str(uuid.uuid4())
     job = IngestionJob(
         job_id=job_id,
@@ -264,6 +259,15 @@ def ingest_data(
         execution_mode=ExecutionMode.BATCH,
     )
     jobs_db[job_id] = {"job": job, "status": "running", "telemetry": None}
+    log_pipeline_event(
+        log,
+        "info",
+        "Ingestion request accepted",
+        layer=StorageLayer.BRONZE.value,
+        source_id=source_id,
+        job_id=job_id,
+        record_count=len(request_data.records),
+    )
     background_tasks.add_task(process_ingestion, job_id, source_id, request_data.records)
     return {"job_id": job_id, "message": "Ingestion started"}
 
@@ -277,14 +281,18 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
         telemetry = JobTelemetry(job_id=job_id, source_id=source_id)
         telemetry.mark_start()
 
+        contract = get_contract(source_id)
         bronze_writer = BronzeWriter(source_id)
         envelopes = []
+        # CPU-bound contract work does not benefit from threads under the GIL; a
+        # ThreadPoolExecutor with 10k futures only adds scheduling overhead (~10+ min for 10k rows).
+        nrec = len(records)
+        batch_log_interval = max(500, min(2000, max(1, nrec // 10)))
 
         for idx, record in enumerate(records, start=1):
-            result = CONTRACT_REGISTRY[source_id].enforce(record)
+            result = contract.enforce(record)
             rec_status = result["status"]
             if rec_status in ["ok", "coerced"]:
-                # Create EventEnvelope for Bronze layer
                 envelope = EventEnvelope(
                     payload=result["record"],
                     source_id=source_id,
@@ -294,26 +302,44 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
                     event_timestamp=time.time(),
                 )
                 envelopes.append(envelope)
-                datasets_db.setdefault(source_id, []).append(result["record"])
-                telemetry.records_ingested += 1
+                if len(datasets_db.setdefault(source_id, [])) < 100:
+                    datasets_db[source_id].append(result["record"])
+                telemetry.record_ok()
+                if rec_status == "coerced":
+                    telemetry.record_coerce()
             elif rec_status == "quarantine":
-                telemetry.records_quarantined += 1
+                telemetry.record_quarantine()
             else:
-                telemetry.records_failed += 1
+                telemetry.record_fail()
 
-            log.info(
-                f"[API-INGEST] job={job_id} source={source_id} row={idx} status={rec_status} "
-                f"records_ingested={telemetry.records_ingested} "
-                f"records_quarantined={telemetry.records_quarantined} "
-                f"records_failed={telemetry.records_failed}"
-            )
+            if idx % batch_log_interval == 0 or rec_status not in ["ok", "coerced"]:
+                log_pipeline_event(
+                    log,
+                    "info",
+                    "Processed ingestion record batch" if idx % batch_log_interval == 0 else "Processed ingestion record",
+                    layer=StorageLayer.BRONZE.value,
+                    source_id=source_id,
+                    job_id=job_id,
+                    row=idx,
+                    status=rec_status,
+                    records_ingested=telemetry.records_ingested,
+                    records_quarantined=telemetry.records_quarantined,
+                    records_failed=telemetry.records_failed,
+                )
 
         # Write to Bronze Iceberg table
         if envelopes:
             bronze_result = bronze_writer.write_batch(envelopes)
-            log.info(f"[BRONZE-WRITE] job={job_id} source={source_id} "
-                    f"records_written={bronze_result['records_written']} "
-                    f"snapshot_id={bronze_result['snapshot_id']}")
+            log_pipeline_event(
+                log,
+                "info",
+                "Bronze write completed",
+                layer=StorageLayer.BRONZE.value,
+                source_id=source_id,
+                job_id=job_id,
+                records_written=bronze_result["records_written"],
+                snapshot_id=bronze_result["snapshot_id"],
+            )
 
         telemetry.mark_end()
         telemetry.log_report()
@@ -321,7 +347,14 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
         jobs_db[job_id]["telemetry"] = telemetry.report()
 
     except Exception as e:
-        log.error(f"Ingestion failed for job {job_id}: {e}")
+        log_pipeline_event(
+            log,
+            "error",
+            f"Ingestion failed: {e}",
+            layer=StorageLayer.BRONZE.value,
+            source_id=source_id,
+            job_id=job_id,
+        )
         jobs_db[job_id]["status"] = "failed"
 
 
@@ -329,15 +362,33 @@ def process_ingestion(job_id: str, source_id: str, records: List[Dict[str, Any]]
 # region: Jobs / Telemetry
 # ---------------------------------------------------------------------------
 @app.get("/jobs")
-def list_jobs(token: str = Depends(verify_token)):
-    """List all jobs with their status and telemetry."""
-    return {"jobs": jobs_db}
+def list_jobs(limit: int = 500, token: str = Depends(verify_token)):
+    """List recent jobs with bounded payload for UI performance."""
+    safe_limit = min(max(limit, 1), 5000)
+    recent_items = list(jobs_db.items())[-safe_limit:]
+    return {"jobs": {job_id: info for job_id, info in recent_items}, "count": len(recent_items)}
+
+
+@app.get("/jobs/{job_id}/status")
+def get_job_status(job_id: str, token: str = Depends(verify_token)):
+    """Lightweight status endpoint for orchestrators polling ingestion completion."""
+    job_info = jobs_db.get(job_id)
+    if not job_info:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+    return {
+        "job_id": job_id,
+        "source_id": job_info["job"].source_id,
+        "dataset_id": job_info["job"].dataset_id,
+        "status": job_info["status"],
+        "telemetry": job_info.get("telemetry"),
+    }
 
 
 @app.get("/telemetry")
-def get_telemetry(token: str = Depends(verify_token)):
-    """Return persisted telemetry job records for ingestion visibility."""
-    telemetry_records = JobTelemetry.load_reports()
+def get_telemetry(limit: int = 1000, token: str = Depends(verify_token)):
+    """Return persisted telemetry records, bounded for dashboard performance."""
+    safe_limit = min(max(limit, 1), 10000)
+    telemetry_records = JobTelemetry.load_reports(limit=safe_limit)
     return {"telemetry_records": telemetry_records, "count": len(telemetry_records)}
 
 
@@ -346,7 +397,7 @@ def get_telemetry(token: str = Depends(verify_token)):
 # ---------------------------------------------------------------------------
 @app.get("/datasets/{dataset_id}")
 def query_dataset(dataset_id: str, limit: int = 100, token: str = Depends(verify_token)):
-    source_id = f"src_{dataset_id.replace('ds_', '')}"
+    source_id = source_id_from_dataset(dataset_id)
     if source_id not in datasets_db:
         return {"records": []}
     return {"records": datasets_db[source_id][:limit]}
@@ -367,8 +418,10 @@ def get_dataset_samples(token: str = Depends(verify_token)):
 # region: Dashboard JSON  (used by the JS front-end)
 # ---------------------------------------------------------------------------
 @app.get("/dashboard/json")
-def dashboard_json(token: str = Depends(verify_token)):
-    # 1. Get jobs from the current session (in-memory)
+def dashboard_json(history_limit: int = 1000, token: str = Depends(verify_token)):
+    # 1. Get recent jobs from current session (in-memory, bounded)
+    session_limit = min(max(history_limit, 100), 10000)
+    recent_session_jobs = list(jobs_db.items())[-session_limit:]
     job_list = [
         {
             "job_id":     job_id,
@@ -377,13 +430,14 @@ def dashboard_json(token: str = Depends(verify_token)):
             "status":     info["status"],
             "telemetry":  info["telemetry"],
         }
-        for job_id, info in jobs_db.items()
+        for job_id, info in recent_session_jobs
     ]
 
     # 2. Merge historic jobs from persisted telemetry records on disk.
     # This ensures "all jobs till date" are visible even after a server restart.
-    persisted_telemetry = JobTelemetry.load_reports()
-    current_session_ids = set(jobs_db.keys())
+    safe_history_limit = min(max(history_limit, 100), 10000)
+    persisted_telemetry = JobTelemetry.load_reports(limit=safe_history_limit)
+    current_session_ids = set(job_id for job_id, _ in recent_session_jobs)
 
     for report in persisted_telemetry:
         jid = report.get("job_id")
@@ -415,7 +469,18 @@ def dashboard_json(token: str = Depends(verify_token)):
         }.items()
     }
 
-    return {"jobs": job_list, "datasets": dataset_list, "storage_summary": storage_summary}
+    return {
+        "jobs": job_list,
+        "datasets": dataset_list,
+        "storage_summary": storage_summary,
+        "layer_summaries": build_layer_summaries(jobs_db),
+    }
+
+
+@app.get("/observability/layers")
+def observability_layers(token: str = Depends(verify_token)):
+    """Unified per-layer KPI summary for dashboard and external consumers."""
+    return {"layers": build_layer_summaries(jobs_db)}
 
 
 # ---------------------------------------------------------------------------
@@ -561,8 +626,7 @@ def get_transformation_summary(token: str = Depends(verify_token)):
 # region: Storage/Iceberg Metrics
 # ---------------------------------------------------------------------------
 @app.get("/storage/iceberg-kpis")
-# def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(verify_token)):
-def get_iceberg_kpis(table_name: Optional[str] = None):
+def get_iceberg_kpis(table_name: Optional[str] = None, token: str = Depends(verify_token)):
     """
     Get Iceberg table KPIs (file metrics, snapshots, compaction status).
     
@@ -570,16 +634,23 @@ def get_iceberg_kpis(table_name: Optional[str] = None):
     - table_name: Specific table (e.g., "bronze.iot_rfid_stream"). If None, returns all tables.
     """
     from storage_plane.storage_kpis import get_storage_kpis, get_all_tables_kpis
-    
-    if table_name:
-        return {"table": table_name, "kpis": get_storage_kpis(table_name)}
-    else:
-        return {"tables": get_all_tables_kpis()}
+
+    try:
+        if table_name:
+            try:
+                return {"table": table_name, "kpis": get_storage_kpis(table_name)}
+            except Exception as exc:
+                log.warning(f"Failed to load storage KPIs for table {table_name}: {exc}")
+                return {"table": table_name, "kpis": {"error": str(exc)}}
+        else:
+            return {"tables": get_all_tables_kpis()}
+    except Exception as exc:
+        log.error(f"Failed to load storage iceberg KPIs: {exc}", exc_info=True)
+        return {"error": str(exc), "tables": {}}
 
 
 @app.get("/storage/summary")
-# def get_storage_summary_json(token: str = Depends(verify_token)):
-def get_storage_summary_json():
+def get_storage_summary_json(token: str = Depends(verify_token)):
     """Get consolidated storage summary (file counts, sizes, compaction status)."""
     from storage_plane.storage_kpis import get_all_tables_kpis, compute_storage_health
     
@@ -767,5 +838,52 @@ def metrics_prometheus(token: str = Depends(verify_token)):
     output.write("# HELP ingest_avg_throughput Average throughput\n")
     output.write("# TYPE ingest_avg_throughput gauge\n")
     output.write(f"ingest_avg_throughput {metrics_data['avg_throughput_rec_sec']}\n\n")
-    
+    output.write(layer_summaries_to_prometheus(build_layer_summaries(jobs_db)))
+
     return output.getvalue()
+
+
+@app.get("/errors/summary")
+def errors_summary(token: str = Depends(verify_token)):
+    """
+    Cross-layer error insights to explain pipeline health by data source.
+    """
+    telemetry = JobTelemetry.load_reports()
+    by_source: Dict[str, Dict[str, Any]] = {}
+    for row in telemetry:
+        sid = row.get("source_id", "unknown")
+        bucket = by_source.setdefault(
+            sid,
+            {"records_failed": 0, "records_quarantined": 0, "records_ingested": 0, "status": "ok"},
+        )
+        bucket["records_failed"] += row.get("records_failed", 0)
+        bucket["records_quarantined"] += row.get("records_quarantined", 0)
+        bucket["records_ingested"] += row.get("records_ingested", 0)
+
+    for sid, bucket in by_source.items():
+        total = bucket["records_ingested"] + bucket["records_failed"] + bucket["records_quarantined"]
+        error_ratio = (bucket["records_failed"] + bucket["records_quarantined"]) / total if total else 0.0
+        if error_ratio >= 0.2:
+            bucket["status"] = "critical"
+        elif error_ratio >= 0.05:
+            bucket["status"] = "warning"
+        else:
+            bucket["status"] = "ok"
+
+    from data_plane.transformation.transformation_kpis import TransformationKPILogger
+    silver = TransformationKPILogger.get_aggregate_stats("silver")
+    transformation = {
+        "schema_violations": silver.get("total_schema_violations", 0),
+        "records_rejected": silver.get("total_records_rejected", 0),
+        "late_arrivals": silver.get("total_late_arrivals", 0),
+        "duplicates_removed": silver.get("total_duplicates_removed", 0),
+    }
+
+    from storage_plane.storage_kpis import compute_storage_health, get_all_tables_kpis
+    storage_health = compute_storage_health(get_all_tables_kpis())
+
+    return {
+        "ingestion": {"by_source": by_source},
+        "transformation": transformation,
+        "storage": storage_health,
+    }

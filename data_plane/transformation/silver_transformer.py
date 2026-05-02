@@ -1,10 +1,32 @@
-
+import traceback
 import pandas as pd
 import pyarrow as pa
 from dataclasses import dataclass
+
+import numpy as np
+
+from common.arrow_iceberg_utils import prepare_arrow_table_for_iceberg
 from storage_plane.iceberg_catalog import get_catalog
+from storage_plane.iceberg_session_lock import iceberg_catalog_session, retry_catalog_mutation
 from control_plane.contracts import CONTRACT_REGISTRY
 from data_plane.transformation.transformation_kpis import TransformationKPITracker
+from control_plane.service_registry import StorageLayer, table_name_for_layer
+from observability_plane.structured_logging import get_logger, log_pipeline_event
+
+
+def _sanitize_dataframe_for_arrow(df: pd.DataFrame) -> pd.DataFrame:
+    """Avoid PyArrow/Iceberg failures on nullable booleans and non-finite floats."""
+    out = df.copy()
+    if "late_arriving" in out.columns:
+        out["late_arriving"] = out["late_arriving"].fillna(False).astype(bool)
+    for col in out.columns:
+        s = out[col]
+        if pd.api.types.is_bool_dtype(s) or getattr(s.dtype, "name", "") == "boolean":
+            out[col] = s.fillna(False).astype(bool)
+        elif pd.api.types.is_float_dtype(s):
+            out[col] = s.replace([np.inf, -np.inf], np.nan)
+    return out
+
 
 @dataclass
 class SilverTransformResult:
@@ -28,18 +50,54 @@ class SilverTransformer:
 
     def __init__(self, source_id: str):
         self.source_id = source_id
-        self.bronze_table = f"bronze.{source_id.replace('src_', '')}"
-        self.silver_table = f"silver.{source_id.replace('src_', '')}"
+        self.bronze_table = table_name_for_layer(StorageLayer.BRONZE, source_id)
+        self.silver_table = table_name_for_layer(StorageLayer.SILVER, source_id)
         self.contract = CONTRACT_REGISTRY.get(source_id)
         self.catalog = get_catalog()
         self.kpi = TransformationKPITracker(source_id, layer="silver")
+        self.log = get_logger("silver_transformer")
 
     def transform(self) -> SilverTransformResult:
         import time
         t0 = time.time()
+        log_pipeline_event(
+            self.log,
+            "info",
+            "Starting Silver transformation",
+            layer=StorageLayer.SILVER.value,
+            source_id=self.source_id,
+            bronze_table=self.bronze_table,
+            silver_table=self.silver_table,
+        )
 
-        # 1. Read from Bronze
-        bronze = self.catalog.load_table(self.bronze_table)
+        # 1. Read from Bronze (graceful skip if source has not landed yet)
+        try:
+            bronze = self.catalog.load_table(self.bronze_table)
+        except Exception as exc:
+            latency = time.time() - t0
+            log_pipeline_event(
+                self.log,
+                "warning",
+                f"Bronze table not available yet, skipping Silver transform: {type(exc).__name__}: {exc}",
+                layer=StorageLayer.SILVER.value,
+                source_id=self.source_id,
+                bronze_table=self.bronze_table,
+                duration_sec=round(latency, 3),
+                exception_type=type(exc).__name__,
+                exception_message=str(exc),
+                traceback=traceback.format_exc(),
+            )
+            return SilverTransformResult(
+                source_id=self.source_id,
+                records_read=0,
+                records_cleaned=0,
+                records_rejected=0,
+                null_imputations=0,
+                duplicates_removed=0,
+                late_arriving_count=0,
+                schema_violations=0,
+                transformation_latency_sec=latency,
+            )
         df: pd.DataFrame = bronze.scan().to_pandas()
         records_read = len(df)
 
@@ -56,6 +114,11 @@ class SilverTransformer:
                 rejected_rows.append(result["record"])
 
         df = pd.DataFrame(valid_rows)
+
+        # Ingestion normalizes legacy CSV "old_product_code" → "product_id"; contract + dedup still use old_product_code
+        if self.source_id == "src_legacy_trends" and "product_id" in df.columns and "old_product_code" not in df.columns:
+            df = df.copy()
+            df["old_product_code"] = df["product_id"].astype(str)
 
         # 3. Null imputation (source-specific rules from contracts)
         null_imputations = 0
@@ -114,22 +177,84 @@ class SilverTransformer:
 
         # 8. Write to Silver Iceberg table
         if not df.empty:
-            arrow_table = pa.Table.from_pandas(df, preserve_index=False)
+            df_write = _sanitize_dataframe_for_arrow(df)
             try:
-                silver = self.catalog.load_table(self.silver_table)
-            except:
-                silver = self.catalog.create_table(self.silver_table, schema=arrow_table.schema)
-            silver.overwrite(arrow_table)  # overwrite for idempotency
+                arrow_table = prepare_arrow_table_for_iceberg(
+                    pa.Table.from_pandas(df_write, preserve_index=False, safe=False)
+                )
+            except Exception as conv_exc:
+                tb = traceback.format_exc()
+                log_pipeline_event(
+                    self.log,
+                    "error",
+                    f"PyArrow conversion failed for Silver: {type(conv_exc).__name__}: {conv_exc}",
+                    layer=StorageLayer.SILVER.value,
+                    source_id=self.source_id,
+                    silver_table=self.silver_table,
+                    exception_type=type(conv_exc).__name__,
+                    exception_message=str(conv_exc),
+                    traceback=tb,
+                )
+                raise
+
+            def _silver_catalog_write() -> None:
+                try:
+                    silver = self.catalog.load_table(self.silver_table)
+                except Exception:
+                    silver = self.catalog.create_table(self.silver_table, schema=arrow_table.schema)
+                try:
+                    silver.overwrite(arrow_table)  # overwrite for idempotency
+                except Exception as exc:
+                    log_pipeline_event(
+                        self.log,
+                        "warning",
+                        f"Silver overwrite failed ({type(exc).__name__}: {exc}); recreating table {self.silver_table}",
+                        layer=StorageLayer.SILVER.value,
+                        source_id=self.source_id,
+                        silver_table=self.silver_table,
+                        exception_type=type(exc).__name__,
+                        exception_message=str(exc),
+                        traceback=traceback.format_exc(),
+                    )
+                    try:
+                        self.catalog.drop_table(self.silver_table)
+                    except Exception as drop_exc:
+                        log_pipeline_event(
+                            self.log,
+                            "warning",
+                            f"Silver drop_table failed (continuing): {type(drop_exc).__name__}: {drop_exc}",
+                            layer=StorageLayer.SILVER.value,
+                            source_id=self.source_id,
+                            silver_table=self.silver_table,
+                            exception_type=type(drop_exc).__name__,
+                            traceback=traceback.format_exc(),
+                        )
+                    silver = self.catalog.create_table(self.silver_table, schema=arrow_table.schema)
+                    silver.append(arrow_table)
+
+            with iceberg_catalog_session():
+                retry_catalog_mutation(_silver_catalog_write)
 
         latency = time.time() - t0
-        return SilverTransformResult(
+        log_pipeline_event(
+            self.log,
+            "info",
+            "Completed Silver transformation",
+            layer=StorageLayer.SILVER.value,
             source_id=self.source_id,
             records_read=records_read,
             records_cleaned=len(df),
             records_rejected=len(rejected_rows),
-            null_imputations=null_imputations,
-            duplicates_removed=duplicates_removed,
-            late_arriving_count=late_arriving_count,
-            schema_violations=violations,
-            transformation_latency_sec=latency,
+            duration_sec=round(latency, 3),
+        )
+        return SilverTransformResult(
+            source_id=self.source_id,
+            records_read=int(records_read),
+            records_cleaned=int(len(df)),
+            records_rejected=int(len(rejected_rows)),
+            null_imputations=int(null_imputations),
+            duplicates_removed=int(duplicates_removed),
+            late_arriving_count=int(late_arriving_count),
+            schema_violations=int(violations),
+            transformation_latency_sec=float(latency),
         )

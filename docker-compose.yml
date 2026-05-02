@@ -102,7 +102,6 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      # INGESTION_API_URL: http://localhost:8000
       INGESTION_API_URL: http://ingestion-api:8000
     command: >
       python -c "from data_plane.ingestion.real_time_iot_ingest import run_real_time_ingestion; run_real_time_ingestion()"
@@ -182,6 +181,36 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       # INGESTION_API_URL: http://ingestion-api:8000
     command: ["python", "data_plane/cdc/cdc_consumer.py"]
+    networks:
+      - pipeline-net
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      ingestion-api:
+        condition: service_started
+    networks:
+      - pipeline-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
     networks:
       - pipeline-net
 

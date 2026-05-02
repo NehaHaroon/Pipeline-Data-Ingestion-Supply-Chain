@@ -8,15 +8,100 @@ from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
 from airflow.exceptions import AirflowException
 from datetime import datetime, timedelta
+import json
 import logging
 import sys
 import os
+import traceback
 import requests
 
 # Add project root to Python path
 sys.path.insert(0, '/opt/airflow/project')
 
 log = logging.getLogger(__name__)
+
+# Silver/Gold POST must cover pandas work plus waiting on the Iceberg SQLite catalog lock.
+_TRANSFORM_HTTP_TIMEOUT = int(os.getenv("TRANSFORM_POST_TIMEOUT_SECONDS", "3600"))
+
+
+def _ingestion_dag_run_logical_date(logical_date, **kwargs):
+    """
+    Align transformation runs with ``supply_chain_ingestion`` (@hourly).
+
+    Manual DAG triggers use a logical time like 11:23; ingestion runs use hour-aligned
+    intervals. Without this, ExternalTaskSensor looks for an ingestion run at 11:23 and
+    never finds it.
+    """
+    if logical_date is None:
+        return None
+    try:
+        import pendulum
+
+        return pendulum.instance(logical_date).start_of("hour")
+    except Exception:
+        from datetime import timezone as tz
+
+        dt = logical_date
+        if getattr(dt, "tzinfo", None) is not None:
+            dt = dt.astimezone(tz.utc)
+        return dt.replace(minute=0, second=0, microsecond=0)
+
+
+def _transform_service_error_text(response: requests.Response) -> str:
+    """Parse FastAPI/Starlette error body so task logs show the real failure (not just '500')."""
+    try:
+        data = response.json()
+    except Exception:
+        return (response.text or "")[:4000]
+    detail = data.get("detail")
+    if detail is None:
+        return json.dumps(data)[:4000]
+    if isinstance(detail, list):
+        return json.dumps(detail)[:4000]
+    return str(detail)[:4000]
+
+
+def _post_transform_or_fail(url: str, *, what: str, timeout: int = 3600) -> dict:
+    try:
+        response = requests.post(url, timeout=timeout)
+    except requests.RequestException as exc:
+        log.error(
+            "%s request failed before HTTP response | url=%s | error=%s: %s\n%s",
+            what,
+            url,
+            type(exc).__name__,
+            exc,
+            traceback.format_exc(),
+        )
+        raise AirflowException(
+            f"{what}: connection/request error ({type(exc).__name__}: {exc})"
+        ) from exc
+
+    if not response.ok:
+        err = _transform_service_error_text(response)
+        log.error(
+            "%s failed | url=%s | http_status=%s | response_body=%s",
+            what,
+            url,
+            response.status_code,
+            err,
+        )
+        raise AirflowException(f"{what} HTTP {response.status_code}: {err}")
+
+    try:
+        return response.json()
+    except json.JSONDecodeError as exc:
+        body_preview = (response.text or "")[:2000]
+        log.error(
+            "Transform service returned non-JSON | url=%s | status=%s | preview=%s\n%s",
+            url,
+            response.status_code,
+            body_preview,
+            traceback.format_exc(),
+        )
+        raise AirflowException(
+            f"{what}: invalid JSON response ({type(exc).__name__}: {exc}); body preview: {body_preview}"
+        ) from exc
 
 # ═══════════════════════════════════════════════════════════════════════════════════
 # CONFIG
@@ -29,11 +114,15 @@ default_args = {
     "owner": "data-engineering"
 }
 
+# Gold replenishment joins warehouse + IoT shelf stock (+ sales + weather). Include all dependencies here
+# or Gold exits early with records_written=0 (see gold_aggregator gate on warehouse + iot).
 SOURCES_FOR_SILVER = [
     "src_warehouse_master",
     "src_sales_history",
     "src_manufacturing_logs",
-    "src_legacy_trends"
+    "src_legacy_trends",
+    "src_iot_rfid_stream",
+    "src_weather_api",
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════════════
@@ -45,19 +134,17 @@ def transform_silver(source_id: str) -> dict:
     try:
         url = "http://transform-service:8001/transform/silver/{}".format(source_id)
         log.info(f"Starting Silver transformation for {source_id} via {url}")
-
-        response = requests.post(url, timeout=300)  # 5 minute timeout
-        response.raise_for_status()
-
-        result = response.json()
+        result = _post_transform_or_fail(
+            url, what=f"Silver transform ({source_id})", timeout=_TRANSFORM_HTTP_TIMEOUT
+        )
         log.info(
             f"Silver done for {source_id}: "
             f"read={result.get('records_read', 0)}, cleaned={result.get('records_cleaned', 0)}, "
             f"rejected={result.get('records_rejected', 0)}"
         )
-
         return result
-
+    except AirflowException:
+        raise
     except Exception as e:
         log.error(f"Silver failed for {source_id}: {e}", exc_info=True)
         raise AirflowException(str(e))
@@ -67,15 +154,11 @@ def transform_gold() -> dict:
     try:
         url = "http://transform-service:8001/transform/gold"
         log.info("Starting Gold aggregation via {}".format(url))
-
-        response = requests.post(url, timeout=300)  # 5 minute timeout
-        response.raise_for_status()
-
-        result = response.json()
+        result = _post_transform_or_fail(url, what="Gold transform", timeout=_TRANSFORM_HTTP_TIMEOUT)
         log.info(f"Gold completed: {result}")
-
         return result
-
+    except AirflowException:
+        raise
     except Exception as e:
         log.error(f"Gold failed: {e}", exc_info=True)
         raise AirflowException(str(e))
@@ -90,26 +173,56 @@ def trigger_silver(source_id: str) -> dict:
     try:
         url = "http://transform-service:8001/transform/silver/{}".format(source_id)
         log.info(f"Triggering Silver transformation for {source_id}")
-        
-        response = requests.post(url, timeout=300)
-        response.raise_for_status()
-        
-        result = response.json()
+        result = _post_transform_or_fail(
+            url, what=f"Silver transform ({source_id})", timeout=_TRANSFORM_HTTP_TIMEOUT
+        )
         log.info(f"Silver triggered for {source_id}: {result}")
         return result
-    
+    except AirflowException:
+        raise
     except Exception as e:
         log.error(f"Silver trigger failed for {source_id}: {e}", exc_info=True)
         raise AirflowException(str(e))
 
+
+def assert_bronze_ready(source_id: str, min_records: int = 1) -> dict:
+    """
+    Hard gate for normal Silver path:
+    fail task if Bronze table is missing or still empty.
+    """
+    bronze_table = f"bronze.{source_id.replace('src_', '')}"
+    ingestion_api = os.getenv("INGESTION_API_URL", "http://ingestion-api:8000").rstrip("/")
+    api_token = os.getenv("API_TOKEN")
+    if not api_token:
+        raise AirflowException("API_TOKEN is not configured in Airflow environment.")
+    try:
+        response = requests.get(
+            f"{ingestion_api}/storage/iceberg-kpis",
+            params={"table_name": bronze_table},
+            headers={"Authorization": f"Bearer {api_token}"},
+            timeout=60,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        kpis = payload.get("kpis", {})
+        if not isinstance(kpis, dict) or kpis.get("error"):
+            raise AirflowException(
+                f"Bronze table '{bronze_table}' is not queryable yet: {kpis.get('error', payload)}"
+            )
+        records = int(kpis.get("record_count", 0) or 0)
+        if records < min_records:
+            raise AirflowException(
+                f"Bronze table '{bronze_table}' exists but has {records} records; required >= {min_records}."
+            )
+        log.info(f"Bronze readiness OK for {source_id}: table={bronze_table} records={records}")
+        return {"source_id": source_id, "bronze_table": bronze_table, "records": records}
+    except Exception as exc:
+        log.error(f"Bronze readiness check failed for {source_id}: {exc}", exc_info=True)
+        raise AirflowException(str(exc))
+
 def trigger_gold():
     url = "http://transform-service:8001/transform/gold"
-    response = requests.post(url)
-
-    if response.status_code != 200:
-        raise Exception(f"Gold failed: {response.text}")
-
-    return response.json()
+    return _post_transform_or_fail(url, what="Gold transform", timeout=_TRANSFORM_HTTP_TIMEOUT)
 
 def emit_transformation_summary(**context):
     from data_plane.transformation.transformation_kpis import TransformationKPILogger
@@ -147,9 +260,10 @@ with DAG(
         task_id="wait_for_ingestion",
         external_dag_id="supply_chain_ingestion",
         external_task_id=None,  # Wait for entire DAG
+        execution_date_fn=_ingestion_dag_run_logical_date,
         timeout=3600,  # 1 hour timeout
         poke_interval=60,  # Check every minute
-        mode="reschedule"
+        mode="reschedule",
     )
 
     # ─────────────────────────────────────────────────────────────
@@ -163,11 +277,18 @@ with DAG(
         silver_results = {}
 
         for source_id in SOURCES_FOR_SILVER:
+            bronze_ready_task = PythonOperator(
+                task_id=f"check_bronze_{source_id.replace('src_', '')}",
+                python_callable=assert_bronze_ready,
+                op_kwargs={"source_id": source_id, "min_records": 1},
+            )
+
             task = PythonOperator(
                 task_id=f"trigger_silver_{source_id.replace('src_', '')}",
                 python_callable=trigger_silver,
                 op_kwargs={"source_id": source_id},
             )
+            bronze_ready_task >> task
             silver_results[source_id] = task
 
     # ─────────────────────────────────────────────────────────────

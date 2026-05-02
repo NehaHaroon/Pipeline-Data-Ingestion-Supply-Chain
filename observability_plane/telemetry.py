@@ -8,17 +8,52 @@ import json
 import time
 import threading
 import logging
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
-log = logging.getLogger(__name__)
+from observability_plane.structured_logging import get_logger, log_pipeline_event
+
+log = get_logger("job_telemetry")
 
 TELEMETRY_DIR = os.path.join("storage", "telemetry")
 TELEMETRY_LOG_FILE = os.path.join(TELEMETRY_DIR, "telemetry_records.jsonl")
+TELEMETRY_SUMMARY_FILE = os.path.join(TELEMETRY_DIR, "telemetry_summary.json")
 TELEMETRY_LOCK = threading.Lock()
 
 os.makedirs(TELEMETRY_DIR, exist_ok=True)
+
+
+def _default_summary() -> dict:
+    return {
+        "jobs_completed": 0,
+        "records_ingested": 0,
+        "records_failed": 0,
+        "records_quarantined": 0,
+        "records_coerced": 0,
+        "throughput_sum": 0.0,
+        "throughput_samples": 0,
+        "peak_throughput_rec_sec": 0.0,
+    }
+
+
+def _load_summary_locked() -> dict:
+    if not os.path.exists(TELEMETRY_SUMMARY_FILE):
+        return _default_summary()
+    try:
+        with open(TELEMETRY_SUMMARY_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        base = _default_summary()
+        base.update(data if isinstance(data, dict) else {})
+        return base
+    except (json.JSONDecodeError, OSError):
+        return _default_summary()
+
+
+def _save_summary_locked(summary: dict) -> None:
+    with open(TELEMETRY_SUMMARY_FILE, "w", encoding="utf-8") as f:
+        json.dump(summary, f)
 
 
 @dataclass
@@ -51,14 +86,28 @@ class JobTelemetry:
 
     def mark_start(self):
         self._start_wall = time.time()
-        log.info(f"[TELEMETRY][{self.job_id}] ▶  Job started at "
-                 f"{datetime.now(timezone.utc).isoformat()}")
+        log_pipeline_event(
+            log,
+            "info",
+            "Telemetry started for job",
+            layer="ingestion",
+            source_id=self.source_id,
+            job_id=self.job_id,
+            started_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     def mark_end(self):
         self._end_wall = time.time()
-        log.info(f"[TELEMETRY][{self.job_id}] ⏹  Job ended at "
-                 f"{datetime.now(timezone.utc).isoformat()} | "
-                 f"Duration: {self.duration_seconds:.2f}s")
+        log_pipeline_event(
+            log,
+            "info",
+            "Telemetry completed for job",
+            layer="ingestion",
+            source_id=self.source_id,
+            job_id=self.job_id,
+            ended_at=datetime.now(timezone.utc).isoformat(),
+            duration_sec=round(self.duration_seconds, 2),
+        )
 
     @property
     def duration_seconds(self) -> float:
@@ -138,13 +187,25 @@ class JobTelemetry:
             source_file = os.path.join(TELEMETRY_DIR, f"{self.source_id}.jsonl")
             with open(source_file, "a", encoding="utf-8") as f:
                 f.write(record_line + "\n")
+            summary = _load_summary_locked()
+            summary["jobs_completed"] += 1
+            summary["records_ingested"] += report.get("records_ingested", 0)
+            summary["records_failed"] += report.get("records_failed", 0)
+            summary["records_quarantined"] += report.get("records_quarantined", 0)
+            summary["records_coerced"] += report.get("records_coerced", 0)
+            throughput = float(report.get("throughput_rec_sec", 0.0) or 0.0)
+            if throughput > 0:
+                summary["throughput_sum"] += throughput
+                summary["throughput_samples"] += 1
+                summary["peak_throughput_rec_sec"] = max(summary["peak_throughput_rec_sec"], throughput)
+            _save_summary_locked(summary)
         return report
 
     @classmethod
-    def load_reports(cls, source_id: Optional[str] = None) -> list[dict]:
+    def load_reports(cls, source_id: Optional[str] = None, limit: Optional[int] = None) -> list[dict]:
         if not os.path.exists(TELEMETRY_LOG_FILE):
             return []
-        records = []
+        records = deque(maxlen=limit) if limit and limit > 0 else []
         with open(TELEMETRY_LOG_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
@@ -153,10 +214,20 @@ class JobTelemetry:
                 try:
                     data = json.loads(line)
                     if source_id is None or data.get("source_id") == source_id:
-                        records.append(data)
+                        records.append(data)  # list or deque
                 except json.JSONDecodeError:
                     continue
-        return records
+        return list(records)
+
+    @classmethod
+    def load_summary(cls) -> dict:
+        with TELEMETRY_LOCK:
+            summary = _load_summary_locked()
+        samples = summary.get("throughput_samples", 0) or 0
+        summary["avg_throughput_rec_sec"] = round(
+            (summary.get("throughput_sum", 0.0) / samples) if samples else 0.0, 3
+        )
+        return summary
 
     # ── Reporting ────────────────────────────────────────────────────────
 

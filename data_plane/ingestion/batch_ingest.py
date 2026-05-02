@@ -206,6 +206,7 @@ def ingest_source(
     dup_count   = 0
 
     good_records:      List[Dict] = []
+    good_envelopes:    List[EventEnvelope] = []
     quarantine_records: List[Dict] = []
     detail_log:        List[Dict] = []
 
@@ -316,6 +317,7 @@ def ingest_source(
                         record.get("sale_timestamp")
                     ),
                 )
+                good_envelopes.append(envelope)
                 good_records.append(envelope.to_dict())
                 tel.record_ok()
             except Exception as e:
@@ -335,10 +337,8 @@ def ingest_source(
 
                 # Write to Bronze Iceberg table
                 from data_plane.transformation.bronze_writer import BronzeWriter
-                from control_plane.entities import EventEnvelope
-                envelopes = [EventEnvelope.from_dict(rec) for rec in good_records]
                 bronze_writer = BronzeWriter(source_id)
-                bronze_result = bronze_writer.write_batch(envelopes)
+                bronze_result = bronze_writer.write_batch(good_envelopes)
                 log.info(f"  [BRONZE-WRITE] {bronze_result['records_written']} records → "
                         f"{source_id.replace('src_', '')} table | "
                         f"snapshot_id={bronze_result['snapshot_id']}")

@@ -104,6 +104,17 @@ def _forward_to_ingestion_api(config: ConsumerConfig, envelope: EventEnvelope) -
         print(f"[CDC] Failed to send event envelope to API")
 
 
+def _forward_batch_to_ingestion_api(config: ConsumerConfig, envelopes: List[EventEnvelope]) -> None:
+    if not envelopes:
+        return
+    records = [env.to_dict() for env in envelopes]
+    success = send_records_to_api(records, config.api_url, config.api_token)
+    if success:
+        print(f"[CDC] Successfully sent batch to API | batch_size={len(records)}")
+    else:
+        print(f"[CDC] Failed to send batch to API | batch_size={len(records)}")
+
+
 def run_consumer() -> None:
     """Main loop consuming Debezium topic and forwarding to ingestion API."""
     config = _load_config()
@@ -132,6 +143,7 @@ def run_consumer() -> None:
 
             for topic_partition, messages in polled_records.items():
                 _ = topic_partition
+                batch_envelopes: List[EventEnvelope] = []
                 for message in messages:
                     raw_value = message.value or {}
                     op_code = raw_value.get("__op") or raw_value.get("op")
@@ -154,7 +166,7 @@ def run_consumer() -> None:
                         event_timestamp=datetime.now(timezone.utc).isoformat(),
                         source_timestamp=source_timestamp,
                     )
-                    _forward_to_ingestion_api(config, envelope)
+                    batch_envelopes.append(envelope)
                     print(
                         "[CDC] op={op} txn_id={txn} product={product}".format(
                             op=operation_type.value,
@@ -162,6 +174,7 @@ def run_consumer() -> None:
                             product=payload.get("product_id", "UNKNOWN"),
                         )
                     )
+                _forward_batch_to_ingestion_api(config, batch_envelopes)
     except KeyboardInterrupt:
         print("[CDC] Shutdown requested by user.")
     finally:

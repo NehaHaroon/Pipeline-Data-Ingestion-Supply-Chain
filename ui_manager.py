@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import logging
-from control_plane.entities import ALL_DATASETS
+from control_plane.entities import ALL_DATASETS, ALL_SOURCES
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,32 @@ def render_storage_summary() -> str:
     }
     rows = [[label, len(glob.glob(pattern)), pattern] for label, pattern in storage_paths.items()]
     return _render_table(["Area", "File Count", "Pattern"], rows)
+
+
+def _source_options_html() -> str:
+    options = ["<option value='all'>All sources</option>"]
+    for src in ALL_SOURCES:
+        options.append(f"<option value='{html.escape(src.source_id)}'>{html.escape(src.name)}</option>")
+    return "".join(options)
+
+
+def _domain_chips_html() -> str:
+    domains = sorted({d.domain for d in ALL_DATASETS})
+    chips = [
+        "<div class=\"chip active\" data-filter=\"domain\" data-val=\"all\" onclick=\"toggleChip('domain','all',this)\">"
+        "<div class=\"cdot\" style=\"background:#5a6278\"></div>All domains"
+        "</div>"
+    ]
+    colors = ["#3d8bff", "#00c9a7", "#9b7fff", "#ff7056", "#f5a623", "#3ecf8e"]
+    for idx, domain in enumerate(domains):
+        color = colors[idx % len(colors)]
+        chips.append(
+            f"<div class=\"chip\" data-filter=\"domain\" data-val=\"{html.escape(domain)}\" "
+            f"onclick=\"toggleChip('domain','{html.escape(domain)}',this)\">"
+            f"<div class=\"cdot\" style=\"background:{color}\"></div>{html.escape(domain.title())}"
+            f"</div>"
+        )
+    return "".join(chips)
 
 # ---------------------------------------------------------------------------
 # region: Dashboard Template (Frontend)
@@ -318,43 +344,12 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 
   <div class="fsec">
     <div class="fsec-lbl">Data Source</div>
-    <select class="fsel" id="f-source" onchange="applyFilters()">
-      <option value="all">All sources</option>
-      <option value="src_sales_history">Sales History</option>
-      <option value="src_warehouse_master">Warehouse Master</option>
-      <option value="src_iot_rfid_stream">IoT RFID Stream</option>
-      <option value="src_weather_api">Weather API</option>
-      <option value="src_manufacturing_logs">Manufacturing Logs</option>
-      <option value="src_legacy_trends">Legacy Trends</option>
-      <option value="src_inventory_transactions">Inventory Transactions</option>
-    </select>
+    <select class="fsel" id="f-source" onchange="applyFilters()">__SOURCE_OPTIONS__</select>
   </div>
 
   <div class="fsec">
     <div class="fsec-lbl">Domain</div>
-    <div class="chip-grp" id="domain-chips">
-      <div class="chip active" data-filter="domain" data-val="all" onclick="toggleChip('domain','all',this)">
-        <div class="cdot" style="background:#5a6278"></div>All domains
-      </div>
-      <div class="chip" data-filter="domain" data-val="sales" onclick="toggleChip('domain','sales',this)">
-        <div class="cdot" style="background:#3d8bff"></div>Sales
-      </div>
-      <div class="chip" data-filter="domain" data-val="inventory" onclick="toggleChip('domain','inventory',this)">
-        <div class="cdot" style="background:#00c9a7"></div>Inventory
-      </div>
-      <div class="chip" data-filter="domain" data-val="logistics" onclick="toggleChip('domain','logistics',this)">
-        <div class="cdot" style="background:#9b7fff"></div>Logistics
-      </div>
-      <div class="chip" data-filter="domain" data-val="production" onclick="toggleChip('domain','production',this)">
-        <div class="cdot" style="background:#ff7056"></div>Production
-      </div>
-      <div class="chip" data-filter="domain" data-val="external" onclick="toggleChip('domain','external',this)">
-        <div class="cdot" style="background:#f5a623"></div>External
-      </div>
-      <div class="chip" data-filter="domain" data-val="analytics" onclick="toggleChip('domain','analytics',this)">
-        <div class="cdot" style="background:#3ecf8e"></div>Analytics
-      </div>
-    </div>
+    <div class="chip-grp" id="domain-chips">__DOMAIN_CHIPS__</div>
   </div>
 
   <div class="fsec">
@@ -393,7 +388,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
     <div class="fsec-lbl">Time range</div>
     <select class="fsel" id="f-time" onchange="applyFilters()">
       <option value="all">All time</option>
-      <option value="1h">Last 1 hour</option>
+      <option value="1h" selected>Last 1 hour</option>
       <option value="6h">Last 6 hours</option>
       <option value="24h">Last 24 hours</option>
       <option value="7d">Last 7 days</option>
@@ -699,7 +694,7 @@ const CD   = { color:'#9ba3b8', grid:'rgba(255,255,255,0.05)' };
 
 /* ══ STATE ═══════════════════════════════════════════════════════════════ */
 let allJobs=[], allTel=[], allSrc=[];
-let F = { status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'all' };
+let F = { status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'1h' };
 
 /* ══ CHARTS ══════════════════════════════════════════════════════════════ */
 let cDonut, cThr, cDur;
@@ -780,8 +775,12 @@ function initCharts() {
 /* ══ API FETCH ═══════════════════════════════════════════════════════════ */
 async function fetchAll() {
   try {
+    const timeMap = { "1h":"1h ago", "6h":"6h ago", "24h":"24h ago", "7d":"7d ago" };
+    const selectedTime = document.getElementById('f-time')?.value || '1h';
+    const fromTs = timeMap[selectedTime];
+    const metricsUrl = fromTs ? `${API}/metrics/filtered?from_timestamp=${encodeURIComponent(fromTs)}` : `${API}/metrics`;
     const [m,t,s,d] = await Promise.all([
-      fetch(API+'/metrics',               {headers:HDR}).then(r=>r.json()),
+      fetch(metricsUrl,                   {headers:HDR}).then(r=>r.json()),
       fetch(API+'/telemetry',             {headers:HDR}).then(r=>r.json()),
       fetch(API+'/source-configurations', {headers:HDR}).then(r=>r.json()),
       fetch(API+'/dashboard/json',        {headers:HDR}).then(r=>r.json()),
@@ -1088,8 +1087,9 @@ function clearF(key) {
 }
 
 function resetFilters() {
-  F={ status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'all' };
-  ['f-source','f-cls','f-freq','f-time'].forEach(id=>{ document.getElementById(id).value='all'; });
+  F={ status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'1h' };
+  ['f-source','f-cls','f-freq'].forEach(id=>{ document.getElementById(id).value='all'; });
+  document.getElementById('f-time').value='1h';
   document.getElementById('f-thr').value=0;
   document.getElementById('thr-val').textContent='0 r/s';
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
@@ -1120,14 +1120,14 @@ function loadTransformationData() {
     .then(d=>{
       const silver=d.silver||{}, gold=d.gold||{};
       document.getElementById('txr-total').textContent=(silver.run_count||0)+(gold.run_count||0);
-      document.getElementById('txr-latency').textContent=((silver.avg_transformation_latency_sec||0)+(gold.avg_transformation_latency_sec||0)/2).toFixed(2);
-      document.getElementById('txr-quality').textContent=((silver.overall_quality_ratio||0)+(gold.overall_quality_ratio||0)/2).toFixed(0);
+      document.getElementById('txr-latency').textContent=(((silver.avg_transformation_latency_sec||0)+(gold.avg_transformation_latency_sec||0))/2).toFixed(2);
+      document.getElementById('txr-quality').textContent=Math.round((((silver.overall_quality_ratio||0)+(gold.overall_quality_ratio||0))/2)*100).toString();
       document.getElementById('txr-dupes').textContent=((silver.total_duplicates_removed||0)+(gold.total_duplicates_removed||0)).toString();
       document.getElementById('txr-late').textContent=(silver.total_late_arrivals||0).toString();
       document.getElementById('txr-silver').textContent=(silver.total_records_cleaned||0).toString();
       document.getElementById('txr-gold').textContent=(gold.total_records_processed||0).toString();
-      document.getElementById('txr-violations').textContent='0';
-    }).catch(e=>log.error('Error loading transformation data:',e));
+      document.getElementById('txr-violations').textContent=(silver.total_schema_violations||0).toString();
+    }).catch(e=>console.error('Error loading transformation data:',e));
   
   // Load detailed KPIs
   fetch(API+'/transformation/kpis?limit=10', {headers:HDR})
@@ -1226,4 +1226,4 @@ initCharts();
 refresh();
 </script>
 </body>
-</html>"""
+</html>""".replace("__SOURCE_OPTIONS__", _source_options_html()).replace("__DOMAIN_CHIPS__", _domain_chips_html())

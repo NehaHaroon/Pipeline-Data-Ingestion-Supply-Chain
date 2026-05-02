@@ -17,6 +17,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 
     INGESTION_API_URL: http://ingestion-api:8000
+    API_TOKEN: ${API_TOKEN}
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
     PYTHONPATH: /opt/airflow/project
@@ -66,7 +67,10 @@ services:
     entrypoint: >
       bash -c "
       airflow db migrate &&
-      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev || true
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev || true &&
+      airflow variables set API_TOKEN \"$API_TOKEN\" || true &&
+      airflow connections delete ingestion-api || true &&
+      airflow connections add ingestion-api --conn-type http --conn-host ingestion-api --conn-port 8000 || true
       "
 
     depends_on:
