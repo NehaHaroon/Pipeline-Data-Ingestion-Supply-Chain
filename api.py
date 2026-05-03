@@ -64,6 +64,7 @@ app.state.limiter = limiter
 # region: Security
 # ---------------------------------------------------------------------------
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 API_TOKEN = config.API_TOKEN
 
 
@@ -117,19 +118,19 @@ def metrics():
     Design notes
     ────────────
     jobs_db        – in-memory dict; holds only the current server session's
-                     jobs (running + recently completed/failed).  Resets on
-                     every container/process restart.
+                    jobs (running + recently completed/failed).  Resets on
+                    every container/process restart.
 
     persisted_tel  – JSONL/parquet files written by JobTelemetry.log_report()
-                     at job completion.  They survive restarts and accumulate
-                     across sessions.
+                    at job completion.  They survive restarts and accumulate
+                    across sessions.
 
     Deduplication  – jobs_db already contains the current session's completed
-                     jobs, which are ALSO written to persisted telemetry the
-                     moment they finish.  To avoid counting them twice we
-                     subtract the current-session completed count from the
-                     historic total.  Running jobs have no telemetry record
-                     yet, so they're safe to add directly.
+                    jobs, which are ALSO written to persisted telemetry the
+                    moment they finish.  To avoid counting them twice we
+                    subtract the current-session completed count from the
+                    historic total.  Running jobs have no telemetry record
+                    yet, so they're safe to add directly.
     """
     # ── current session (in-memory) ──────────────────────────────────────
     session_total     = len(jobs_db)
@@ -813,35 +814,42 @@ def _aggregate_by_source(telemetry_records: List[Dict[str, Any]]) -> Dict[str, i
 # region: Prometheus Metrics Endpoint (for Grafana integration)
 # ---------------------------------------------------------------------------
 @app.get("/metrics/prometheus")
-def metrics_prometheus(token: str = Depends(verify_token)):
+def metrics_prometheus(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional)):
     """
     Export metrics in Prometheus exposition format for Grafana scraping.
     """
+    # Prometheus scrapes without auth by default. If Authorization is sent, validate it.
+    if credentials and credentials.credentials != API_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     from io import StringIO
-    
+
     metrics_data = metrics()  # Call the main /metrics endpoint
-    
+
     output = StringIO()
     output.write("# HELP ingest_total_jobs Total ingestion jobs\n")
     output.write("# TYPE ingest_total_jobs counter\n")
     output.write(f"ingest_total_jobs {metrics_data['total_jobs']}\n\n")
-    
+
     output.write("# HELP ingest_running_jobs Currently running jobs\n")
     output.write("# TYPE ingest_running_jobs gauge\n")
     output.write(f"ingest_running_jobs {metrics_data['running_jobs']}\n\n")
-    
+
     output.write("# HELP ingest_records_ingested Total records ingested\n")
     output.write("# TYPE ingest_records_ingested counter\n")
     output.write(f"ingest_records_ingested {metrics_data['total_records_ingested']}\n\n")
-    
+
     output.write("# HELP ingest_records_quarantined Total records quarantined\n")
     output.write("# TYPE ingest_records_quarantined counter\n")
     output.write(f"ingest_records_quarantined {metrics_data['total_records_quarantined']}\n\n")
-    
+
     output.write("# HELP ingest_records_failed Total records failed\n")
     output.write("# TYPE ingest_records_failed counter\n")
     output.write(f"ingest_records_failed {metrics_data['total_records_failed']}\n\n")
-    
+
     output.write("# HELP ingest_avg_throughput Average throughput\n")
     output.write("# TYPE ingest_avg_throughput gauge\n")
     output.write(f"ingest_avg_throughput {metrics_data['avg_throughput_rec_sec']}\n\n")

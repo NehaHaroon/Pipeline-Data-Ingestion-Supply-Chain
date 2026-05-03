@@ -104,7 +104,7 @@ def post_to_ingestion_api(source_id: str, records_task_id: str, **context):
 
     # Wait for background ingestion completion so downstream DAGs see Bronze tables.
     status_url = f"{api_base}/jobs/{job_id}/status"
-    max_wait_seconds = int(os.getenv("INGESTION_JOB_MAX_WAIT_SECONDS", "1800"))  # Increased to 30 min default for large batches
+    max_wait_seconds = int(os.getenv("INGESTION_JOB_MAX_WAIT_SECONDS", "1800"))
     poll_interval = int(os.getenv("INGESTION_JOB_POLL_INTERVAL_SECONDS", "5"))
     progress_log_interval = int(os.getenv("INGESTION_POLL_PROGRESS_LOG_SECONDS", "60"))
     waited = 0
@@ -114,7 +114,7 @@ def post_to_ingestion_api(source_id: str, records_task_id: str, **context):
             status_resp = requests.get(
                 status_url,
                 headers={"Authorization": f"Bearer {api_token}"},
-                timeout=60,  # Increased from 30 to 60 seconds for better reliability
+                timeout=60
             )
         except RequestException as exc:
             log.warning(

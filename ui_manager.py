@@ -2,9 +2,6 @@ from typing import Dict, Any, List
 import glob
 import html
 import os
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import logging
 from control_plane.entities import ALL_DATASETS, ALL_SOURCES
 
@@ -156,7 +153,6 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-l{display:flex;align-items:center;gap:16px}
-.page-title{font-family:var(--font-d);font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-0.02em}
 .pills{display:flex;gap:6px;flex-wrap:wrap}
 .pill{font-size:10px;padding:3px 8px;background:rgba(61,139,255,.15);
   border:1px solid rgba(61,139,255,.25);border-radius:20px;color:var(--accent);
@@ -406,7 +402,6 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
 <div class="main">
   <div class="topbar">
     <div class="topbar-l">
-      <!-- Page tabs for navigation -->
       <div class="page-tabs" style="display:flex;gap:12px;margin-right:20px;">
         <button class="page-tab active" data-page="ingestion" onclick="switchPage('ingestion')" style="padding:6px 14px;background:transparent;border:none;color:var(--accent);cursor:pointer;font-size:12px;border-bottom:2px solid var(--accent);font-weight:500">Ingestion</button>
         <button class="page-tab" data-page="transformation" onclick="switchPage('transformation')" style="padding:6px 14px;background:transparent;border:none;color:var(--t2);cursor:pointer;font-size:12px;border-bottom:2px solid transparent;font-weight:500">Transformation</button>
@@ -421,11 +416,10 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
     </div>
   </div>
 
-  <!-- INGESTION PAGE (existing content) -->
+  <!-- ══ INGESTION PAGE ══ -->
   <div id="page-ingestion" class="page-content" style="display:block;">
     <div class="content">
 
-      <!-- filter summary -->
       <div class="fsummary hidden ai" id="fsummary">
         Showing <strong id="f-cnt">—</strong> of <strong id="t-cnt">—</strong> jobs &nbsp;
         <span style="color:var(--t3)" id="f-desc"></span>
@@ -459,17 +453,17 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="kpi-sub"><span class="badge b-up">rec/sec</span></div></div>
       </div>
 
-      <!-- Row 1: throughput line + donut -->
+      <!-- Row 1: Source comparison line chart + donut -->
       <div class="row r-6040 ai d2">
         <div class="panel">
-          <div class="ph"><div class="ph-title">Throughput over time</div><div class="ph-meta" id="thr-meta">rec/sec</div></div>
+          <div class="ph">
+            <div class="ph-title">Throughput by source</div>
+            <div class="ph-meta" id="src-thr-meta">rec/sec · per job run</div>
+          </div>
           <div class="pb">
-            <div class="legend">
-              <div class="leg-item"><div class="leg-sw" style="background:#3d8bff"></div>Throughput (r/s)</div>
-              <div class="leg-item"><div class="leg-sw" style="background:#9b7fff;border:1px dashed #9b7fff"></div>Quarantine %</div>
-            </div>
+            <div class="legend" id="src-thr-legend"></div>
             <div style="position:relative;height:200px">
-              <canvas id="c-thr" role="img" aria-label="Throughput and quarantine rate line chart">No data.</canvas>
+              <canvas id="c-src-thr" role="img" aria-label="Line chart comparing throughput rec/sec per job run across all active sources">No data.</canvas>
             </div>
           </div>
         </div>
@@ -478,13 +472,33 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="pb">
             <div class="legend" id="donut-leg"></div>
             <div style="position:relative;height:190px">
-              <canvas id="c-donut" role="img" aria-label="Donut chart of record outcomes">No data.</canvas>
+              <canvas id="c-donut" role="img" aria-label="Donut chart of record outcomes: ingested, quarantined, failed">No data.</canvas>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Row 2: SLA + sources -->
+      <!-- Row 2: Records per source bar + duration vs throughput scatter -->
+      <div class="row r-5050 ai d3">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Records per source</div><div class="ph-meta">ingested total</div></div>
+          <div class="pb">
+            <div style="position:relative;height:200px">
+              <canvas id="c-src-bar" role="img" aria-label="Horizontal bar chart of total records ingested per source">No data.</canvas>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Duration vs throughput</div><div class="ph-meta">per job · scatter</div></div>
+          <div class="pb">
+            <div style="position:relative;height:200px">
+              <canvas id="c-scatter" role="img" aria-label="Scatter plot of job duration in seconds versus throughput rec/sec, one point per source">No data.</canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: SLA + source health -->
       <div class="row r-5050 ai d3">
         <div class="panel">
           <div class="ph"><div class="ph-title">Data quality SLA</div><div class="ph-meta">ingestion success % per source</div></div>
@@ -498,19 +512,23 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
         </div>
       </div>
 
-      <!-- Row 3: duration + storage + gauge -->
+      <!-- Row 4: Storage footprint + processing lag + gauge -->
       <div class="row r-333 ai d4">
         <div class="panel">
-          <div class="ph"><div class="ph-title">Job duration</div><div class="ph-meta">seconds per job</div></div>
+          <div class="ph"><div class="ph-title">Storage footprint</div><div class="ph-meta">MB per area per source</div></div>
           <div class="pb">
             <div style="position:relative;height:180px">
-              <canvas id="c-dur" role="img" aria-label="Job duration bar chart">No data.</canvas>
+              <canvas id="c-storage-stacked" role="img" aria-label="Stacked bar chart of storage bytes split across ingested, stream buffer, CDC log, and micro-batch areas per source">No data.</canvas>
             </div>
           </div>
         </div>
         <div class="panel">
-          <div class="ph"><div class="ph-title">Storage utilisation</div><div class="ph-meta">files per area</div></div>
-          <div class="pb"><div class="stor-grid" id="stor-grid"><div class="empty">Loading…</div></div></div>
+          <div class="ph"><div class="ph-title">Processing lag</div><div class="ph-meta">seconds per source</div></div>
+          <div class="pb">
+            <div style="position:relative;height:180px">
+              <canvas id="c-lag" role="img" aria-label="Bar chart showing processing lag in seconds per source">No data.</canvas>
+            </div>
+          </div>
         </div>
         <div class="panel">
           <div class="ph"><div class="ph-title">Pipeline throughput</div><div class="ph-meta">aggregate performance</div></div>
@@ -540,15 +558,38 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
         </div>
       </div>
 
-      <!-- Row 4: alerts -->
-      <div class="row r-full ai d4">
+      <!-- Row 5: Storage utilisation (file counts) + alerts -->
+      <div class="row r-5050 ai d4">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Storage utilisation</div><div class="ph-meta">files per area</div></div>
+          <div class="pb"><div class="stor-grid" id="stor-grid"><div class="empty">Loading…</div></div></div>
+        </div>
         <div class="panel">
           <div class="ph"><div class="ph-title">Pipeline alerts</div><div class="ph-meta" id="a-cnt">scanning…</div></div>
           <div class="pb"><div class="alert-list" id="alert-list"><div class="empty"><div class="ei">◎</div>Loading…</div></div></div>
         </div>
       </div>
 
-      <!-- Row 5: jobs table -->
+      <!-- Row 6: Source health matrix -->
+      <div class="row r-full ai d4">
+        <div class="panel">
+          <div class="ph"><div class="ph-title">Source health matrix</div><div class="ph-meta">latest job per source</div></div>
+          <div class="pb-np">
+            <div class="scroll-body" style="max-height:300px">
+              <table class="jt">
+                <thead><tr>
+                  <th>Source</th><th>Type</th><th>Records</th>
+                  <th>Throughput</th><th>Duration</th><th>Lag</th>
+                  <th>Quarantine</th><th>Failed</th><th>Status</th>
+                </tr></thead>
+                <tbody id="health-matrix-body"><tr><td colspan="9" class="empty">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 7: Jobs table -->
       <div class="row r-full ai d5">
         <div class="panel">
           <div class="ph"><div class="ph-title">Active &amp; recent jobs</div><div class="ph-meta" id="j-cnt">—</div></div>
@@ -565,11 +606,11 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           </div>
         </div>
       </div>
-    </div>
 
+    </div>
   </div><!-- /page-ingestion -->
 
-  <!-- TRANSFORMATION PAGE -->
+  <!-- ══ TRANSFORMATION PAGE ══ -->
   <div id="page-transformation" class="page-content" style="display:none;">
     <div class="content">
       <div class="kpi-strip ai d1">
@@ -584,7 +625,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="kpi-sub"><span class="badge b-up">cleaned %</span></div></div>
         <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#f5a623,#ffd066)"></div>
           <div class="kpi-lbl">Duplicates Removed</div><div class="kpi-val" id="txr-dupes">—</div>
-          <div class="kpi-sub"><span class="badge b-nt">%</span></div></div>
+          <div class="kpi-sub"><span class="badge b-nt">count</span></div></div>
         <div class="kpi"><div class="kpi-bar" style="background:linear-gradient(90deg,#00c9a7,#4af0d5)"></div>
           <div class="kpi-lbl">Late Arrivals</div><div class="kpi-val" id="txr-late">—</div>
           <div class="kpi-sub"><span class="badge b-up">detected</span></div></div>
@@ -598,7 +639,6 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="kpi-lbl">Schema Violations</div><div class="kpi-val" id="txr-violations">—</div>
           <div class="kpi-sub"><span class="badge b-dn">count</span></div></div>
       </div>
-      
       <div class="row r-5050 ai d2">
         <div class="panel">
           <div class="ph"><div class="ph-title">Transformation KPIs</div><div class="ph-meta">per-run details</div></div>
@@ -617,7 +657,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="ph"><div class="ph-title">Data Quality Trend</div><div class="ph-meta">records cleaned %</div></div>
           <div class="pb">
             <div style="position:relative;height:220px">
-              <canvas id="c-txr-quality" role="img" aria-label="Quality trend">No data.</canvas>
+              <canvas id="c-txr-quality" role="img" aria-label="Line chart of data quality percentage (records cleaned) over transformation runs">No data.</canvas>
             </div>
           </div>
         </div>
@@ -625,7 +665,7 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
     </div>
   </div><!-- /page-transformation -->
 
-  <!-- STORAGE PAGE -->
+  <!-- ══ STORAGE PAGE ══ -->
   <div id="page-storage" class="page-content" style="display:none;">
     <div class="content">
       <div class="kpi-strip ai d1">
@@ -654,10 +694,9 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           <div class="kpi-lbl">Storage Health</div><div class="kpi-val" id="stor-health">—</div>
           <div class="kpi-sub"><span class="badge b-up" id="stor-health-badge">Good</span></div></div>
       </div>
-      
       <div class="row r-full ai d2">
         <div class="panel">
-          <div class="ph"><div class="ph-title">Iceberg Tables Health</div><div class="ph-meta">file metrics & compaction status</div></div>
+          <div class="ph"><div class="ph-title">Iceberg Tables Health</div><div class="ph-meta">file metrics &amp; compaction status</div></div>
           <div class="pb-np">
             <div class="scroll-body" style="max-height:400px;padding:12px">
               <table class="jt" style="font-size:10px">
@@ -670,7 +709,6 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
           </div>
         </div>
       </div>
-      
       <div class="row r-5050 ai d3">
         <div class="panel">
           <div class="ph"><div class="ph-title">Storage Warnings</div><div class="ph-meta">health alerts</div></div>
@@ -684,25 +722,33 @@ body{font-family:var(--font-m);background:var(--bg);color:var(--t1);min-height:1
     </div>
   </div><!-- /page-storage -->
 
-
 </div><!-- /main -->
 </div><!-- /shell -->
 
 <script>
 /* ══ CONFIG ══════════════════════════════════════════════════════════════ */
 const API  = window.location.origin || 'http://localhost:8000';
-const TOK  = '__API_TOKEN__';      /* injected by FastAPI at request time */
+const TOK  = '__API_TOKEN__';
 const HDR  = { 'Authorization': `Bearer ${TOK}` };
 const CD   = { color:'#9ba3b8', grid:'rgba(255,255,255,0.05)' };
+
+/* Source colour palette — consistent across all charts */
+const SRC_COLORS = [
+  '#3d8bff','#3ecf8e','#f5a623','#9b7fff','#ff7056','#00c9a7','#f04b4b','#c4aaff'
+];
+const SRC_DASHES = [
+  undefined,[5,3],[3,3],[6,2],[4,4],[2,2],[7,3],[5,5]
+];
 
 /* ══ STATE ═══════════════════════════════════════════════════════════════ */
 let allJobs=[], allTel=[], allSrc=[];
 let F = { status:'all', source:'all', domain:'all', cls:'all', freq:'all', thr:0, time:'1h' };
 
 /* ══ CHARTS ══════════════════════════════════════════════════════════════ */
-let cDonut, cThr, cDur, cTxr;
+let cDonut, cSrcThr, cSrcBar, cScatter, cStorageStacked, cLag, cDur, cTxr;
 
 function initCharts() {
+  /* Donut — record outcome mix */
   cDonut = new Chart(document.getElementById('c-donut'), {
     type:'doughnut',
     data:{ labels:['Ingested','Quarantined','Failed'],
@@ -711,36 +757,80 @@ function initCharts() {
       plugins:{ legend:{display:false} }, animation:{duration:500} }
   });
 
-  cThr = new Chart(document.getElementById('c-thr'), {
+  /* Source throughput comparison — multi-line, one series per source */
+  cSrcThr = new Chart(document.getElementById('c-src-thr'), {
     type:'line',
-    data:{ labels:[],
-      datasets:[
-        { label:'Throughput (r/s)', data:[], borderColor:'#3d8bff', backgroundColor:'rgba(61,139,255,.08)',
-          fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#3d8bff', borderWidth:1.5, yAxisID:'y' },
-        { label:'Quarantine %', data:[], borderColor:'#9b7fff', backgroundColor:'transparent',
-          fill:false, tension:.4, pointRadius:2, borderWidth:1.5, borderDash:[4,3], yAxisID:'y1' }
-      ] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    data:{ labels:[], datasets:[] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
       scales:{
         x:{ ticks:{font:{size:9,family:'DM Mono'},color:CD.color}, grid:{color:CD.grid} },
-        y:{ ticks:{font:{size:9},color:CD.color}, grid:{color:CD.grid}, beginAtZero:true, position:'left' },
-        y1:{ ticks:{font:{size:9},color:'#9b7fff',callback:v=>v+'%'}, grid:{display:false},
-          beginAtZero:true, position:'right', max:100 }
+        y:{ beginAtZero:true, ticks:{font:{size:9},color:CD.color,callback:v=>v+' r/s'}, grid:{color:CD.grid} }
       }, animation:{duration:400} }
   });
 
-  cDur = new Chart(document.getElementById('c-dur'), {
+  /* Records per source — horizontal bar */
+  cSrcBar = new Chart(document.getElementById('c-src-bar'), {
     type:'bar',
-    data:{ labels:[],
-      datasets:[{ label:'Duration (s)', data:[], backgroundColor:'rgba(0,201,167,.25)',
-        borderColor:'#00c9a7', borderWidth:1, borderRadius:3 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    data:{ labels:[], datasets:[{ label:'Records ingested', data:[],
+      backgroundColor:[], borderColor:[], borderWidth:1, borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ beginAtZero:true, ticks:{font:{size:9},color:CD.color}, grid:{color:CD.grid} },
+        y:{ ticks:{font:{size:9},color:CD.color}, grid:{display:false} }
+      }, animation:{duration:400} }
+  });
+
+  /* Duration vs throughput — scatter */
+  cScatter = new Chart(document.getElementById('c-scatter'), {
+    type:'scatter',
+    data:{ datasets:[] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx=>`${ctx.dataset.label}: ${ctx.parsed.x.toFixed(2)}s · ${ctx.parsed.y.toFixed(1)} r/s` }}
+      },
+      scales:{
+        x:{ beginAtZero:true, ticks:{font:{size:9},color:CD.color,callback:v=>v+'s'}, grid:{color:CD.grid},
+          title:{display:true,text:'duration (s)',font:{size:9},color:CD.color} },
+        y:{ beginAtZero:true, ticks:{font:{size:9},color:CD.color,callback:v=>v+' r/s'}, grid:{color:CD.grid},
+          title:{display:true,text:'throughput',font:{size:9},color:CD.color} }
+      }, animation:{duration:400} }
+  });
+
+  /* Storage footprint — stacked bar per source */
+  cStorageStacked = new Chart(document.getElementById('c-storage-stacked'), {
+    type:'bar',
+    data:{ labels:[], datasets:[
+      { label:'Ingested',    data:[], backgroundColor:'rgba(62,207,142,.65)',  borderRadius:0 },
+      { label:'Stream buf',  data:[], backgroundColor:'rgba(61,139,255,.65)',  borderRadius:0 },
+      { label:'CDC log',     data:[], backgroundColor:'rgba(155,127,255,.65)', borderRadius:0 },
+      { label:'Micro-batch', data:[], backgroundColor:'rgba(245,166,35,.65)',  borderRadius:0 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'bottom',
+        labels:{font:{size:9},color:CD.color,boxWidth:8,padding:8} } },
+      scales:{
+        x:{ stacked:true, ticks:{font:{size:9},color:CD.color}, grid:{display:false} },
+        y:{ stacked:true, beginAtZero:true,
+          ticks:{font:{size:9},color:CD.color,callback:v=>v+'MB'}, grid:{color:CD.grid} }
+      }, animation:{duration:400} }
+  });
+
+  /* Processing lag — bar per source */
+  cLag = new Chart(document.getElementById('c-lag'), {
+    type:'bar',
+    data:{ labels:[], datasets:[{ label:'Lag (s)', data:[],
+      backgroundColor:[], borderColor:[], borderWidth:1, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
       scales:{
         x:{ ticks:{font:{size:9},color:CD.color,maxRotation:30}, grid:{display:false} },
-        y:{ ticks:{font:{size:9},color:CD.color}, grid:{color:CD.grid}, beginAtZero:true }
+        y:{ beginAtZero:true, ticks:{font:{size:9},color:CD.color,callback:v=>v+'s'}, grid:{color:CD.grid} }
       }, animation:{duration:400} }
   });
 }
+
 function initTxrChart() {
   const ctxTxr = document.getElementById('c-txr-quality');
   if (!ctxTxr || cTxr) return;
@@ -753,43 +843,10 @@ function initTxrChart() {
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{
         x:{ ticks:{font:{size:9,family:'DM Mono'},color:CD.color}, grid:{color:CD.grid} },
-        y:{ min:0, max:100, ticks:{font:{size:9},color:CD.color, callback:v=>v+'%'}, grid:{color:CD.grid} }
+        y:{ min:0, max:100, ticks:{font:{size:9},color:CD.color,callback:v=>v+'%'}, grid:{color:CD.grid} }
       }, animation:{duration:400} }
   });
 }
-
-/* ══ MOCK DATA ═══════════════════════════════════════════════════════════ */
-// function genMock() {
-//   const SRCS = [
-//     { source_id:'src_sales_history',      name:'Sales History',      source_type:'file',  ingestion_frequency:'daily',    domain:'sales',      classification_level:'internal',      schema_version:'v2' },
-//     { source_id:'src_warehouse_master',   name:'Warehouse Master',   source_type:'batch',     ingestion_frequency:'daily',   domain:'inventory',  classification_level:'public',  schema_version:'v1' },
-//     { source_id:'src_iot_rfid_stream',    name:'IoT RFID Stream',    source_type:'streaming', ingestion_frequency:'real_time',domain:'logistics',  classification_level:'internal',      schema_version:'v3' },
-//     { source_id:'src_weather_api',        name:'Weather API',        source_type:'api',       ingestion_frequency:'every_2_minutes',   domain:'external',   classification_level:'public',        schema_version:'v1' },
-//     { source_id:'src_manufacturing_logs', name:'Manufacturing Logs', source_type:'file',      ingestion_frequency:'daily',    domain:'production', classification_level:'restricted',    schema_version:'v2' },
-//     { source_id:'src_legacy_trends',      name:'Legacy Trends',      source_type:'batch',     ingestion_frequency:'weekly',   domain:'analytics',  classification_level:'internal',      schema_version:'v1' },
-//     { source_id:'src_inventory_transactions',      name:'Inventory Transactions DB',      source_type:'db',     ingestion_frequency:'every_2_minutes',   domain:'analytics',  classification_level:'internal',      schema_version:'v1' },
-//   ];
-//   const stats=['completed','completed','completed','running','failed'];
-//   const tel = SRCS.flatMap((s,si)=>Array.from({length:4},(_,i)=>{
-//     const ing=Math.round(100+Math.random()*300), q=Math.round(Math.random()*20), f=Math.round(Math.random()*8);
-//     return { job_id:`job-${si}-${i}`, source_id:s.source_id, domain:s.domain,
-//       records_ingested:ing, records_quarantined:q, records_failed:f,
-//       throughput_rec_sec:parseFloat((5+Math.random()*60).toFixed(2)),
-//       duration_seconds:parseFloat((0.3+Math.random()*4).toFixed(2)),
-//       status:stats[(si+i)%5], classification_level:s.classification_level,
-//       frequency:s.ingestion_frequency, ts:Date.now()-(si*4+i)*3600000 };
-//   }));
-//   const jobs=tel.map(t=>({ job_id:t.job_id, source_id:t.source_id,
-//     dataset_id:t.source_id.replace('src_','ds_'), status:t.status, telemetry:t, domain:t.domain }));
-//   return {
-//     metrics:{ total_jobs:jobs.length, running_jobs:jobs.filter(j=>j.status==='running').length,
-//       completed_jobs:jobs.filter(j=>j.status==='completed').length },
-//     telemetry:{ telemetry_records:tel, count:tel.length },
-//     sources:{ sources:SRCS },
-//     dashboard:{ jobs, storage_summary:{ ingested:12, quarantine:3, cdc_log:5, micro_batch:8,
-//       stream_buffer:6, checkpoints:4, details:9 } }
-//   };
-// }
 
 /* ══ API FETCH ═══════════════════════════════════════════════════════════ */
 async function fetchAll() {
@@ -797,7 +854,9 @@ async function fetchAll() {
     const timeMap = { "1h":"1h ago", "6h":"6h ago", "24h":"24h ago", "7d":"7d ago" };
     const selectedTime = document.getElementById('f-time')?.value || '1h';
     const fromTs = timeMap[selectedTime];
-    const metricsUrl = fromTs ? `${API}/metrics/filtered?from_timestamp=${encodeURIComponent(fromTs)}` : `${API}/metrics`;
+    const metricsUrl = fromTs
+      ? `${API}/metrics/filtered?from_timestamp=${encodeURIComponent(fromTs)}`
+      : `${API}/metrics`;
     const [m,t,s,d] = await Promise.all([
       fetch(metricsUrl,                   {headers:HDR}).then(r=>r.json()),
       fetch(API+'/telemetry',             {headers:HDR}).then(r=>r.json()),
@@ -806,8 +865,7 @@ async function fetchAll() {
     ]);
     return { metrics:m, telemetry:t, sources:s, dashboard:d };
   } catch(e) {
-    console.warn('API unreachable – using demo data');
-    // return genMock();
+    console.warn('API unreachable:', e);
   }
 }
 
@@ -845,9 +903,11 @@ function filterTel(records) {
   });
 }
 
-/* ══ RENDER ══════════════════════════════════════════════════════════════ */
-const fmt=n=>{if(n==null)return'—';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=12000)return(n/12000).toFixed(1)+'k';return Math.round(n)};
+/* ══ RENDER HELPERS ══════════════════════════════════════════════════════ */
+const fmt=n=>{if(n==null)return'—';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'k';return Math.round(n)};
+const shortSrc=s=>String(s||'').replace(/^src_/,'').replace(/_/g,' ');
 
+/* ── KPI strip ── */
 function renderKPIs(jobs, tel) {
   const run=jobs.filter(j=>j.status==='running').length;
   const ok=jobs.filter(j=>j.status==='completed').length;
@@ -878,6 +938,7 @@ function renderKPIs(jobs, tel) {
   document.getElementById('cnt-fail').textContent=fail;
 }
 
+/* ── Donut ── */
 function renderDonut(tel) {
   const ing=tel.reduce((a,r)=>a+(r.records_ingested||0),0);
   const q=tel.reduce((a,r)=>a+(r.records_quarantined||0),0);
@@ -889,23 +950,143 @@ function renderDonut(tel) {
   ].map(([c,l,v])=>`<div class="leg-item"><div class="leg-sw" style="background:${c}"></div>${l}: ${fmt(v)} (${Math.round(v/total*100)}%)</div>`).join('');
 }
 
-function renderThrChart(tel) {
-  const sl=tel.slice(-14);
-  cThr.data.labels=sl.map((_,i)=>'J'+(i+1));
-  cThr.data.datasets[0].data=sl.map(r=>parseFloat((r.throughput_rec_sec||0).toFixed(2)));
-  const tots=sl.map(r=>(r.records_ingested||0)+(r.records_quarantined||0)+(r.records_failed||0)||1);
-  cThr.data.datasets[1].data=sl.map((r,i)=>Math.round((r.records_quarantined||0)/tots[i]*100));
-  cThr.update();
-  document.getElementById('thr-meta').textContent=`rec/sec · last ${sl.length} jobs`;
+/* ── Source throughput comparison line chart ── */
+function renderSrcThrChart(tel) {
+  /* Group telemetry records by source_id, preserving chronological order */
+  const bySource = {};
+  tel.forEach(r => {
+    if (!bySource[r.source_id]) bySource[r.source_id] = [];
+    bySource[r.source_id].push(r);
+  });
+
+  const sources = Object.keys(bySource);
+  /* Use the longest source's run count as x-axis length */
+  const maxRuns = sources.reduce((m,s)=>Math.max(m,bySource[s].length),0);
+  const labels = Array.from({length:maxRuns},(_,i)=>'R'+(i+1));
+
+  const datasets = sources.map((sid, idx) => {
+    const color = SRC_COLORS[idx % SRC_COLORS.length];
+    const dash  = SRC_DASHES[idx % SRC_DASHES.length];
+    return {
+      label: shortSrc(sid),
+      data: bySource[sid].map(r => parseFloat((r.throughput_rec_sec||0).toFixed(2))),
+      borderColor: color,
+      backgroundColor: color+'18',
+      borderWidth: 1.8,
+      pointRadius: 3,
+      pointBackgroundColor: color,
+      fill: false,
+      tension: 0.35,
+      borderDash: dash,
+    };
+  });
+
+  cSrcThr.data.labels = labels;
+  cSrcThr.data.datasets = datasets;
+  cSrcThr.update();
+
+  /* Custom legend */
+  document.getElementById('src-thr-legend').innerHTML = datasets
+    .map(ds=>`<div class="leg-item">
+      <div class="leg-sw" style="background:${ds.borderColor};${ds.borderDash?'border:1px dashed '+ds.borderColor+';background:transparent':''}"></div>
+      ${ds.label}
+    </div>`).join('');
+  document.getElementById('src-thr-meta').textContent = `rec/sec · ${maxRuns} run${maxRuns!==1?'s':''} · ${sources.length} source${sources.length!==1?'s':''}`;
 }
 
-function renderDurChart(tel) {
-  const sl=tel.slice(-12);
-  cDur.data.labels=sl.map((_,i)=>'J'+(i+1));
-  cDur.data.datasets[0].data=sl.map(r=>parseFloat((r.duration_seconds||0).toFixed(2)));
-  cDur.update();
+/* ── Records per source horizontal bar ── */
+function renderSrcBarChart(tel) {
+  const bySource = {};
+  tel.forEach(r => {
+    bySource[r.source_id] = (bySource[r.source_id]||0) + (r.records_ingested||0);
+  });
+  const entries = Object.entries(bySource).sort((a,b)=>b[1]-a[1]);
+  const labels = entries.map(([s])=>shortSrc(s));
+  const data   = entries.map(([,v])=>v);
+  const colors = entries.map((_,i)=>SRC_COLORS[i%SRC_COLORS.length]);
+
+  cSrcBar.data.labels = labels;
+  cSrcBar.data.datasets[0].data = data;
+  cSrcBar.data.datasets[0].backgroundColor = colors.map(c=>c+'55');
+  cSrcBar.data.datasets[0].borderColor = colors;
+  cSrcBar.update();
 }
 
+/* ── Duration vs throughput scatter ── */
+function renderScatterChart(tel) {
+  /* Use most recent job per source */
+  const latest = {};
+  tel.forEach(r => {
+    if (!latest[r.source_id] ||
+        new Date(r.start_time||0) > new Date(latest[r.source_id].start_time||0)) {
+      latest[r.source_id] = r;
+    }
+  });
+  const entries = Object.entries(latest);
+  cScatter.data.datasets = entries.map(([sid, r], idx) => ({
+    label: shortSrc(sid),
+    data: [{ x: parseFloat((r.duration_seconds||0).toFixed(2)),
+             y: parseFloat((r.throughput_rec_sec||0).toFixed(1)) }],
+    backgroundColor: SRC_COLORS[idx%SRC_COLORS.length]+'cc',
+    borderColor: SRC_COLORS[idx%SRC_COLORS.length],
+    borderWidth: 1.5,
+    pointRadius: 8,
+    pointHoverRadius: 10,
+  }));
+  cScatter.update();
+}
+
+/* ── Storage footprint stacked bar ── */
+function renderStorageStackedChart(jobs) {
+  /* Use latest job per source from jobs list (has storage_summary) */
+  const latest = {};
+  jobs.forEach(j => {
+    const ts = j.telemetry?.start_time||'';
+    if (!latest[j.source_id] ||
+        ts > (latest[j.source_id].telemetry?.start_time||'')) {
+      latest[j.source_id] = j;
+    }
+  });
+  const entries = Object.entries(latest);
+  const labels = entries.map(([s])=>shortSrc(s));
+
+  const getMB = (j, key) => {
+    const ss = j.telemetry?.storage_summary;
+    if (!ss) return 0;
+    const bytes = ss[key]?.bytes ?? (typeof ss[key]==='number'?ss[key]:0);
+    return parseFloat((bytes/1e6).toFixed(3));
+  };
+
+  cStorageStacked.data.labels = labels;
+  cStorageStacked.data.datasets[0].data = entries.map(([,j])=>getMB(j,'ingested'));
+  cStorageStacked.data.datasets[1].data = entries.map(([,j])=>getMB(j,'stream_buffer'));
+  cStorageStacked.data.datasets[2].data = entries.map(([,j])=>getMB(j,'cdc_log'));
+  cStorageStacked.data.datasets[3].data = entries.map(([,j])=>getMB(j,'micro_batch'));
+  cStorageStacked.update();
+}
+
+/* ── Processing lag bar ── */
+function renderLagChart(tel) {
+  const latest = {};
+  tel.forEach(r => {
+    if (!latest[r.source_id] ||
+        new Date(r.start_time||0) > new Date(latest[r.source_id].start_time||0)) {
+      latest[r.source_id] = r;
+    }
+  });
+  const entries = Object.entries(latest);
+  const labels = entries.map(([s])=>shortSrc(s));
+  const data   = entries.map(([,r])=>parseFloat((r.processing_lag_sec||r.duration_seconds||0).toFixed(2)));
+  const colors = entries.map((_,i)=>SRC_COLORS[i%SRC_COLORS.length]);
+
+  cLag.data.labels = labels;
+  cLag.data.datasets[0].data = data;
+  cLag.data.datasets[0].backgroundColor = colors.map(c=>c+'66');
+  cLag.data.datasets[0].borderColor = colors;
+  cLag.update();
+}
+
+/* ── Gauge ── */
 function renderGauge(tel) {
   const vals=tel.map(r=>r.throughput_rec_sec||0).filter(v=>v>0).sort((a,b)=>a-b);
   if(!vals.length) return;
@@ -924,6 +1105,7 @@ function renderGauge(tel) {
   arc.style.stroke=avg<20?'#f04b4b':avg<50?'#f5a623':'#3ecf8e';
 }
 
+/* ── SLA panel ── */
 function renderSLA(tel) {
   const by={};
   tel.forEach(r=>{ if(!by[r.source_id]) by[r.source_id]={ing:0,q:0,f:0};
@@ -944,6 +1126,7 @@ function renderSLA(tel) {
   }).join('');
 }
 
+/* ── Source health cards ── */
 function renderSources(sources) {
   const ICONS={batch:'▤',streaming:'⟳',api:'⬡',file:'⊟',database:'⊗',iot:'◈'};
   const COLS=['#3d8bff','#00c9a7','#f5a623','#9b7fff','#ff7056','#3ecf8e'];
@@ -979,6 +1162,52 @@ function renderSources(sources) {
   }).join('');
 }
 
+/* ── Source health matrix table ── */
+function renderHealthMatrix(jobs, tel) {
+  const latest = {};
+  jobs.forEach(j => {
+    const ts = j.telemetry?.start_time||'';
+    if (!latest[j.source_id] ||
+        ts > (latest[j.source_id].telemetry?.start_time||'')) {
+      latest[j.source_id] = j;
+    }
+  });
+  const tbody = document.getElementById('health-matrix-body');
+  const entries = Object.entries(latest);
+  if (!entries.length) {
+    tbody.innerHTML='<tr><td colspan="9" class="empty">No job data</td></tr>';
+    return;
+  }
+  const srcTypeMap = {};
+  allSrc.forEach(s=>{ srcTypeMap[s.source_id]=s.source_type+'·'+s.extraction_mode; });
+
+  tbody.innerHTML = entries.map(([sid, j]) => {
+    const tel = j.telemetry || {};
+    const q   = tel.records_quarantined||0;
+    const f   = tel.records_failed||0;
+    const ing = tel.records_ingested||0;
+    const tot = ing+q+f||1;
+    const qr  = Math.round(q/tot*100);
+    const lag = tel.processing_lag_sec??tel.duration_seconds??0;
+    const statusOk = j.status==='completed' && f===0 && qr<5;
+    const statusWarn = j.status==='completed' && (f>0||qr>=5);
+    const sc = j.status==='running'?'s-run':j.status==='failed'?'s-fail':'s-ok';
+    const lagColor = lag>60?'color:var(--red)':lag>10?'color:var(--amber)':'color:var(--green)';
+    return `<tr>
+      <td style="color:var(--t1);font-weight:500">${shortSrc(sid)}</td>
+      <td style="color:var(--t3);font-size:10px">${srcTypeMap[sid]||'—'}</td>
+      <td class="ng">${fmt(ing)}</td>
+      <td style="color:var(--green)">${tel.throughput_rec_sec?tel.throughput_rec_sec.toFixed(1)+' r/s':'—'}</td>
+      <td>${tel.duration_seconds?tel.duration_seconds.toFixed(2)+'s':'—'}</td>
+      <td style="${lagColor}">${lag.toFixed(2)}s</td>
+      <td class="${qr>=5?'nw':''}">${qr}%</td>
+      <td class="${f>0?'nb':''}">${f}</td>
+      <td><span class="sp ${sc}">${j.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Storage utilisation (file counts widget) ── */
 function renderStorage(d) {
   const data=[
     {ico:'◼',lbl:'Ingested',    cnt:d?.ingested||0},
@@ -996,6 +1225,7 @@ function renderStorage(d) {
   ).join('');
 }
 
+/* ── Pipeline alerts ── */
 function renderAlerts(jobs, tel, srcs) {
   const q=tel.reduce((a,r)=>a+(r.records_quarantined||0),0);
   const ing=tel.reduce((a,r)=>a+(r.records_ingested||0),0);
@@ -1008,7 +1238,7 @@ function renderAlerts(jobs, tel, srcs) {
   const fj=jobs.filter(j=>j.status==='failed');
   if(fj.length) alerts.push({t:'warn',txt:`${fj.length} job(s) in failed state`,sub:fj.map(j=>j.job_id.slice(0,8)).join(', '),time:'active'});
   const rj=jobs.filter(j=>j.status==='running');
-  if(rj.length>3) alerts.push({t:'warn',txt:`${rj.length} concurrent jobs — approaching rate limit (10/min)`,sub:'Slowapi limiter active on /ingest/{source_id}',time:'now'});
+  if(rj.length>3) alerts.push({t:'warn',txt:`${rj.length} concurrent jobs — approaching rate limit`,sub:'Slowapi limiter active on /ingest/{source_id}',time:'now'});
   const rt=(srcs||[]).filter(s=>s.ingestion_frequency==='real_time');
   if(rt.length) alerts.push({t:'info',txt:`${rt.length} real-time source(s) streaming continuously`,sub:rt.map(s=>s.name).join(', '),time:'streaming'});
   alerts.push({t:'info',txt:'Contract registry loaded — schemas enforced on ingest',sub:'Using coerce + quarantine mode',time:'startup'});
@@ -1021,6 +1251,7 @@ function renderAlerts(jobs, tel, srcs) {
   document.getElementById('a-cnt').textContent=`${alerts.length} alert(s)`;
 }
 
+/* ── Jobs table ── */
 function renderJobs(jobs) {
   document.getElementById('j-cnt').textContent=`${jobs.length} job(s) shown`;
   const tb=document.getElementById('j-body');
@@ -1031,8 +1262,8 @@ function renderJobs(jobs) {
     const q=tel.records_quarantined||0, f=tel.records_failed||0, ing=tel.records_ingested||0;
     return `<tr>
       <td class="jid">${j.job_id.slice(0,8)}…</td>
-      <td style="color:var(--t1)">${j.source_id.replace('src_','').replace(/_/g,' ')}</td>
-      <td>${j.dataset_id.replace('ds_','').replace(/_/g,' ')}</td>
+      <td style="color:var(--t1)">${shortSrc(j.source_id)}</td>
+      <td>${(j.dataset_id||'').replace('ds_','').replace(/_/g,' ')}</td>
       <td><span class="sp ${sc}">${j.status}</span></td>
       <td class="ng">${fmt(ing)}</td>
       <td class="${f>10?'nb':f>0?'nw':''}">${fmt(f)}</td>
@@ -1043,6 +1274,7 @@ function renderJobs(jobs) {
   }).join('');
 }
 
+/* ── Filter summary + pills ── */
 function renderFSummary() {
   const has=Object.entries(F).some(([k,v])=>v!=='all'&&v!==0);
   const el=document.getElementById('fsummary');
@@ -1053,7 +1285,7 @@ function renderFSummary() {
   document.getElementById('t-cnt').textContent=allJobs.length;
   const parts=[];
   if(F.status!=='all') parts.push(`status: ${F.status}`);
-  if(F.source!=='all') parts.push(`source: ${F.source.replace('src_','').replace(/_/g,' ')}`);
+  if(F.source!=='all') parts.push(`source: ${shortSrc(F.source)}`);
   if(F.domain!=='all') parts.push(`domain: ${F.domain}`);
   if(F.cls!=='all') parts.push(`class: ${F.cls}`);
   if(F.freq!=='all') parts.push(`freq: ${F.freq}`);
@@ -1064,7 +1296,7 @@ function renderFSummary() {
 function renderPills() {
   const pills=[];
   if(F.status!=='all') pills.push(['status',F.status]);
-  if(F.source!=='all') pills.push(['source',F.source.replace('src_','').replace(/_/g,' ')]);
+  if(F.source!=='all') pills.push(['source',shortSrc(F.source)]);
   if(F.domain!=='all') pills.push(['domain',F.domain]);
   if(F.cls!=='all') pills.push(['cls',F.cls]);
   if(F.freq!=='all') pills.push(['freq',F.freq]);
@@ -1085,11 +1317,22 @@ function applyFilters() {
   F.freq=document.getElementById('f-freq').value;
   F.thr=parseInt(document.getElementById('f-thr').value)||0;
   F.time=document.getElementById('f-time').value;
-  // F.status and F.domain are managed by toggleChip/clearF/resetFilters — do not overwrite here
   const fj=filterJobs(allJobs), ft=filterTel(allTel);
-  renderKPIs(fj,ft); renderDonut(ft); renderThrChart(ft); renderDurChart(ft);
-  renderGauge(ft); renderSLA(ft); renderSources(allSrc);
-  renderAlerts(fj,ft,allSrc); renderJobs(fj); renderFSummary(); renderPills();
+  renderKPIs(fj,ft);
+  renderDonut(ft);
+  renderSrcThrChart(ft);
+  renderSrcBarChart(ft);
+  renderScatterChart(ft);
+  renderStorageStackedChart(fj);
+  renderLagChart(ft);
+  renderGauge(ft);
+  renderSLA(ft);
+  renderSources(allSrc);
+  renderAlerts(fj,ft,allSrc);
+  renderHealthMatrix(fj,ft);
+  renderJobs(fj);
+  renderFSummary();
+  renderPills();
 }
 
 function clearF(key) {
@@ -1133,15 +1376,20 @@ function switchPage(page) {
     tab.style.color='var(--accent)';
   }
   if(page==='transformation') {
-    if(!cTxr) initTxrChart();
-    loadTransformationData();
-    setTimeout(()=>{ if(cTxr) cTxr.resize(); }, 60);
+    setTimeout(()=>{
+      if(!cTxr) initTxrChart();
+      loadTransformationData();
+      setTimeout(()=>{ if(cTxr) cTxr.resize(); }, 100);
+    }, 50);
   }
-  if(page==='storage') loadStorageData();
+  if(page==='storage') {
+    setTimeout(()=>{ loadStorageData(); }, 50);
+  }
 }
 
+/* ══ TRANSFORMATION DATA ═════════════════════════════════════════════════ */
 function loadTransformationData() {
-  const qPct=(rr,rc)=>{ const r=Number(rr)||0, c=Number(rc)||0; return r>0 ? Math.min(100, Math.round(100*c/r)) : 0; };
+  const qPct=(rr,rc)=>{ const r=Number(rr)||0, c=Number(rc)||0; return r>0?Math.min(100,Math.round(100*c/r)):0; };
 
   fetch(API+'/transformation/summary', {headers:HDR})
     .then(r=>{ if(!r.ok) throw new Error('summary '+r.status); return r.json(); })
@@ -1155,18 +1403,21 @@ function loadTransformationData() {
       document.getElementById('txr-silver').textContent=String(silver.total_records_cleaned||0);
       document.getElementById('txr-gold').textContent=String((gold.total_records_cleaned!=null?gold.total_records_cleaned:gold.total_records_processed)||0);
       document.getElementById('txr-violations').textContent='0';
-    }).catch(e=>console.error('Error loading transformation data:',e));
-  
-  fetch(API+'/transformation/kpis?limit=10', {headers:HDR})
+    }).catch(e=>console.error('Transformation summary error:',e));
+
+  fetch(API+'/transformation/kpis?limit=100', {headers:HDR})
     .then(r=>{ if(!r.ok) throw new Error('kpis '+r.status); return r.json(); })
     .then(d=>{
       const kpis=d.kpis||[];
       const tbody=document.getElementById('txr-table');
       if(!tbody) return;
-      if(!kpis.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No transformation data</td></tr>'; if(cTxr){ cTxr.data.labels=[]; cTxr.data.datasets[0].data=[]; cTxr.update(); } return;}
-      const sid=x=>String(x||'').replace(/^src_/,'');
-      tbody.innerHTML=kpis.map(k=>`<tr>
-        <td>${sid(k.source_id)}</td>
+      if(!kpis.length){
+        tbody.innerHTML='<tr><td colspan="6" class="empty">No transformation data</td></tr>';
+        if(cTxr){ cTxr.data.labels=[]; cTxr.data.datasets[0].data=[]; cTxr.update(); }
+        return;
+      }
+      tbody.innerHTML=kpis.slice(0,50).map(k=>`<tr>
+        <td>${shortSrc(k.source_id)}</td>
         <td><span class="sp ${k.layer==='silver'?'s-run':'s-ok'}">${k.layer||'—'}</span></td>
         <td>${k.records_read!=null?k.records_read:'—'}</td>
         <td class="ng">${k.records_cleaned!=null?k.records_cleaned:'—'}</td>
@@ -1174,14 +1425,15 @@ function loadTransformationData() {
         <td style="font-size:9px;color:var(--t3)">${(k.run_at||'').slice(0,10)}</td>
       </tr>`).join('');
       if(cTxr){
-        const slice=kpis.slice().reverse().slice(-12);
-        cTxr.data.labels=slice.map((k,i)=>'#'+(i+1));
+        const slice=kpis.slice().reverse().slice(-20);
+        cTxr.data.labels=slice.map((_,i)=>'#'+(i+1));
         cTxr.data.datasets[0].data=slice.map(k=>qPct(k.records_read,k.records_cleaned));
         cTxr.update();
       }
-    }).catch(e=>console.error('Error loading KPIs:',e));
+    }).catch(e=>console.error('Transformation KPIs error:',e));
 }
 
+/* ══ STORAGE DATA ════════════════════════════════════════════════════════ */
 function loadStorageData() {
   fetch(API+'/storage/summary', {headers:HDR})
     .then(r=>{ if(!r.ok) throw new Error('storage summary '+r.status); return r.json(); })
@@ -1199,12 +1451,12 @@ function loadStorageData() {
         }
       });
       const avgSmall=cnt>0?(smallRatio/cnt*100):0;
-      const avgSzMb=cnt>0 && totalFiles>0 ? (totalMB/totalFiles) : 0;
+      const avgSzMb=cnt>0&&totalFiles>0?(totalMB/totalFiles):0;
       document.getElementById('stor-files').textContent=String(totalFiles);
       document.getElementById('stor-size').textContent=totalMB.toFixed(0);
       document.getElementById('stor-avg').textContent=avgSzMb.toFixed(1);
       document.getElementById('stor-small').textContent=avgSmall.toFixed(0);
-      document.getElementById('stor-healthy').textContent=String(Math.max(0, cnt-needCompact.length));
+      document.getElementById('stor-healthy').textContent=String(Math.max(0,cnt-needCompact.length));
       document.getElementById('stor-compact').textContent=String(needCompact.length);
       document.getElementById('stor-snapshots').textContent=String(totalSnapshots);
       const healthBadge=document.getElementById('stor-health-badge');
@@ -1212,34 +1464,35 @@ function loadStorageData() {
       healthBadge.textContent=hstat;
       healthBadge.style.background=(hstat==='warning')?'rgba(240,75,75,.1)':'rgba(62,207,142,.15)';
       document.getElementById('stor-health').textContent=(hstat==='warning')?'⚠️':'✓';
-      
+
       const tbody=document.getElementById('stor-table');
       if(!tbody) return;
-      const tables=Object.entries(kpis).filter(([_,k])=>k && !k.error).slice(0,15);
+      const tables=Object.entries(kpis).filter(([_,k])=>k&&!k.error).slice(0,15);
       if(!tables.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No storage data</td></tr>';return;}
       tbody.innerHTML=tables.map(([name,k])=>{
         const avg=Number(k.avg_file_size_mb);
         const sr=Number(k.small_file_ratio)||0;
-        const need=k.needs_compaction===true || sr>0.5;
+        const need=k.needs_compaction===true||sr>0.5;
         return `<tr>
-        <td style="font-size:9px">${name}</td>
-        <td>${k.file_count!=null?k.file_count:'—'}</td>
-        <td>${isNaN(avg)?'0.0':avg.toFixed(1)}</td>
-        <td class="${sr>0.5?'nb':''}">${(sr*100).toFixed(0)}</td>
-        <td>${k.snapshot_count!=null?k.snapshot_count:'—'}</td>
-        <td><span class="sp ${need?'s-run':'s-ok'}">${need?'compact':'ok'}</span></td>
-      </tr>`;}).join('');
-      
+          <td style="font-size:9px">${name}</td>
+          <td>${k.file_count!=null?k.file_count:'—'}</td>
+          <td>${isNaN(avg)?'0.0':avg.toFixed(1)}</td>
+          <td class="${sr>0.5?'nb':''}">${(sr*100).toFixed(0)}</td>
+          <td>${k.snapshot_count!=null?k.snapshot_count:'—'}</td>
+          <td><span class="sp ${need?'s-run':'s-ok'}">${need?'compact':'ok'}</span></td>
+        </tr>`;
+      }).join('');
+
       const warns=document.getElementById('stor-warnings');
       warns.innerHTML=(health.warnings||[]).length>0
         ?(health.warnings.map(w=>`<div class="alert-item a-warn"><div class="a-dot"></div><div class="a-text">${String(w)}</div></div>`).join(''))
         :('<div class="empty"><div class="ei">✓</div>All tables healthy</div>');
-      
+
       const recs=document.getElementById('stor-recs');
       recs.innerHTML=(health.recommendations||[]).length>0
         ?(health.recommendations.map(r=>`<div class="alert-item a-info"><div class="a-dot"></div><div class="a-text">${String(r)}</div></div>`).join(''))
         :('<div class="empty"><div class="ei">✓</div>No actions needed</div>');
-    }).catch(e=>console.error('Error loading storage data:',e));
+    }).catch(e=>console.error('Storage data error:',e));
 }
 
 /* ══ MAIN REFRESH ════════════════════════════════════════════════════════ */
@@ -1247,6 +1500,8 @@ async function refresh() {
   const icon=document.getElementById('spin-icon'); icon.classList.add('spinning');
   try {
     const data=await fetchAll();
+    if (!data) { icon.classList.remove('spinning'); return; }
+
     allSrc=data.sources?.sources||[];
     allTel=(data.telemetry?.telemetry_records||[]).map(r=>({
       ...r, domain:allSrc.find(s=>s.source_id===r.source_id)?.domain||'unknown'
@@ -1254,13 +1509,17 @@ async function refresh() {
     allJobs=(data.dashboard?.jobs||[]).map(j=>({
       ...j, domain:allSrc.find(s=>s.source_id===j.source_id)?.domain||'unknown'
     }));
+
     renderStorage(data.dashboard?.storage_summary);
-    // Keep secondary tabs warm even before the user clicks them.
-    loadTransformationData();
-    loadStorageData();
     applyFilters();
+
+    /* Reload secondary tab if it is currently visible */
+    const activePage = document.querySelector('.page-tab.active')?.dataset?.page;
+    if(activePage==='transformation') loadTransformationData();
+    if(activePage==='storage') loadStorageData();
+
     document.getElementById('last-upd').textContent=new Date().toLocaleTimeString();
-  } catch(e){ console.error(e); }
+  } catch(e){ console.error('Refresh error:',e); }
   icon.classList.remove('spinning');
 }
 

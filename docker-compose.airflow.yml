@@ -3,34 +3,25 @@ x-airflow-common: &airflow-common
     context: .
     dockerfile: Dockerfile.airflow
   image: custom-airflow:latest
-
   env_file: .env
 
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
-
     AIRFLOW__CORE__FERNET_KEY: HVOKFHsSX9zF4J4ilYwoXfyQsh7Z33KueV1jKmpN1GI=
     AIRFLOW__WEBSERVER__SECRET_KEY: M2_WZ23Uv_JbvzdMpAX6Y0_Q66ioO30W47-Fp_8JzI8
-
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-
-    # apache/airflow entrypoint maps the airflow user to this UID so bind-mounted ./storage is writable.
-    # Add to .env: AIRFLOW_UID and AIRFLOW_GID from `id -u` / `id -g` on Linux/macOS WSL if you see
-    # PermissionError on storage/.iceberg_pyiceberg_catalog.lock (see storage_plane/iceberg_session_lock.py).
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     AIRFLOW_GID: ${AIRFLOW_GID:-0}
-
     INGESTION_API_URL: http://ingestion-api:8000
     API_TOKEN: ${API_TOKEN}
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-
     PYTHONPATH: /opt/airflow/project
 
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./:/opt/airflow/project
+    - ./:/app
     - ./storage:/opt/airflow/storage
     - ./logs:/opt/airflow/logs
 
@@ -39,9 +30,8 @@ x-airflow-common: &airflow-common
 
 
 services:
-
   # ─────────────────────────────
-  # POSTGRES DB
+  # region POSTGRES DB
   # ─────────────────────────────
   airflow-postgres:
     image: postgres:15
@@ -50,26 +40,21 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
-
     ports:
       - "5433:5432"
-
     networks:
       - pipeline-net
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U airflow"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-
   # ─────────────────────────────
-  # AIRFLOW INIT
+  # region AIRFLOW INIT
   # ─────────────────────────────
   airflow-init:
     <<: *airflow-common
-
     entrypoint: >
       bash -c "
       airflow db migrate &&
@@ -78,69 +63,50 @@ services:
       airflow connections delete ingestion-api || true &&
       airflow connections add ingestion-api --conn-type http --conn-host ingestion-api --conn-port 8000 || true
       "
-
     depends_on:
       airflow-postgres:
         condition: service_healthy
 
 
   # ─────────────────────────────
-  # SCHEDULER
+  # region SCHEDULER
   # ─────────────────────────────
   airflow-scheduler:
     <<: *airflow-common
-
     command: scheduler
-
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-
     restart: unless-stopped
 
-
   # ─────────────────────────────
-  # WEBSERVER
+  # region WEBSERVER
   # ─────────────────────────────
   airflow-webserver:
     <<: *airflow-common
-
     command: webserver
-
     ports:
       - "8080:8080"
-
     depends_on:
       airflow-scheduler:
         condition: service_started
 
     restart: unless-stopped
 
-
   # ─────────────────────────────
-  # TRANSFORM SERVICE
+  # region TRANSFORM SERVICE
   # ─────────────────────────────
   transform-service:
     build: .
     working_dir: /app
-
     volumes:
       - ./:/app
-
     ports:
       - "8001:8001"
-
     command: ["uvicorn", "transform_service:app", "--host", "0.0.0.0", "--port", "8001"]
-
-    # depends_on:
-    #   ingestion-api:
-    #     condition: service_healthy
-
     networks:
       - pipeline-net
-
     restart: unless-stopped
-
 
 networks:
   pipeline-net:
