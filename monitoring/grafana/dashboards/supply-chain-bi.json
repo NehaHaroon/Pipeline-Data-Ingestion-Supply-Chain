@@ -1,0 +1,91 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "SKUs Needing Replenishment",
+      "type": "stat",
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"skus_needing_replenishment\"}", "refId": "A" }],
+      "description": "exec_001 / marts.fct_replenishment_signals"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "title": "Avg Urgency Score",
+      "type": "stat",
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"avg_urgency_score\"}", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "title": "Weather Risk Active",
+      "type": "stat",
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"weather_risk_active\"}", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "title": "Replenishment Value (PKR)",
+      "type": "stat",
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"replenishment_value_pkr\"}", "refId": "A" }],
+      "description": "exec_002 profitability_dashboard"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "title": "P95 Query Latency (Executive Path)",
+      "type": "timeseries",
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"p95_query_latency_sec\"}", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "title": "Suggested Order Units",
+      "type": "timeseries",
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"total_suggested_order_units\"}", "refId": "A" }],
+      "description": "exec_001 total_suggested_order_units"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "id": 7,
+      "title": "Semantic Layer Health",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"dbt_model_runtime_sec\"}", "legendFormat": "dbt_runtime", "refId": "A" },
+        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"failed_dbt_tests\"}", "legendFormat": "failed_tests", "refId": "B" }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["supply-chain", "bi", "part3", "semantic"],
+  "templating": {
+    "list": [
+      {
+        "name": "region",
+        "type": "custom",
+        "options": [
+          { "text": "All", "value": "All", "selected": true },
+          { "text": "Karachi", "value": "WAREHOUSE-KARACHI" },
+          { "text": "Dubai", "value": "WAREHOUSE-DUBAI" }
+        ],
+        "query": "All,Karachi,Dubai"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Supply Chain Executive BI",
+  "uid": "supply-chain-bi",
+  "version": 2
+}

@@ -61,7 +61,8 @@ def process_iot_event(event: Dict[str, Any], buffer: List[Dict], tel: JobTelemet
             source_timestamp=event["timestamp"],
         )
 
-        buffer.append(envelope.to_dict())
+        # API contract enforcement expects raw business fields (see api.process_ingestion)
+        buffer.append(dict(event))
         tel.record_ok()
 
         log.info(
@@ -84,10 +85,34 @@ def flush(buffer: List[Dict], flush_count: int):
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
 
-    # 1. Send to API
-    send_to_api(buffer)
+    # 1. Send raw sensor records to ingestion API (validates + writes Bronze on server)
+    api_ok = send_to_api(buffer)
+    if not api_ok:
+        # Real-world resilience: if API is down, land validated batches directly to Bronze Iceberg
+        try:
+            from data_plane.transformation.bronze_writer import BronzeWriter
 
-    # 2. Write to data lake (IMPORTANT: include source_id in filename)
+            flat: List[Dict] = []
+            for event in buffer:
+                env = EventEnvelope(
+                    payload=event,
+                    source_id="src_iot_rfid_stream",
+                    dataset_id="ds_iot_rfid_stream",
+                    schema_version="v1",
+                    operation_type=OperationType.INSERT,
+                    event_timestamp=event.get("timestamp"),
+                    source_timestamp=event.get("timestamp"),
+                )
+                flat.append(env.to_dict())
+            br = BronzeWriter("src_iot_rfid_stream").append_flat_records(flat)
+            log.warning(
+                f"[BRONZE-FALLBACK] API unavailable; wrote {br['records_written']} rows to "
+                f"bronze.iot_rfid_stream (snapshot={br.get('snapshot_id')})"
+            )
+        except Exception as e:
+            log.error(f"[BRONZE-FALLBACK] Direct Iceberg write failed: {e}")
+
+    # 2. Local stream buffer parquet (audit / replay)
     path = os.path.join(
         STREAM_BUFFER_DIR,
         f"src_iot_rfid_stream_{ts}_batch{flush_count:03d}.parquet"

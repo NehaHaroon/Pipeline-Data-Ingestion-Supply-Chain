@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supply Chain — Analytics & Semantic Layer</title>
+  <style>
+    :root { --bg:#0f1419; --card:#1a2332; --accent:#3d8bff; --text:#e6edf3; --muted:#8b949e; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 1.5rem; }
+    h1 { font-size: 1.4rem; margin: 0 0 0.5rem; }
+    .sub { color: var(--muted); margin-bottom: 1.5rem; }
+    .links a { color: var(--accent); margin-right: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: var(--card); border-radius: 8px; padding: 1rem; }
+    .card h3 { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; }
+    .card .val { font-size: 1.75rem; font-weight: 600; }
+    button { background: var(--accent); color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; margin-right: 0.5rem; }
+    button.secondary { background: #30363d; }
+    pre { background: #0d1117; padding: 1rem; border-radius: 8px; overflow: auto; max-height: 320px; font-size: 0.8rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #30363d; }
+    .role { margin: 1rem 0; }
+    select { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 0.4rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Part 3 — Analytics & Semantic Layer</h1>
+  <p class="sub">This UI consumes <code>analytics-service</code> REST APIs (port 8002). Executive charts also appear in Grafana via Prometheus.</p>
+  <p class="links">
+    <a href="/docs" target="_blank">OpenAPI /docs</a>
+    <a href="http://localhost:3000" target="_blank">Grafana (BI + workload)</a>
+    <a href="http://localhost:8000/dashboard" target="_blank">Ingestion dashboard (Part 1–2)</a>
+    <a href="http://localhost:8080" target="_blank">Airflow</a>
+  </p>
+
+  <div class="role">
+    <label>Analytics role (header <code>X-Analytics-Role</code>): </label>
+    <select id="role">
+      <option value="analyst">analyst</option>
+      <option value="admin">admin</option>
+      <option value="finance">finance</option>
+      <option value="ops_streaming">ops_streaming</option>
+    </select>
+    <button onclick="refreshAll()">Refresh KPIs</button>
+    <button class="secondary" onclick="runAllQueries()">Run all SQL workloads</button>
+  </div>
+
+  <div class="grid" id="kpi-grid">
+    <div class="card"><h3>SKUs at risk</h3><div class="val" id="kpi-skus">—</div></div>
+    <div class="card"><h3>Avg urgency</h3><div class="val" id="kpi-urgency">—</div></div>
+    <div class="card"><h3>Replenishment PKR</h3><div class="val" id="kpi-pkr">—</div></div>
+    <div class="card"><h3>Weather risk</h3><div class="val" id="kpi-weather">—</div></div>
+    <div class="card"><h3>P95 latency (s)</h3><div class="val" id="kpi-p95">—</div></div>
+    <div class="card"><h3>Query failure rate</h3><div class="val" id="kpi-fail">—</div></div>
+  </div>
+
+  <h2>SQL workload catalog</h2>
+  <div id="catalog-table"></div>
+
+  <h2>Last run-all results</h2>
+  <pre id="run-output">Click “Run all SQL workloads” to execute op_001 … adhoc_002.</pre>
+
+  <script>
+    const API = window.location.origin;
+    function headers() {
+      return { "X-Analytics-Role": document.getElementById("role").value, "Content-Type": "application/json" };
+    }
+    async function refreshAll() {
+      try {
+        const [bi, metrics, catalog] = await Promise.all([
+          fetch(API + "/semantic/bi-kpis").then(r => r.json()),
+          fetch(API + "/analytics/metrics").then(r => r.json()),
+          fetch(API + "/analytics/catalog").then(r => r.json()),
+        ]);
+        document.getElementById("kpi-skus").textContent = bi.skus_needing_replenishment ?? "—";
+        document.getElementById("kpi-urgency").textContent = (bi.avg_urgency_score ?? 0).toFixed(3);
+        document.getElementById("kpi-pkr").textContent = (bi.replenishment_value_pkr ?? 0).toLocaleString();
+        document.getElementById("kpi-weather").textContent = bi.weather_risk_active ? "Yes" : "No";
+        const qp = metrics.query_performance || {};
+        document.getElementById("kpi-p95").textContent = qp.p95_query_latency_sec ?? "—";
+        document.getElementById("kpi-fail").textContent = qp.query_failure_rate ?? "—";
+
+        let rows = "";
+        for (const [wt, items] of Object.entries(catalog.by_workload || {})) {
+          for (const q of items) {
+            rows += `<tr><td>${q.query_id}</td><td>${wt}</td><td>${q.name}</td><td>${q.complexity}</td></tr>`;
+          }
+        }
+        document.getElementById("catalog-table").innerHTML =
+          `<table><thead><tr><th>ID</th><th>Workload</th><th>Name</th><th>Complexity</th></tr></thead><tbody>${rows}</tbody></table>`;
+      } catch (e) {
+        document.getElementById("run-output").textContent = "Error: " + e;
+      }
+    }
+    async function runAllQueries() {
+      document.getElementById("run-output").textContent = "Running…";
+      const res = await fetch(API + "/analytics/run-all", { method: "POST", headers: headers() });
+      const data = await res.json();
+      document.getElementById("run-output").textContent = JSON.stringify(data, null, 2);
+      refreshAll();
+    }
+    refreshAll();
+    setInterval(refreshAll, 30000);
+  </script>
+</body>
+</html>

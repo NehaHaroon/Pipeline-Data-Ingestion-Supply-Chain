@@ -11,9 +11,19 @@ This project now includes a standardized monitoring stack for large-scale operat
 
 ## Run
 
+**Parts 1–2 (Prometheus + layer dashboards):**
+
 ```bash
-docker compose up -d ingestion-api prometheus grafana
+docker compose -f docker-compose.yml up -d ingestion-api prometheus
 ```
+
+**Part 3 (BI + workload monitoring — requires `pipeline-net` from ingestion compose):**
+
+```bash
+docker compose -f docker-compose.part3.yml up -d analytics-service grafana
+```
+
+Prometheus (port 9090) scrapes both `ingestion-api:8000` and `analytics-service:8002` when all stacks are up.
 
 ## Access
 

@@ -182,6 +182,17 @@ def _flush_buffer(buffer: List[Dict], quarantine_buf: List[Dict], flush_count: i
         path = os.path.join(STREAM_BUFFER_DIR, f"iot_stream_{ts}_batch{flush_count:03d}.parquet")
         pd.DataFrame(buffer).to_parquet(path, index=False)
         log.info(f"  [IOT-WRITE] {len(buffer)} valid events → {path}")
+        # Bronze Iceberg — same path as batch/API ingestion (Silver/Gold depend on this table)
+        try:
+            from data_plane.transformation.bronze_writer import BronzeWriter
+
+            br = BronzeWriter("src_iot_rfid_stream").append_flat_records(buffer)
+            log.info(
+                f"  [BRONZE] IoT micro-batch → bronze.iot_rfid_stream | "
+                f"records={br['records_written']} snapshot={br.get('snapshot_id')}"
+            )
+        except Exception as exc:
+            log.error(f"  [BRONZE] Failed to append IoT batch to Iceberg: {exc}")
     if quarantine_buf:
         qpath = os.path.join(QUARANTINE_DIR, f"iot_quarantine_{ts}_batch{flush_count:03d}.parquet")
         pd.DataFrame(quarantine_buf).to_parquet(qpath, index=False)

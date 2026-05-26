@@ -13,7 +13,11 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
     AIRFLOW_GID: ${AIRFLOW_GID:-0}
+    PIPELINE_UID: ${PIPELINE_UID:-${AIRFLOW_UID:-50000}}
+    PIPELINE_GID: ${PIPELINE_GID:-0}
     INGESTION_API_URL: http://ingestion-api:8000
+    TRANSFORM_SERVICE_URL: http://transform-service:8001
+    ANALYTICS_SERVICE_URL: http://analytics-service:8002
     API_TOKEN: ${API_TOKEN}
     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     PYTHONPATH: /opt/airflow/project
@@ -55,13 +59,24 @@ services:
   # ─────────────────────────────
   airflow-init:
     <<: *airflow-common
+    user: "0:0"
     entrypoint: >
       bash -c "
-      airflow db migrate &&
-      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev || true &&
-      airflow variables set API_TOKEN \"$API_TOKEN\" || true &&
-      airflow connections delete ingestion-api || true &&
-      airflow connections add ingestion-api --conn-type http --conn-host ingestion-api --conn-port 8000 || true
+      set -e
+      UID=$${AIRFLOW_UID:-50000}
+      STORAGE=/opt/airflow/project/storage
+      rm -f $$STORAGE/iceberg_catalog.db.session.lock $$STORAGE/.iceberg_pyiceberg_catalog.lock 2>/dev/null || true
+      rm -rf $$STORAGE/.locks 2>/dev/null || true
+      mkdir -p $$STORAGE/.locks && chmod 1777 $$STORAGE/.locks 2>/dev/null || true
+      chown -R $$UID:0 $$STORAGE /opt/airflow/storage 2>/dev/null || true
+      chmod -R u+rwX,g+rwX $$STORAGE 2>/dev/null || true
+      exec gosu $$UID:0 bash -c \"
+        airflow db migrate &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@local.dev || true &&
+        airflow variables set API_TOKEN \\\"$$API_TOKEN\\\" || true &&
+        airflow connections delete ingestion-api || true &&
+        airflow connections add ingestion-api --conn-type http --conn-host ingestion-api --conn-port 8000 || true
+      \"
       "
     depends_on:
       airflow-postgres:
@@ -97,16 +112,28 @@ services:
   # region TRANSFORM SERVICE
   # ─────────────────────────────
   transform-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: supply-chain-ingestion:latest
+    env_file: .env
+    user: "${PIPELINE_UID:-50000}:${PIPELINE_GID:-0}"
     working_dir: /app
     volumes:
-      - ./:/app
+      - ./storage:/app/storage
+      - ./logs:/app/logs
     ports:
       - "8001:8001"
     command: ["uvicorn", "transform_service:app", "--host", "0.0.0.0", "--port", "8001"]
     networks:
       - pipeline-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
 networks:
   pipeline-net:

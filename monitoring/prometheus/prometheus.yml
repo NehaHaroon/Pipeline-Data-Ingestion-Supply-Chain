@@ -7,3 +7,8 @@ scrape_configs:
     metrics_path: /metrics/prometheus
     static_configs:
       - targets: ["ingestion-api:8000"]
+
+  - job_name: "analytics-service"
+    metrics_path: /metrics/prometheus
+    static_configs:
+      - targets: ["analytics-service:8002"]

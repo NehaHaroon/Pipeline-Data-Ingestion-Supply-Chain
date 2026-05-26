@@ -12,9 +12,9 @@ Environment:
   ICEBERG_CATALOG_LOCK_TIMEOUT — seconds to wait for the lock once (default 900).
   ICEBERG_CATALOG_IO_RETRIES — retries for transient SQLite busy inside a mutation (default 12).
 
-Default lock path is ``{sqlite_catalog_db}.session.lock`` next to the Iceberg SqlCatalog SQLite file
-(derived from STORAGE_ICEBERG_CATALOG_URI). The legacy file ``storage/.iceberg_pyiceberg_catalog.lock``
-is no longer used — delete it if an older deployment created it as root and blocked writers.
+Default lock path is ``storage/.locks/iceberg_catalog.session.lock`` (mode 1777 directory for
+multi-container Docker). Legacy paths ``{db}.session.lock`` and ``storage/.iceberg_pyiceberg_catalog.lock``
+should be deleted if present from older deployments.
 """
 
 from __future__ import annotations
@@ -51,9 +51,14 @@ def _lock_file_path() -> str:
 
     db_path = _sqlite_catalog_db_abspath()
     if db_path:
-        # Same directory as iceberg_catalog.db — typically same permissions as the DB; avoids a stale
-        # root-owned legacy lock at storage/.iceberg_pyiceberg_catalog.lock (warehouse dirname).
-        return db_path + ".session.lock"
+        # Shared .locks dir (mode 1777) so Airflow + ingestion-api (same bind mount, different UIDs)
+        # can create the lock file on Docker Desktop / Linux bind mounts.
+        lock_dir = os.path.join(os.path.dirname(db_path), ".locks")
+        try:
+            os.makedirs(lock_dir, mode=0o1777, exist_ok=True)
+        except OSError:
+            lock_dir = os.path.dirname(db_path)
+        return os.path.join(lock_dir, "iceberg_catalog.session.lock")
 
     base = os.path.dirname(os.path.abspath(STORAGE_ICEBERG_WAREHOUSE))
     return os.path.join(base, ".iceberg_pyiceberg_catalog.lock")
@@ -132,7 +137,8 @@ def iceberg_catalog_session(lock_timeout_sec: float | None = None) -> Iterator[N
                 f"Cannot acquire Iceberg catalog lock {path!r}. "
                 f"If using Docker bind mounts, set AIRFLOW_UID/AIRFLOW_GID to match the host owner "
                 f"of ./storage, fix permissions on that directory, or remove a stale root-owned "
-                f"legacy file storage/.iceberg_pyiceberg_catalog.lock if still present. Original: {e}"
+                f"stale locks under storage/.locks/ or storage/*.session.lock, or run "
+                f"scripts/fix-iceberg-storage.ps1. Original: {e}"
             ) from e
         except FileLockTimeout as e:
             raise RuntimeError(

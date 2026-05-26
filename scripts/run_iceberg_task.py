@@ -40,6 +40,13 @@ def cmd_compact(table_name: str) -> dict:
     return runner.run_table(table_name)
 
 
+def cmd_export_semantic_parquet() -> dict:
+    """Export Silver/Gold Iceberg tables to parquet for dbt (Part 3 semantic DAG)."""
+    from semantic_plane.export_for_dbt import export_all
+
+    return export_all()
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Iceberg tasks for Airflow (toolkit venv)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -49,11 +56,18 @@ def main() -> None:
     pc = sub.add_parser("compact", help="Run bin-pack compaction on one table")
     pc.add_argument("table_name", help='e.g. "bronze.iot_rfid_stream"')
 
+    sub.add_parser(
+        "export-semantic-parquet",
+        help="Export Silver/Gold Iceberg tables to storage/semantic/parquet for dbt",
+    )
+
     args = p.parse_args()
     if args.cmd == "compaction-health":
         out = cmd_compaction_health()
     elif args.cmd == "compact":
         out = cmd_compact(args.table_name)
+    elif args.cmd == "export-semantic-parquet":
+        out = cmd_export_semantic_parquet()
     else:
         raise SystemExit(2)
     print(json.dumps(out))

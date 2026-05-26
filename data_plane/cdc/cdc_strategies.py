@@ -132,6 +132,16 @@ def run_log_based_cdc(source_id: str, cdc_log_path: str,
             out = f"storage/ingested/{source_id}_log_cdc_{scenario}.parquet"
             pd.DataFrame(processed).to_parquet(out, index=False)
             log.info(f"[LOG-CDC]  Processed {len(processed)} events → {out}")
+            try:
+                from data_plane.transformation.bronze_writer import BronzeWriter
+
+                br = BronzeWriter(source_id).append_flat_records(processed)
+                log.info(
+                    f"[BRONZE] Log-CDC → bronze layer | records={br['records_written']} "
+                    f"snapshot={br.get('snapshot_id')}"
+                )
+            except Exception as be:
+                log.warning(f"[BRONZE] Log-CDC Iceberg append skipped: {be}")
 
         op_counts = pd.DataFrame(processed)["_operation_type"].value_counts().to_dict() if processed else {}
         log.info(f"[LOG-CDC] Operation breakdown: {op_counts}")
@@ -214,6 +224,16 @@ def run_trigger_based_cdc(source_id: str, cdc_log_path: str,
             pd.DataFrame(processed).to_parquet(out, index=False)
             op_counts = pd.DataFrame(processed)["_operation_type"].value_counts().to_dict()
             log.info(f"[TRIGGER-CDC]  {len(processed)} events → {out} | ops={op_counts}")
+            try:
+                from data_plane.transformation.bronze_writer import BronzeWriter
+
+                br = BronzeWriter(source_id).append_flat_records(processed)
+                log.info(
+                    f"[BRONZE] Trigger-CDC → bronze | records={br['records_written']} "
+                    f"snapshot={br.get('snapshot_id')}"
+                )
+            except Exception as be:
+                log.warning(f"[BRONZE] Trigger-CDC Iceberg append skipped: {be}")
 
     except Exception as e:
         log.error(f"[TRIGGER-CDC] ❌ Error: {e}", exc_info=True)
@@ -289,6 +309,16 @@ def run_timestamp_based_cdc(source_id: str, cdc_log_path: str,
             pd.DataFrame(processed).to_parquet(out, index=False)
             log.info(f"[TS-CDC]  {len(processed)} records → {out} | "
                      f"New watermark: {new_watermark}")
+            try:
+                from data_plane.transformation.bronze_writer import BronzeWriter
+
+                br = BronzeWriter(source_id).append_flat_records(processed)
+                log.info(
+                    f"[BRONZE] Timestamp-CDC → bronze | records={br['records_written']} "
+                    f"snapshot={br.get('snapshot_id')}"
+                )
+            except Exception as be:
+                log.warning(f"[BRONZE] Timestamp-CDC Iceberg append skipped: {be}")
 
     except Exception as e:
         log.error(f"[TS-CDC] ❌ Error: {e}", exc_info=True)

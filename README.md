@@ -248,6 +248,29 @@ Outputs are written to `storage/cdc_log/`.
 
 ### Phase 6 — CDC Strategies (`cdc/cdc_strategies.py`)
 
+## Part 3 — Analytics & Semantic Layer
+
+See **[PART3_EXECUTION_GUIDE.md](PART3_EXECUTION_GUIDE.md)**.
+
+**Docker (separate stack, same as Parts 1–2 pattern):**
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+docker compose -f docker-compose.airflow.yml up -d --build
+docker compose -f docker-compose.part3.yml up -d --build
+```
+
+| Artifact | Role |
+|----------|------|
+| `Dockerfile.part3` | Image with DuckDB + dbt |
+| `docker-compose.part3.yml` | analytics-service, Grafana |
+| `requirements-part3-extras.txt` | Safe add-on (dbt only; does not change `requirements.txt`) |
+| `requirements-part3.txt` | Full local Part 3 venv (`-r requirements.txt` + extras) |
+
+Optional: `docker compose -f docker-compose.part3.yml --profile tools run --rm semantic-dbt`
+
+---
+
 Implements three CDC ingestion patterns with exactly-once semantics:
 - log-based CDC with checkpointing
 - trigger-based CDC with event deduplication

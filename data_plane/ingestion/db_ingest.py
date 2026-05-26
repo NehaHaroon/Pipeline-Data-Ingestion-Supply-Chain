@@ -406,6 +406,16 @@ def ingest_db_source(
                 tel.file_count_per_partition += 1
                 tel.snapshot_count += 1
                 log.info(f"  [WRITE]  {len(good_records)} records → {out_path}")
+                try:
+                    from data_plane.transformation.bronze_writer import BronzeWriter
+
+                    br = BronzeWriter(source_id).append_flat_records(good_records)
+                    log.info(
+                        f"  [BRONZE] Inventory CDC → {source_id.replace('src_', 'bronze.')} | "
+                        f"records={br['records_written']} snapshot={br.get('snapshot_id')}"
+                    )
+                except Exception as berr:
+                    log.error(f"  [BRONZE] Iceberg append failed (parquet still saved): {berr}")
         except Exception as e:
             log.error(f"  [WRITE] Failed to write good records: {e}")
             tel.record_fail()

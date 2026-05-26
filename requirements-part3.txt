@@ -1,0 +1,8 @@
+# Full Part 3 local environment (base + extras). Use constraints to avoid pyarrow downgrade.
+# Safe add-on only (recommended if Parts 1–2 already installed):
+#   pip install -r requirements-part3-extras.txt
+#
+# Full install:
+#   pip install -r requirements-part3.txt -c constraints-part3.txt
+-r requirements.txt
+-r requirements-part3-extras.txt

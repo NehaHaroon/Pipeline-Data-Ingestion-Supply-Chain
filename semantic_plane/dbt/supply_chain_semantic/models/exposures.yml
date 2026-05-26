@@ -1,0 +1,25 @@
+version: 2
+
+exposures:
+  - name: supply_chain_executive_dashboard
+    type: dashboard
+    maturity: high
+    url: http://localhost:3000/d/supply-chain-bi
+    description: >
+      Grafana BI dashboard for replenishment KPIs, profitability, and operational health.
+    depends_on:
+      - ref('fct_replenishment_signals')
+      - ref('fct_daily_revenue')
+      - ref('dim_warehouse')
+    owner:
+      name: Data Engineering Team
+      email: analytics@supply-chain.local
+
+  - name: analytical_workload_monitoring
+    type: dashboard
+    maturity: medium
+    url: http://localhost:3000/d/analytical-workload-monitoring
+    depends_on:
+      - ref('fct_inventory_movements')
+    owner:
+      name: Platform Observability

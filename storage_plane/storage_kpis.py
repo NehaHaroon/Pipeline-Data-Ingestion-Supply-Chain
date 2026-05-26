@@ -30,6 +30,29 @@ def _summary_int(summary: Any, key: str, default: int = 0) -> int:
         return default
 
 
+def _summary_long(summary: Any, key: str, default: int = 0) -> int:
+    """Like _summary_int but for total-size style counters."""
+    return _summary_int(summary, key, default)
+
+
+def _pick_summary_keys(summary: Any) -> Dict[str, Any]:
+    """Normalize Iceberg snapshot summary to plain dict for KPI derivation."""
+    if summary is None:
+        return {}
+    if hasattr(summary, "additional_properties") and summary.additional_properties:
+        try:
+            return dict(summary.additional_properties)
+        except Exception:
+            pass
+    if hasattr(summary, "__dict__"):
+        return {
+            k.replace("_", "-"): v
+            for k, v in vars(summary).items()
+            if not k.startswith("_") and v is not None
+        }
+    return summary if isinstance(summary, dict) else {}
+
+
 def get_storage_kpis(table_name: str) -> Dict[str, Any]:
     """
     Get comprehensive KPIs for a single Iceberg table.
@@ -57,44 +80,57 @@ def get_storage_kpis(table_name: str) -> Dict[str, Any]:
             }
         
         summary = snap.summary
-        
-        # Get file metadata - simplified to avoid inspect issues
-        # files_table = t.inspect.files().to_pydict()
-        # file_paths = files_table.get("file_path", [])
-        # file_sizes = files_table.get("file_size_in_bytes", [])
-        file_sizes = []  # Placeholder - would need manifest parsing for accurate file sizes
-        
-        # Calculate file metrics (simplified)
-        file_count = _summary_int(summary, "added-data-files", 0)  # Approximate
-        avg_file_size = 0  # Placeholder
-        small_file_count = 0  # Placeholder
-        small_file_ratio = 0.0  # Placeholder
-        
-        # Total storage
-        total_storage_bytes = sum(file_sizes) if file_sizes else 0
-        
-        # Snapshot metrics
+        summary_keys = _pick_summary_keys(summary)
+
+        # File counts — prefer cumulative snapshot totals when available (PyIceberg summaries vary by operation)
+        total_data_files = _summary_int(summary, "total-data-files", 0)
+        added_this_snap = _summary_int(summary, "added-data-files", 0)
+        file_count = total_data_files or added_this_snap
+
+        # Total file bytes — common Iceberg summary keys across engines
+        total_storage_bytes = (
+            _summary_long(summary, "total-data-files-size-bytes", 0)
+            or _summary_long(summary, "total-files-size-bytes", 0)
+            or _summary_long(summary, "total-file-size-in-bytes", 0)
+            or _summary_long(summary, "added-files-size-bytes", 0)
+        )
+
+        avg_bytes = (total_storage_bytes / file_count) if file_count and total_storage_bytes else 0
+        avg_file_size_mb = round(avg_bytes / (1024 * 1024), 4)
+
+        # Streaming small-file signal: low avg size vs 128MB compaction target → elevated ratio
+        target_mb = 128
+        small_file_ratio = 0.0
+        if avg_file_size_mb > 0 and avg_file_size_mb < 10:
+            small_file_ratio = min(1.0, 1.0 - (avg_file_size_mb / target_mb))
+
+        small_file_count = int(file_count * small_file_ratio) if small_file_ratio else 0
+
         snapshot_count = len(list(t.history())) if hasattr(t, "history") else 1
-        
-        # Partition metrics
-        partition_count = snapshot_count  # simplified; ideally would scan partition spec
-        
+
+        metadata_hint_bytes = _summary_long(summary, "total-metadata-files-size-bytes", 0)
+        data_vs_meta_ratio = round(
+            total_storage_bytes / metadata_hint_bytes, 2
+        ) if metadata_hint_bytes else None
+
         return {
             "table_name": table_name,
             "status": "healthy",
-            
-            # File-level metrics (simplified)
+
+            # File-level metrics (derived from snapshot summary — upgrade path: Iceberg inspect.files())
             "file_count": file_count,
-            "avg_file_size_mb": round(avg_file_size / (1024 * 1024), 2) if avg_file_size else 0,
+            "avg_file_size_mb": avg_file_size_mb,
             "small_file_count": small_file_count,
-            "small_file_ratio": round(small_file_ratio, 3),  # > 0.5 is a problem
-            "min_file_size_mb": 0,  # Placeholder
-            "max_file_size_mb": 0,  # Placeholder
-            
+            "small_file_ratio": round(small_file_ratio, 3),
+            "min_file_size_mb": 0,
+            "max_file_size_mb": 0,
+
             # Snapshot metrics
             "snapshot_count": snapshot_count,
+            "snapshot_summary_keys_sample": list(summary_keys.keys())[:12],
             "total_storage_bytes": total_storage_bytes,
-            "total_storage_mb": round(total_storage_bytes / (1024 * 1024), 2),
+            "total_storage_mb": round(total_storage_bytes / (1024 * 1024), 4),
+            "data_vs_metadata_ratio": data_vs_meta_ratio,
             
             # From current snapshot summary
             "record_count": _summary_int(summary, "total-records", 0),

@@ -38,6 +38,7 @@ services:
     build: .
     env_file:
       - .env
+    user: "${PIPELINE_UID:-50000}:${PIPELINE_GID:-0}"
     depends_on:
       kafka:
         condition: service_healthy
@@ -62,6 +63,7 @@ services:
     build: .
     env_file:
       - .env
+    user: "${PIPELINE_UID:-50000}:${PIPELINE_GID:-0}"
     depends_on:
       ingestion-api:
         condition: service_healthy
@@ -95,6 +97,7 @@ services:
     build: .
     env_file:
       - .env
+    user: "${PIPELINE_UID:-50000}:${PIPELINE_GID:-0}"
     depends_on:
       kafka:
         condition: service_healthy
@@ -194,22 +197,6 @@ services:
       - "9090:9090"
     depends_on:
       ingestion-api:
-        condition: service_started
-    networks:
-      - pipeline-net
-
-  grafana:
-    image: grafana/grafana:11.2.0
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-    volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
-    depends_on:
-      prometheus:
         condition: service_started
     networks:
       - pipeline-net

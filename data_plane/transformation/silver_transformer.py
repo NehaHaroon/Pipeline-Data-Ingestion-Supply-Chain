@@ -159,7 +159,15 @@ class SilverTransformer:
                 if ts_col in df.columns:
                     event_ts = pd.to_datetime(df[ts_col], utc=True, errors="coerce")
                     lag = (df["_ingestion_ts"] - event_ts).dt.total_seconds()
-                    df["late_arriving"] = lag > 300  # >5 min lag
+                    max_lag_sec = 300
+                    try:
+                        from control_plane.advanced_contracts import ENTERPRISE_CONTRACTS
+                        bundle = ENTERPRISE_CONTRACTS.get(self.source_id)
+                        if bundle:
+                            max_lag_sec = bundle.freshness.max_lag_seconds
+                    except Exception:
+                        pass
+                    df["late_arriving"] = lag > max_lag_sec
                     late_arriving_count = int(df["late_arriving"].sum())
                     break
 

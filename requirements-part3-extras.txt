@@ -1,0 +1,6 @@
+# Part 3 ONLY — safe add-on; does not change Part 1/2 requirements.txt
+# Install when ingestion/transformation deps are already working:
+#   pip install -r requirements-part3-extras.txt
+duckdb>=1.0.0
+dbt-core>=1.7.0,<2.0.0
+dbt-duckdb>=1.7.0,<2.0.0

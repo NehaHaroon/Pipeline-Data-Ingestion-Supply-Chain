@@ -1,0 +1,102 @@
+# Part 3 — Semantic analytics, SQL workloads, BI & workload monitoring
+#
+# Prerequisites (same Docker network `pipeline-net`):
+#   docker compose -f docker-compose.yml up -d
+#   docker compose -f docker-compose.airflow.yml up -d
+#
+# Then:
+#   docker compose -f docker-compose.part3.yml up -d --build
+#
+# Services: analytics-service, grafana (+ optional one-shot semantic-export)
+
+x-part3-common: &part3-common
+  build:
+    context: .
+    dockerfile: Dockerfile.part3
+  image: supply-chain-part3:latest
+  user: "${PIPELINE_UID:-50000}:${PIPELINE_GID:-0}"
+  env_file:
+    - .env
+  environment: &part3-env
+    PYTHONPATH: /app
+    INGESTION_API_URL: http://ingestion-api:8000
+    TRANSFORM_SERVICE_URL: http://transform-service:8001
+    ANALYTICS_SERVICE_URL: http://analytics-service:8002
+    SEMANTIC_PARQUET_DIR: /app/storage/semantic/parquet
+    QUERY_AUDIT_LOG_PATH: /app/storage/analytics/query_audit.jsonl
+    ANALYTICS_METRICS_STATE: /app/storage/analytics/metrics_state.json
+  volumes:
+    - ./storage:/app/storage
+    - ./logs:/app/logs
+    - ./semantic_plane:/app/semantic_plane
+    - ./data_plane:/app/data_plane
+    - ./control_plane:/app/control_plane
+    - ./storage_plane:/app/storage_plane
+    - ./observability_plane:/app/observability_plane
+    - ./scripts:/app/scripts
+  networks:
+    - pipeline-net
+
+services:
+  analytics-service:
+    <<: *part3-common
+    container_name: analytics-service
+    ports:
+      - "8002:8002"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # One-shot: export Iceberg → parquet + run all SQL workloads (optional manual run)
+  semantic-export:
+    <<: *part3-common
+    profiles: ["tools"]
+    container_name: semantic-export
+    entrypoint: ["python", "scripts/run_part3_pipeline.py"]
+    command: ["--skip-dbt"]
+    depends_on:
+      analytics-service:
+        condition: service_healthy
+
+  # One-shot: dbt run + test (requires Silver/Gold parquet export)
+  semantic-dbt:
+    <<: *part3-common
+    profiles: ["tools"]
+    container_name: semantic-dbt
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        cd /app && python -m semantic_plane.export_for_dbt &&
+        cd /app/semantic_plane/dbt/supply_chain_semantic &&
+        dbt run --profiles-dir . --project-dir . --select marts+ &&
+        dbt test --profiles-dir . --project-dir .
+    depends_on:
+      analytics-service:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana-part3
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      analytics-service:
+        condition: service_healthy
+    networks:
+      - pipeline-net
+    restart: unless-stopped
+
+networks:
+  pipeline-net:
+    external: true
+    name: pipeline-net

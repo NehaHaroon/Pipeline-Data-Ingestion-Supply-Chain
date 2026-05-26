@@ -1,0 +1,153 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "title": "Avg Query Latency",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "id": 10,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"avg_query_latency_sec\"}", "refId": "A" }]
+    },
+    {
+      "title": "P95 Query Latency",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "id": 11,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"p95_query_latency_sec\"}", "refId": "A" }]
+    },
+    {
+      "title": "Query Failure Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "id": 12,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"query_failure_rate\"}", "refId": "A" }]
+    },
+    {
+      "title": "Concurrent Queries",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "id": 13,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"concurrent_queries\"}", "refId": "A" }]
+    },
+    {
+      "title": "Query Queue Time",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "id": 14,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"query_queue_time_sec\"}", "refId": "A" }]
+    },
+    {
+      "title": "Partition Pruning Efficiency",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 4 },
+      "id": 21,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"partition_pruning_efficiency\"}", "refId": "A" }]
+    },
+    {
+      "title": "Snapshot Scan Count",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 4 },
+      "id": 22,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"snapshot_scan_count\"}", "refId": "A" }]
+    },
+    {
+      "title": "Bytes Scanned / Query",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 4 },
+      "id": 23,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"sql_workload\",metric=\"bytes_scanned_per_query\"}", "refId": "A" }]
+    },
+    {
+      "title": "Cache Hit Ratio",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 4 },
+      "id": 24,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"cache_hit_ratio\"}", "refId": "A" }]
+    },
+    {
+      "title": "CPU Utilization %",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 10 },
+      "id": 25,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"cpu_utilization_pct\"}", "refId": "A" }]
+    },
+    {
+      "title": "Memory Utilization %",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 10 },
+      "id": 26,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"memory_utilization_pct\"}", "refId": "A" }]
+    },
+    {
+      "title": "Disk I/O (MB/s)",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 10 },
+      "id": 27,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"resource\",metric=\"disk_io_mbps\"}", "refId": "A" }]
+    },
+    {
+      "title": "Dashboard Refresh / hr",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 16 },
+      "id": 30,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"dashboard_refresh_frequency_per_hr\"}", "refId": "A" }]
+    },
+    {
+      "title": "Dashboard Load Time (s)",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
+      "id": 31,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"dashboard_load_time_sec\"}", "refId": "A" }]
+    },
+    {
+      "title": "dbt Model Runtime",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 22 },
+      "id": 50,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"dbt_model_runtime_sec\"}", "refId": "A" },
+        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"lineage_depth\"}", "refId": "B" }
+      ]
+    },
+    {
+      "title": "Failed dbt Tests",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 22 },
+      "id": 51,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"failed_dbt_tests\"}", "refId": "A" }]
+    },
+    {
+      "title": "Stale Semantic Models",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 22 },
+      "id": 52,
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"stale_semantic_models\"}", "refId": "A" }]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["part3", "observability", "workload"],
+  "time": { "from": "now-24h", "to": "now" },
+  "title": "Analytical Workload Monitoring",
+  "uid": "analytical-workload-monitoring",
+  "version": 2
+}
