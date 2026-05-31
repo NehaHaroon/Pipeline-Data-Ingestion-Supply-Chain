@@ -6,32 +6,30 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from data_plane.analytics.query_executor import run_query
+from data_plane.analytics.executive_dashboard import build_executive_dashboard
 
 
 def compute_bi_kpis() -> Dict[str, Any]:
-    """Run executive queries and derive dashboard scorecard metrics."""
-    scorecard = run_query("exec_001")
-    profitability = run_query("exec_002")
-
-    rows = scorecard.get("rows") or [{}]
-    sc = rows[0] if rows else {}
-
-    prof_rows = profitability.get("rows") or []
-    replenishment_pkr = sum(
-        float(r.get("replenishment_value_pkr") or 0) for r in prof_rows
-    )
-
+    """Business scorecards for executive dashboards (no technical metrics)."""
+    payload = build_executive_dashboard()
+    sc = payload["scorecards"]
     return {
-        "skus_needing_replenishment": int(sc.get("skus_needing_replenishment") or 0),
-        "avg_urgency_score": float(sc.get("avg_urgency_score") or 0),
-        "max_urgency_score": float(sc.get("max_urgency_score") or 0),
-        "total_suggested_order_units": int(sc.get("total_suggested_order_units") or 0),
-        "total_suggested_order_units_metric": int(sc.get("total_suggested_order_units") or 0),
-        "weather_risk_active": 1 if sc.get("weather_risk_flag") else 0,
-        "replenishment_value_pkr": round(replenishment_pkr, 2),
-        "profitable_skus_at_risk": len(prof_rows),
-        "last_gold_refresh": str(sc.get("last_gold_refresh") or ""),
-        "scorecard_status": scorecard.get("status"),
-        "profitability_status": profitability.get("status"),
+        "skus_needing_replenishment": sc["skus_at_risk"],
+        "catalog_products_total": sc["catalog_products"],
+        "stockout_risk_pct": sc["stockout_risk_pct"],
+        "critical_skus_count": sc["critical_skus"],
+        "high_urgency_skus_count": sc["high_urgency_skus"],
+        "avg_urgency_score": sc["avg_urgency_score"],
+        "max_urgency_score": sc["max_urgency_score"],
+        "total_suggested_order_units": sc["total_units_to_order"],
+        "replenishment_value_pkr": sc["replenishment_value_pkr"],
+        "replenishment_value_million_pkr": sc["replenishment_value_million_pkr"],
+        "weather_risk_active": 1 if sc["weather_risk_active"] else 0,
+        "delivery_delay_pct": sc["delivery_delay_pct"],
+        "bottleneck_warehouse_count": sc["bottleneck_locations"],
+        "profitable_skus_at_risk": len(payload.get("top_replenishment_priorities") or []),
+        "last_gold_refresh": sc["last_gold_refresh"],
+        "interpretations": payload.get("interpretations"),
+        "scorecard_status": payload.get("query_status", {}).get("exec_001"),
+        "profitability_status": payload.get("query_status", {}).get("exec_002"),
     }

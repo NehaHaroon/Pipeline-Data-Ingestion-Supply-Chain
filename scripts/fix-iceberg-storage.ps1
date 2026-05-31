@@ -10,6 +10,19 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+Write-Host "Fixing storage/analytics permissions (query audit + metrics) ..."
+$analyticsDir = Join-Path $root "storage" "analytics"
+if (-not (Test-Path $analyticsDir)) {
+    New-Item -ItemType Directory -Path $analyticsDir -Force | Out-Null
+}
+foreach ($f in @("query_audit.jsonl", "metrics_state.json", "workload_execution_report.json")) {
+    $p = Join-Path $analyticsDir $f
+    if (Test-Path $p) {
+        try { Remove-Item -Force $p -ErrorAction Stop; Write-Host "  removed $p (recreate with correct owner)" }
+        catch { Write-Host "  could not remove $p — close editors / stop containers, then delete manually" }
+    }
+}
+
 Write-Host "Removing stale Iceberg lock files under storage/ ..."
 $patterns = @(
     "iceberg_catalog.db.session.lock",

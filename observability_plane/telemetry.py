@@ -14,15 +14,20 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from observability_plane.structured_logging import get_logger, log_pipeline_event
+from observability_plane.telemetry_paths import get_telemetry_dir, telemetry_paths
 
 log = get_logger("job_telemetry")
 
-TELEMETRY_DIR = os.path.join("storage", "telemetry")
-TELEMETRY_LOG_FILE = os.path.join(TELEMETRY_DIR, "telemetry_records.jsonl")
-TELEMETRY_SUMMARY_FILE = os.path.join(TELEMETRY_DIR, "telemetry_summary.json")
 TELEMETRY_LOCK = threading.Lock()
 
-os.makedirs(TELEMETRY_DIR, exist_ok=True)
+try:
+    os.makedirs(get_telemetry_dir(), exist_ok=True)
+except OSError:
+    pass
+
+
+def _paths() -> tuple[str, str, str]:
+    return telemetry_paths()
 
 
 def _default_summary() -> dict:
@@ -39,10 +44,11 @@ def _default_summary() -> dict:
 
 
 def _load_summary_locked() -> dict:
-    if not os.path.exists(TELEMETRY_SUMMARY_FILE):
+    _, _, summary_file = _paths()
+    if not os.path.exists(summary_file):
         return _default_summary()
     try:
-        with open(TELEMETRY_SUMMARY_FILE, "r", encoding="utf-8") as f:
+        with open(summary_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         base = _default_summary()
         base.update(data if isinstance(data, dict) else {})
@@ -52,7 +58,8 @@ def _load_summary_locked() -> dict:
 
 
 def _save_summary_locked(summary: dict) -> None:
-    with open(TELEMETRY_SUMMARY_FILE, "w", encoding="utf-8") as f:
+    _, _, summary_file = _paths()
+    with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f)
 
 
@@ -181,10 +188,11 @@ class JobTelemetry:
     def save_report(self) -> dict:
         report = self.report()
         record_line = json.dumps(report)
+        tel_dir, log_file, _ = _paths()
         with TELEMETRY_LOCK:
-            with open(TELEMETRY_LOG_FILE, "a", encoding="utf-8") as f:
+            with open(log_file, "a", encoding="utf-8") as f:
                 f.write(record_line + "\n")
-            source_file = os.path.join(TELEMETRY_DIR, f"{self.source_id}.jsonl")
+            source_file = os.path.join(tel_dir, f"{self.source_id}.jsonl")
             with open(source_file, "a", encoding="utf-8") as f:
                 f.write(record_line + "\n")
             summary = _load_summary_locked()
@@ -203,10 +211,11 @@ class JobTelemetry:
 
     @classmethod
     def load_reports(cls, source_id: Optional[str] = None, limit: Optional[int] = None) -> list[dict]:
-        if not os.path.exists(TELEMETRY_LOG_FILE):
+        _, log_file, _ = _paths()
+        if not os.path.exists(log_file):
             return []
         records = deque(maxlen=limit) if limit and limit > 0 else []
-        with open(TELEMETRY_LOG_FILE, "r", encoding="utf-8") as f:
+        with open(log_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -261,8 +270,17 @@ class JobTelemetry:
         log.info(f"{'='*60}")
         for k, v in r.items():
             log.info(f"  {k:<35} {v}")
-        log.info(f"{'='*60}\n")        
-        self.save_report()        
+        log.info(f"{'='*60}\n")
+        try:
+            self.save_report()
+        except OSError as exc:
+            log_pipeline_event(
+                log,
+                "warning",
+                "Telemetry file write failed — using fallback dir on next run",
+                error=str(exc),
+                telemetry_dir=get_telemetry_dir(),
+            )
         return r
 
 

@@ -138,7 +138,8 @@ def iceberg_catalog_session(lock_timeout_sec: float | None = None) -> Iterator[N
                 f"If using Docker bind mounts, set AIRFLOW_UID/AIRFLOW_GID to match the host owner "
                 f"of ./storage, fix permissions on that directory, or remove a stale root-owned "
                 f"stale locks under storage/.locks/ or storage/*.session.lock, or run "
-                f"scripts/fix-iceberg-storage.ps1. Original: {e}"
+                f"python scripts/fix_iceberg_storage.py (or scripts/fix-iceberg-storage.cmd). "
+                f"Original: {e}"
             ) from e
         except FileLockTimeout as e:
             raise RuntimeError(

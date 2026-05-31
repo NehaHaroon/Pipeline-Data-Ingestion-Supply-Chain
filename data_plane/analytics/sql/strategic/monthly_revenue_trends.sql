@@ -1,7 +1,7 @@
 -- str_001: Monthly revenue / units trend (large aggregation, historical)
 WITH sales_monthly AS (
     SELECT
-        DATE_TRUNC('month', CAST(sale_timestamp AS TIMESTAMP)) AS month,
+        STRFTIME(DATE_TRUNC('month', CAST(sale_timestamp AS TIMESTAMP)), '%Y-%m') AS month,
         COALESCE(store_id, 'UNKNOWN') AS region,
         SUM(units_sold) AS units_sold,
         SUM(CASE WHEN units_sold > 0 THEN units_sold ELSE 0 END) AS gross_units

@@ -5,6 +5,7 @@ datasources:
     uid: prometheus
     type: prometheus
     access: proxy
-    url: http://prometheus:9090
+    # Grafana runs inside Docker — use service name + container port 9090.
+    url: http://pipeline-prometheus:9090
     isDefault: true
-    editable: true
+    editable: false

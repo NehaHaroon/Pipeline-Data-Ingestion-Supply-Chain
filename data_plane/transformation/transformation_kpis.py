@@ -20,8 +20,9 @@ import os
 import logging
 
 from config import TRANSFORMATION_KPI_LOG_PATH
+from observability_plane.structured_logging import get_logger
 
-log = logging.getLogger(__name__)
+log = get_logger("transformation_kpis")
 
 
 @dataclass
@@ -200,10 +201,11 @@ class TransformationKPILogger:
                 f.write(kpi.to_json_line() + "\n")
             log.info(
                 f"KPI logged: source={kpi.source_id} layer={kpi.layer} "
-                f"records_read={kpi.records_read} records_cleaned={kpi.records_cleaned}"
+                f"records_read={kpi.records_read} records_cleaned={kpi.records_cleaned}",
+                extra={"layer": kpi.layer, "source_id": kpi.source_id, "job_id": kpi.run_id},
             )
         except Exception as e:
-            log.error(f"Failed to log KPI: {e}")
+            log.error(f"Failed to log KPI: {e}", extra={"layer": "n/a", "source_id": "n/a", "job_id": "n/a"})
     
     @staticmethod
     def load_kpis(
@@ -212,7 +214,11 @@ class TransformationKPILogger:
         limit: int = 100,
     ) -> List[TransformationKPIs]:
         """Load KPI records from disk with optional filtering."""
-        log.debug("Loading KPIs from %s", TransformationKPILogger.KPIS_LOG_PATH)
+        log.debug(
+            "Loading KPIs from %s",
+            TransformationKPILogger.KPIS_LOG_PATH,
+            extra={"layer": "n/a", "source_id": "n/a", "job_id": "n/a"},
+        )
         if not os.path.exists(TransformationKPILogger.KPIS_LOG_PATH):
             return []
         
@@ -234,9 +240,15 @@ class TransformationKPILogger:
                         
                         records.append(kpi)
                     except json.JSONDecodeError:
-                        log.warning(f"Skipping malformed KPI line: {line[:50]}")
+                        log.warning(
+                            f"Skipping malformed KPI line: {line[:50]}",
+                            extra={"layer": "n/a", "source_id": "n/a", "job_id": "n/a"},
+                        )
         except Exception as e:
-            log.error(f"Error loading KPIs: {e}")
+            log.error(
+                f"Error loading KPIs: {e}",
+                extra={"layer": "n/a", "source_id": "n/a", "job_id": "n/a"},
+            )
         
         # Return most recent records first
         return sorted(records, key=lambda x: x.run_at, reverse=True)[:limit]

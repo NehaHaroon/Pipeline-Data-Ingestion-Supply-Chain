@@ -39,6 +39,37 @@ app.add_middleware(
 )
 log = get_logger("analytics_service")
 
+
+@app.on_event("startup")
+def _startup_seed_metrics() -> None:
+    import threading
+
+    from observability_plane.analytics_metrics import (
+        refresh_storage_and_bi_metrics,
+        seed_prometheus_metrics,
+    )
+
+    try:
+        seed_prometheus_metrics()
+        log_pipeline_event(log, "info", "Seeded default Prometheus metrics (fast)")
+    except Exception as exc:
+        log_pipeline_event(log, "warning", "Metric seed skipped", error=str(exc))
+
+    def _refresh_bi_background() -> None:
+        try:
+            refresh_storage_and_bi_metrics(force=True, skip_resource=True)
+            log_pipeline_event(log, "info", "Background executive BI metrics refresh completed")
+        except Exception as exc:
+            log_pipeline_event(
+                log,
+                "warning",
+                "Background BI refresh failed — Grafana may show zeros until run-all",
+                error=str(exc),
+            )
+
+    threading.Thread(target=_refresh_bi_background, daemon=True, name="bi-metrics-refresh").start()
+
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 DBT_PROJECT = PROJECT_ROOT / "semantic_plane" / "dbt" / "supply_chain_semantic"
 _DASHBOARD_HTML = PROJECT_ROOT / "data_plane" / "analytics" / "analytics_dashboard.html"
@@ -90,6 +121,20 @@ def bi_kpis():
     return data
 
 
+@app.get("/semantic/executive-dashboard")
+def executive_dashboard():
+    """
+    Full executive payload: scorecards, top-10 priorities, monthly trend, warehouse table.
+    Use for :8002/dashboard charts and stakeholder reports.
+    """
+    from data_plane.analytics.executive_dashboard import persist_executive_dashboard
+    from observability_plane.analytics_metrics import refresh_storage_and_bi_metrics
+
+    payload = persist_executive_dashboard()
+    refresh_storage_and_bi_metrics()
+    return payload
+
+
 @app.post("/analytics/query/{query_id}")
 def execute_workload_query(
     query_id: str,
@@ -108,9 +153,69 @@ def execute_workload_query(
 
 @app.post("/analytics/run-all")
 def execute_all_workloads():
+    import threading
+
     with QueryConcurrencyGuard():
-        results = run_all_queries()
-        return {"executed": len(results), "results": results}
+        results = run_all_queries(include_rows=False)
+        failed = [r for r in results if r.get("status") not in ("ok", "blocked")]
+        if failed:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "One or more SQL workloads failed",
+                    "failed": [
+                        {
+                            "query_id": r.get("query_id"),
+                            "status": r.get("status"),
+                            "error": r.get("error"),
+                        }
+                        for r in failed
+                    ],
+                },
+            )
+
+        def _refresh_bi_background() -> None:
+            from observability_plane.analytics_metrics import refresh_storage_and_bi_metrics
+
+            try:
+                refresh_storage_and_bi_metrics(force=True, skip_resource=True)
+                log_pipeline_event(log, "info", "Post run-all BI metrics refresh completed")
+            except Exception as exc:
+                log_pipeline_event(
+                    log,
+                    "warning",
+                    "Post run-all BI refresh failed",
+                    error=str(exc),
+                )
+
+        threading.Thread(target=_refresh_bi_background, daemon=True, name="run-all-bi-refresh").start()
+        return {
+            "executed": len(results),
+            "ok": sum(1 for r in results if r.get("status") == "ok"),
+            "blocked": sum(1 for r in results if r.get("status") == "blocked"),
+            "bi_refresh": "scheduled",
+            "results": results,
+        }
+
+
+@app.post("/semantic/refresh-bi-metrics")
+def refresh_bi_metrics_only():
+    """
+    Lightweight Grafana refresh — skips SQL workloads.
+    Use this instead of /analytics/run-all when dashboards need updated Prometheus KPIs.
+    """
+    import threading
+    from observability_plane.analytics_metrics import refresh_storage_and_bi_metrics
+
+    def _work() -> None:
+        try:
+            refresh_storage_and_bi_metrics(force=True, skip_resource=True)
+            log_pipeline_event(log, "info", "BI metrics-only refresh completed")
+        except Exception as exc:
+            log_pipeline_event(log, "warning", "BI metrics-only refresh failed", error=str(exc))
+
+    threading.Thread(target=_work, daemon=True, name="bi-metrics-only-refresh").start()
+    return {"status": "accepted", "message": "BI metrics refresh started in background"}
 
 
 @app.get("/analytics/metrics")
@@ -123,6 +228,15 @@ def analytics_metrics():
 @app.get("/metrics/prometheus")
 def prometheus_metrics():
     return PlainTextResponse(analytics_metrics_to_prometheus())
+
+
+@app.get("/semantic/prometheus-bi-catalog")
+def prometheus_bi_catalog():
+    """List BI metric names currently exported to Prometheus (debug Grafana 'No data')."""
+    from observability_plane.analytics_metrics import current_bi_kpis
+
+    bi = current_bi_kpis()
+    return {"metrics": sorted(bi.keys()), "count": len(bi)}
 
 
 @app.post("/semantic/dbt/run")

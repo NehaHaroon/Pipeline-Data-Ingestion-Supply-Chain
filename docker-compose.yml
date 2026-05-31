@@ -47,6 +47,7 @@ services:
       API_PORT: 8000
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     command: uvicorn api:app --host 0.0.0.0 --port 8000
+    mem_limit: 2g
     ports:
       - "8000:8000"
     volumes:
@@ -189,21 +190,32 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.54.1
+    container_name: pipeline-prometheus
+    restart: unless-stopped
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
     ports:
-      - "9090:9090"
-    depends_on:
-      ingestion-api:
-        condition: service_started
+      # Host MUST be 9090 — Grafana datasource uses pipeline-prometheus:9090 on Docker network.
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
     networks:
-      - pipeline-net
+      pipeline-net:
+        aliases:
+          - prometheus
+          - pipeline-prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   postgres_data:
 
 networks:
   pipeline-net:
+    external: true
     name: pipeline-net

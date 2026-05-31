@@ -83,6 +83,7 @@ _SILVER_SOURCE_IDS = [
     "src_legacy_trends",
     "src_iot_rfid_stream",
     "src_weather_api",
+    "src_inventory_transactions",
 ]
 SILVER_TABLES = [
     table_name_for_layer(StorageLayer.SILVER, sid) for sid in _SILVER_SOURCE_IDS

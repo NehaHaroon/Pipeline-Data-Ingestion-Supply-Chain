@@ -10,6 +10,8 @@ import logging
 import math
 import time
 
+from pipeline_waits import INGESTION_API_URL, ensure_ingestion_api, wait_for_ingestion_api
+
 default_args = {"retries": 3, "retry_delay": timedelta(minutes=2)}
 log = logging.getLogger(__name__)
 
@@ -78,7 +80,8 @@ def post_to_ingestion_api(source_id: str, records_task_id: str, **context):
         raise ValueError(f"Invalid XCom payload from {records_task_id}. Expected dict with 'records'.")
     records = _sanitize_for_json(records)
 
-    api_base = os.getenv("INGESTION_API_URL", "http://ingestion-api:8000").rstrip("/")
+    api_base = INGESTION_API_URL
+    wait_for_ingestion_api()
     api_token = os.getenv("API_TOKEN")
     if not api_token:
         raise ValueError("API_TOKEN is not set in Airflow runtime environment.")
@@ -87,12 +90,19 @@ def post_to_ingestion_api(source_id: str, records_task_id: str, **context):
     record_count = len(records.get("records", []))
     post_timeout = int(os.getenv("INGESTION_POST_TIMEOUT_SECONDS", "600"))
     log.info("Posting %s records to %s (post timeout=%ss)", record_count, url, post_timeout)
-    response = requests.post(
-        url,
-        headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
-        json=records,
-        timeout=post_timeout,
-    )
+    try:
+        response = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+            json=records,
+            timeout=post_timeout,
+        )
+    except RequestException as exc:
+        raise RuntimeError(
+            f"Cannot reach ingestion-api at {url}. "
+            "Start Part 1: docker compose -f docker-compose.yml up -d. "
+            f"Error: {exc}"
+        ) from exc
     if response.status_code >= 400:
         raise RuntimeError(
             f"Ingestion API call failed for {source_id}. status={response.status_code} body={response.text[:500]}"
@@ -191,8 +201,20 @@ with DAG("supply_chain_ingestion", schedule_interval="@hourly",
          start_date=datetime(2026, 1, 1), catchup=False,
          default_args=default_args) as dag:
 
-    for source_id in ["src_warehouse_master", "src_sales_history",
-                       "src_manufacturing_logs", "src_legacy_trends"]:
+    wait_api = PythonOperator(
+        task_id="wait_for_ingestion_api",
+        python_callable=ensure_ingestion_api,
+    )
+
+    # Run sources sequentially — parallel 4×1000-row POSTs can crash ingestion-api on Windows.
+    source_ids = [
+        "src_warehouse_master",
+        "src_sales_history",
+        "src_manufacturing_logs",
+        "src_legacy_trends",
+    ]
+    previous = wait_api
+    for source_id in source_ids:
 
         # Load data task
         load_task = PythonOperator(
@@ -210,4 +232,5 @@ with DAG("supply_chain_ingestion", schedule_interval="@hourly",
             },
         )
 
-        load_task >> ingest_task
+        previous >> load_task >> ingest_task
+        previous = ingest_task

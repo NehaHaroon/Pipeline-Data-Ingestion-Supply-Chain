@@ -47,7 +47,17 @@ def build_transformation_layer_summary() -> Dict[str, Any]:
     }
 
 
-def build_storage_layer_summary() -> Dict[str, Any]:
+def build_storage_layer_summary(*, lightweight: bool = False) -> Dict[str, Any]:
+    if lightweight:
+        return {
+            "layer": "storage",
+            "table_count": 0,
+            "total_files": 0,
+            "total_storage_mb": 0.0,
+            "total_snapshots": 0,
+            "tables_needing_compaction": 0,
+            "health_status": "unknown",
+        }
     from storage_plane.storage_kpis import compute_storage_health, get_all_tables_kpis
 
     all_kpis = get_all_tables_kpis()
@@ -82,11 +92,15 @@ def build_serving_layer_summary(jobs_db: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def build_layer_summaries(jobs_db: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+def build_layer_summaries(
+    jobs_db: Dict[str, Any],
+    *,
+    lightweight_storage: bool = False,
+) -> Dict[str, Dict[str, Any]]:
     return {
         "ingestion": build_ingestion_layer_summary(jobs_db),
         "transformation": build_transformation_layer_summary(),
-        "storage": build_storage_layer_summary(),
+        "storage": build_storage_layer_summary(lightweight=lightweight_storage),
         "serving": build_serving_layer_summary(jobs_db),
     }
 

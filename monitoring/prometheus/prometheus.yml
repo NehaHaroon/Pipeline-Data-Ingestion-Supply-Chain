@@ -1,14 +1,19 @@
 global:
   scrape_interval: 15s
+  scrape_timeout: 10s
   evaluation_interval: 15s
 
 scrape_configs:
   - job_name: "ingestion-api"
     metrics_path: /metrics/prometheus
+    scrape_interval: 30s
+    scrape_timeout: 8s
     static_configs:
       - targets: ["ingestion-api:8000"]
 
   - job_name: "analytics-service"
     metrics_path: /metrics/prometheus
+    scrape_interval: 30s
+    scrape_timeout: 15s
     static_configs:
       - targets: ["analytics-service:8002"]

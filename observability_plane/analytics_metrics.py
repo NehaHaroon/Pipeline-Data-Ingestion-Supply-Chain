@@ -17,18 +17,32 @@ _QUERY_FAILURES: int = 0
 _QUERY_SUCCESS: int = 0
 _CONCURRENT: int = 0
 _BI_KPIS: Dict[str, float] = {}
+_BI_LABELED: list = []
 _SEMANTIC_METRICS: Dict[str, float] = {
     "dbt_model_runtime_sec": 0.0,
     "failed_dbt_tests": 0.0,
     "stale_semantic_models": 0.0,
     "lineage_depth": 5.0,
 }
+_LAST_BI_REFRESH: float = 0.0
+_BI_REFRESH_INTERVAL_SEC: float = float(os.getenv("BI_METRICS_REFRESH_INTERVAL_SEC", "60"))
 
-METRICS_STATE_PATH = os.getenv(
-    "ANALYTICS_METRICS_STATE",
-    "storage/analytics/metrics_state.json",
+
+from data_plane.analytics.storage_paths import (
+    ensure_analytics_storage_dir,
+    metrics_state_file_path,
+    query_audit_log_path,
 )
-QUERY_AUDIT_PATH = os.getenv("QUERY_AUDIT_LOG_PATH", "storage/analytics/query_audit.jsonl")
+
+ensure_analytics_storage_dir()
+
+
+def _metrics_state_path() -> str:
+    return metrics_state_file_path()
+
+
+def _query_audit_path() -> str:
+    return query_audit_log_path()
 
 
 def record_query_execution(
@@ -50,28 +64,62 @@ def record_query_execution(
     _persist_state()
 
 
-def refresh_storage_and_bi_metrics() -> None:
+def refresh_storage_and_bi_metrics(*, force: bool = False, skip_resource: bool = False) -> None:
     """Pull Iceberg/storage signals and semantic BI KPIs."""
-    global _BI_KPIS
+    global _BI_KPIS, _BI_LABELED, _LAST_BI_REFRESH
+    now = time.time()
+    if not force and _BI_KPIS and (now - _LAST_BI_REFRESH) < _BI_REFRESH_INTERVAL_SEC:
+        _persist_state()
+        return
+
+    t0 = time.time()
     try:
-        from data_plane.analytics.bi_kpis import compute_bi_kpis
+        from data_plane.analytics.executive_dashboard import (
+            persist_executive_dashboard,
+            scorecards_for_prometheus,
+        )
 
-        raw = compute_bi_kpis()
-        _BI_KPIS = {
-            "skus_needing_replenishment": float(raw.get("skus_needing_replenishment", 0)),
-            "avg_urgency_score": float(raw.get("avg_urgency_score", 0)),
-            "total_suggested_order_units": float(raw.get("total_suggested_order_units", 0)),
-            "replenishment_value_pkr": float(raw.get("replenishment_value_pkr", 0)),
-            "weather_risk_active": float(raw.get("weather_risk_active", 0)),
-            "dashboard_refresh_frequency_per_hr": 12.0,
-            "dashboard_load_time_sec": max(0.5, float(_QUERY_LATENCIES[-1]) if _QUERY_LATENCIES else 1.0),
-            "active_users": 1.0,
-            "most_expensive_dashboard_ms": max(_QUERY_LATENCIES) * 1000 if _QUERY_LATENCIES else 0.0,
-        }
-    except Exception:
-        _BI_KPIS = _BI_KPIS or {"skus_needing_replenishment": 0.0}
+        payload = persist_executive_dashboard()
+        _BI_KPIS = scorecards_for_prometheus(payload)
+    except Exception as exc:
+        from observability_plane.structured_logging import get_logger, log_pipeline_event
 
-    _persist_state()
+        log_pipeline_event(
+            get_logger("analytics_metrics"),
+            "error",
+            "Executive BI refresh failed — using last-known or zero KPIs",
+            error=str(exc),
+        )
+        if not _BI_KPIS:
+            _BI_KPIS = {
+                "skus_needing_replenishment": 0.0,
+                "stockout_risk_pct": 0.0,
+                "critical_skus_count": 0.0,
+                "replenishment_value_million_pkr": 0.0,
+                "total_suggested_order_units": 0.0,
+                "avg_urgency_score": 0.0,
+                "max_urgency_score": 0.0,
+            }
+
+    try:
+        from data_plane.analytics.prometheus_bi_export import build_labeled_bi_metrics
+
+        _BI_LABELED = build_labeled_bi_metrics()
+    except Exception as exc:
+        from observability_plane.structured_logging import get_logger, log_pipeline_event
+
+        log_pipeline_event(
+            get_logger("analytics_metrics"),
+            "error",
+            "Labeled BI metrics export failed — warehouse/urgency panels may be empty",
+            error=str(exc),
+        )
+
+    _BI_KPIS["dashboard_refresh_frequency_per_hr"] = 12.0
+    _BI_KPIS["dashboard_load_time_sec"] = round(max(0.1, time.time() - t0), 2)
+    _LAST_BI_REFRESH = now
+    resource = None if skip_resource else _resource_from_storage()
+    _persist_state(extra_resource=resource)
 
 
 def _resource_from_storage() -> Dict[str, float]:
@@ -106,6 +154,45 @@ def _resource_from_storage() -> Dict[str, float]:
         }
 
 
+_STATIC_RESOURCE: Dict[str, float] = {
+    "cpu_utilization_pct": 0.0,
+    "memory_utilization_pct": 0.0,
+    "disk_io_mbps": 0.0,
+    "cache_hit_ratio": 0.0,
+    "snapshot_scan_count": 0.0,
+    "partition_pruning_efficiency": 0.0,
+    "bytes_scanned_estimate": 0.0,
+}
+
+
+def _default_metrics_state() -> Dict[str, Any]:
+    """Baseline gauges — must stay fast (Prometheus scrape_timeout is ~8s)."""
+    return {
+        "query_performance": {
+            "avg_query_latency_sec": 0.0,
+            "p95_query_latency_sec": 0.0,
+            "query_failure_rate": 0.0,
+            "concurrent_queries": 0.0,
+            "query_queue_time_sec": 0.0,
+        },
+        "sql_workload": {"bytes_scanned_per_query": 0.0},
+        "resource": dict(_STATIC_RESOURCE),
+        "semantic_layer": dict(_SEMANTIC_METRICS),
+        "bi_usage": {
+            "dashboard_refresh_frequency_per_hr": 12.0,
+            "dashboard_load_time_sec": 2.0,
+        },
+    }
+
+
+def _merge_state(state: Dict[str, Any]) -> Dict[str, Any]:
+    merged = _default_metrics_state()
+    for section, defaults in merged.items():
+        if isinstance(defaults, dict):
+            merged[section] = {**defaults, **(state.get(section) or {})}
+    return merged
+
+
 def update_semantic_metrics(
     *,
     dbt_runtime_sec: Optional[float] = None,
@@ -121,8 +208,9 @@ def update_semantic_metrics(
     _persist_state()
 
 
-def _persist_state() -> None:
-    os.makedirs(os.path.dirname(METRICS_STATE_PATH), exist_ok=True)
+def _persist_state(*, extra_resource: Optional[Dict[str, float]] = None) -> None:
+    path = _metrics_state_path()
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     latencies = list(_QUERY_LATENCIES)
     avg_lat = sum(latencies) / len(latencies) if latencies else 0.0
     sorted_lat = sorted(latencies)
@@ -145,26 +233,81 @@ def _persist_state() -> None:
             "bytes_scanned_per_query": round(avg_bytes, 0),
             "top_expensive_queries": top_expensive_queries(5),
         },
-        "resource": _resource_from_storage(),
+        "resource": extra_resource if extra_resource is not None else dict(_STATIC_RESOURCE),
         "bi_usage": dict(_BI_KPIS) if _BI_KPIS else {},
+        "bi_labeled": [{"labels": labels, "value": val} for labels, val in _BI_LABELED],
         "semantic_layer": dict(_SEMANTIC_METRICS),
     }
-    with open(METRICS_STATE_PATH, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, default=str)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2, default=str)
+    except OSError:
+        fallback = os.getenv("ANALYTICS_METRICS_STATE_FALLBACK", "/tmp/metrics_state.json")
+        try:
+            with open(fallback, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2, default=str)
+        except OSError:
+            pass
 
 
 def load_metrics_state() -> Dict[str, Any]:
-    if not os.path.exists(METRICS_STATE_PATH):
-        refresh_storage_and_bi_metrics()
-    with open(METRICS_STATE_PATH, encoding="utf-8") as f:
-        return json.load(f)
+    """Load persisted state; always merge in-memory _BI_KPIS (source of truth for Prometheus)."""
+    global _BI_LABELED
+    path = _metrics_state_path()
+    state: Dict[str, Any] = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                state = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            state = {}
+    if _BI_KPIS:
+        state["bi_usage"] = {**state.get("bi_usage", {}), **_BI_KPIS}
+    if not _BI_LABELED and state.get("bi_labeled"):
+        _BI_LABELED = [
+            (item["labels"], float(item["value"]))
+            for item in state["bi_labeled"]
+            if isinstance(item, dict) and "labels" in item and "value" in item
+        ]
+    return _merge_state(state)
+
+
+def _default_bi_kpis() -> Dict[str, float]:
+    return {
+        "skus_needing_replenishment": 0.0,
+        "catalog_products_total": 0.0,
+        "stockout_risk_pct": 0.0,
+        "critical_skus_count": 0.0,
+        "high_urgency_skus_count": 0.0,
+        "avg_urgency_score": 0.0,
+        "max_urgency_score": 0.0,
+        "total_suggested_order_units": 0.0,
+        "replenishment_value_pkr": 0.0,
+        "replenishment_value_million_pkr": 0.0,
+        "weather_risk_active": 0.0,
+        "delivery_delay_pct": 0.0,
+        "bottleneck_warehouse_count": 0.0,
+        "avg_shelf_stock_units": 0.0,
+        "avg_reorder_threshold_units": 0.0,
+        "dashboard_refresh_frequency_per_hr": 12.0,
+        "dashboard_load_time_sec": 2.0,
+    }
+
+
+def seed_prometheus_metrics() -> None:
+    """Fast startup seed — do not load Iceberg here (blocks healthcheck / can OOM)."""
+    global _BI_KPIS
+    if not _BI_KPIS:
+        _BI_KPIS = _default_bi_kpis()
+    _persist_state()
 
 
 def top_expensive_queries(limit: int = 5) -> List[Dict[str, Any]]:
-    if not os.path.exists(QUERY_AUDIT_PATH):
+    audit_path = _query_audit_path()
+    if not os.path.exists(audit_path):
         return []
     rows = []
-    with open(QUERY_AUDIT_PATH, encoding="utf-8") as f:
+    with open(audit_path, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 try:
@@ -176,9 +319,44 @@ def top_expensive_queries(limit: int = 5) -> List[Dict[str, Any]]:
     return rows[:limit]
 
 
+def _snapshot_state_from_memory() -> Dict[str, Any]:
+    """Fast in-memory snapshot for Prometheus scrape (no disk read)."""
+    latencies = list(_QUERY_LATENCIES)
+    avg_lat = sum(latencies) / len(latencies) if latencies else 0.0
+    sorted_lat = sorted(latencies)
+    p95 = sorted_lat[int(len(sorted_lat) * 0.95)] if sorted_lat else 0.0
+    total = _QUERY_SUCCESS + _QUERY_FAILURES
+    failure_rate = (_QUERY_FAILURES / total) if total else 0.0
+    bytes_list = list(_QUERY_BYTES)
+    avg_bytes = sum(bytes_list) / len(bytes_list) if bytes_list else 0.0
+    return {
+        "query_performance": {
+            "avg_query_latency_sec": round(avg_lat, 4),
+            "p95_query_latency_sec": round(p95, 4),
+            "query_failure_rate": round(failure_rate, 4),
+            "concurrent_queries": float(_CONCURRENT),
+            "query_queue_time_sec": 0.0,
+        },
+        "sql_workload": {"bytes_scanned_per_query": round(avg_bytes, 0)},
+        "resource": dict(_STATIC_RESOURCE),
+        "bi_usage": dict(_BI_KPIS) if _BI_KPIS else {},
+        "semantic_layer": dict(_SEMANTIC_METRICS),
+    }
+
+
 def analytics_metrics_to_prometheus() -> str:
-    refresh_storage_and_bi_metrics()
-    state = load_metrics_state()
+    # Never load Iceberg or read metrics_state.json on scrape — keeps response under timeout.
+    state = _merge_state(_snapshot_state_from_memory())
+    bi_metrics = dict(_BI_KPIS) if _BI_KPIS else dict(state.get("bi_usage", {}))
+    bi_metrics.setdefault("dashboard_refresh_frequency_per_hr", 12.0)
+    bi_metrics.setdefault("dashboard_load_time_sec", 2.0)
+    labeled = list(_BI_LABELED)
+    if not labeled and state.get("bi_labeled"):
+        labeled = [
+            (item["labels"], float(item["value"]))
+            for item in state["bi_labeled"]
+            if isinstance(item, dict) and "labels" in item and "value" in item
+        ]
     lines = [
         "# HELP analytics_query_metric Part 3 analytical workload metric",
         "# TYPE analytics_query_metric gauge",
@@ -189,8 +367,19 @@ def analytics_metrics_to_prometheus() -> str:
         lines.append(f'analytics_query_metric{{category="query_performance",metric="{key}"}} {float(val)}')
     for key, val in state.get("resource", {}).items():
         lines.append(f'analytics_query_metric{{category="resource",metric="{key}"}} {float(val)}')
-    for key, val in state.get("bi_usage", {}).items():
-        lines.append(f'analytics_bi_metric{{metric="{key}"}} {float(val)}')
+    if labeled:
+        for labels, val in labeled:
+            label_str = ",".join(f'{k}="{labels[k]}"' for k in sorted(labels))
+            lines.append(f"analytics_bi_metric{{{label_str}}} {float(val)}")
+    else:
+        for key, val in bi_metrics.items():
+            try:
+                lines.append(
+                    f'analytics_bi_metric{{metric="{key}",warehouse_location="ALL",'
+                    f'urgency_tier="all",weather_state="any",demand_window="any"}} {float(val)}'
+                )
+            except (TypeError, ValueError):
+                continue
     for key, val in state.get("semantic_layer", {}).items():
         lines.append(f'analytics_query_metric{{category="semantic_layer",metric="{key}"}} {float(val)}')
     sql_w = state.get("sql_workload", {})
@@ -200,6 +389,11 @@ def analytics_metrics_to_prometheus() -> str:
             f'{float(sql_w["bytes_scanned_per_query"])}'
         )
     return "\n".join(lines) + "\n"
+
+
+def current_bi_kpis() -> Dict[str, float]:
+    """In-memory executive BI gauges (used when metrics_state.json is not writable)."""
+    return dict(_BI_KPIS)
 
 
 class QueryConcurrencyGuard:

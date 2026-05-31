@@ -53,6 +53,45 @@ def _pick_summary_keys(summary: Any) -> Dict[str, Any]:
     return summary if isinstance(summary, dict) else {}
 
 
+def _summary_first(summary: Any, keys: List[str], default: int = 0) -> int:
+    """Read first present numeric summary field (PyIceberg key names vary by writer)."""
+    candidates: List[Any] = [_pick_summary_keys(summary)]
+    if hasattr(summary, "get"):
+        candidates.append(summary)
+    for source in candidates:
+        if not source:
+            continue
+        for key in keys:
+            raw = source.get(key) if hasattr(source, "get") else None
+            if raw is None:
+                continue
+            try:
+                value = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if value > 0:
+                return value
+    return default
+
+
+# Iceberg engines use different snapshot summary keys for byte totals.
+_STORAGE_BYTE_KEYS = [
+    "total-data-files-size-bytes",
+    "total-files-size-bytes",
+    "total-file-size-in-bytes",
+    "total-files-size",          # PyIceberg / this pipeline
+    "total-data-files-size",
+    "added-files-size-bytes",
+    "added-files-size",
+]
+
+_METADATA_BYTE_KEYS = [
+    "total-metadata-files-size-bytes",
+    "total-metadata-files-size",
+    "total-metadata-size",
+]
+
+
 def get_storage_kpis(table_name: str) -> Dict[str, Any]:
     """
     Get comprehensive KPIs for a single Iceberg table.
@@ -87,13 +126,8 @@ def get_storage_kpis(table_name: str) -> Dict[str, Any]:
         added_this_snap = _summary_int(summary, "added-data-files", 0)
         file_count = total_data_files or added_this_snap
 
-        # Total file bytes — common Iceberg summary keys across engines
-        total_storage_bytes = (
-            _summary_long(summary, "total-data-files-size-bytes", 0)
-            or _summary_long(summary, "total-files-size-bytes", 0)
-            or _summary_long(summary, "total-file-size-in-bytes", 0)
-            or _summary_long(summary, "added-files-size-bytes", 0)
-        )
+        # Total file bytes — keys differ between Spark, Flink, and PyIceberg writers
+        total_storage_bytes = _summary_first(summary, _STORAGE_BYTE_KEYS, 0)
 
         avg_bytes = (total_storage_bytes / file_count) if file_count and total_storage_bytes else 0
         avg_file_size_mb = round(avg_bytes / (1024 * 1024), 4)
@@ -108,7 +142,7 @@ def get_storage_kpis(table_name: str) -> Dict[str, Any]:
 
         snapshot_count = len(list(t.history())) if hasattr(t, "history") else 1
 
-        metadata_hint_bytes = _summary_long(summary, "total-metadata-files-size-bytes", 0)
+        metadata_hint_bytes = _summary_first(summary, _METADATA_BYTE_KEYS, 0)
         data_vs_meta_ratio = round(
             total_storage_bytes / metadata_hint_bytes, 2
         ) if metadata_hint_bytes else None

@@ -49,6 +49,98 @@ docker compose -f docker-compose.airflow.yml down
 docker compose -f docker-compose.yml down
 ```
 
+## `Permission denied: query_audit.jsonl`
+
+On Windows bind mounts, `storage/analytics/query_audit.jsonl` may be owned by another user/container.
+
+**If PowerShell scripts are blocked by group policy**, use any of these instead:
+
+```cmd
+REM Option A — CMD batch (no PowerShell)
+scripts\fix-iceberg-storage.cmd
+```
+
+```cmd
+REM Option B — Python (recommended)
+python scripts\fix_iceberg_storage.py
+```
+
+```cmd
+REM Option C — Docker only (no host scripts)
+docker compose -f docker-compose.part3.yml run --rm --user 0:0 --entrypoint bash analytics-service -c "mkdir -p /app/storage/analytics && chmod -R a+rwX /app/storage/analytics"
+```
+
+```cmd
+REM Option D — delete files manually in File Explorer
+REM   storage\analytics\query_audit.jsonl
+REM   storage\analytics\metrics_state.json
+REM   storage\.locks\  (folder)
+```
+
+Then:
+
+```cmd
+docker compose -f docker-compose.part3.yml up -d --build
+```
+
+Analytics falls back to `/tmp/query_audit.jsonl` inside the container if the bind mount is still not writable (SQL workloads still complete).
+
+---
+
+## `silver.inventory_transactions` = 0 / table does not exist
+
+Silver was not built for CDC inventory. After Bronze has data:
+
+1. Re-run **`supply_chain_transformation`** (includes `src_inventory_transactions` in `SOURCES_FOR_SILVER`), or  
+2. `curl -X POST http://localhost:8001/transform/silver/src_inventory_transactions`  
+3. Re-run `semantic-export`.
+
+`run_part3_pipeline.py` auto-calls transform-service when export count is 0.
+
+---
+
+## Grafana panels show "No data" for new KPIs (% catalog, M PKR, etc.)
+
+**Cause:** Prometheus was reading an old `metrics_state.json` on disk (or an empty file when the bind mount is not writable). Only legacy metrics (`skus_needing_replenishment`, `avg_urgency_score`) appeared.
+
+**Fix (code):** `/metrics/prometheus` now exports **in-memory** BI KPIs after each refresh.
+
+**Verify:**
+
+```cmd
+docker compose -f docker-compose.part3.yml up -d --build analytics-service
+curl http://localhost:8002/semantic/prometheus-bi-catalog
+curl http://localhost:8002/metrics/prometheus | findstr stockout_risk
+```
+
+You should see `stockout_risk_pct`, `critical_skus_count`, `replenishment_value_million_pkr`, `max_urgency_score`, etc.
+
+In Prometheus UI (http://localhost:9090) → Status → Targets → `analytics-service` should be **UP**. Wait 1–2 scrape intervals, then refresh Grafana.
+
+---
+
+## Grafana KPIs show 0 / `run-all` returns `_tmp_*` table errors
+
+**Cause (fixed in code):** DuckDB views pointed at unregistered `_tmp_*` relations. Rebuild analytics-service after pulling.
+
+**You still need data in Iceberg:**
+
+1. Run ingestion + **`supply_chain_transformation`** (Silver must include `src_inventory_transactions`).
+2. Confirm Gold: `gold.replenishment_signals` has rows (warehouse + IoT Silver non-empty).
+3. Optional parquet fallback: `docker compose -f docker-compose.part3.yml --profile tools run --rm semantic-export`
+4. Re-run workloads:
+
+```powershell
+curl -X POST http://localhost:8002/analytics/run-all
+curl http://localhost:8002/semantic/bi-kpis
+```
+
+5. Grafana refreshes from Prometheus after step 4 (scrape interval ~15–30s).
+
+`adhoc_001` may show **blocked** during business hours (cost policy) — retry off-peak or use `POST /analytics/query/adhoc_001` after hours.
+
+---
+
 ## Compaction / Iceberg lock errors (Permission denied)
 
 If `supply_chain_iceberg_compaction` fails on `iceberg_catalog.db.session.lock` or `storage/.locks/`:
@@ -56,8 +148,8 @@ If `supply_chain_iceberg_compaction` fails on `iceberg_catalog.db.session.lock` 
 1. Stop heavy writers (optional): pause transformation/compaction DAGs.
 2. From repo root (PowerShell):
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/fix-iceberg-storage.ps1 -DockerChown
+```cmd
+python scripts\fix_iceberg_storage.py --docker-chown
 ```
 
 3. Ensure `.env` has the same `AIRFLOW_UID` and `PIPELINE_UID` (default `50000`).

@@ -1,4 +1,5 @@
 import logging
+import threading
 import traceback
 from dataclasses import asdict
 from typing import Any
@@ -13,6 +14,9 @@ from observability_plane.structured_logging import get_logger, log_pipeline_even
 
 app = FastAPI()
 log = get_logger("transform_service")
+
+# One transform at a time — parallel Airflow tasks otherwise OOM the 4g container.
+_transform_lock = threading.Lock()
 
 _HTTP_DETAIL_MAX = 8000
 
@@ -54,8 +58,18 @@ def _error_json_response(short: str, tb: str) -> JSONResponse:
     return JSONResponse(status_code=500, content={"detail": _detail_for_client(short, tb)})
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "transform-service"}
+
+
 @app.post("/transform/silver/{source_id}")
 def run_silver(source_id: str):
+    with _transform_lock:
+        return _run_silver(source_id)
+
+
+def _run_silver(source_id: str):
     try:
         log_pipeline_event(
             log,
@@ -95,6 +109,11 @@ def run_silver(source_id: str):
 
 @app.post("/transform/gold")
 def run_gold():
+    with _transform_lock:
+        return _run_gold()
+
+
+def _run_gold():
     try:
         log_pipeline_event(log, "info", "Starting Gold aggregation request", layer=StorageLayer.GOLD.value)
         aggregator = GoldAggregator()

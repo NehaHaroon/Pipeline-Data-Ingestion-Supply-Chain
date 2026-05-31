@@ -26,6 +26,7 @@ x-part3-common: &part3-common
     QUERY_AUDIT_LOG_PATH: /app/storage/analytics/query_audit.jsonl
     ANALYTICS_METRICS_STATE: /app/storage/analytics/metrics_state.json
   volumes:
+    - .:/app
     - ./storage:/app/storage
     - ./logs:/app/logs
     - ./semantic_plane:/app/semantic_plane
@@ -41,6 +42,19 @@ services:
   analytics-service:
     <<: *part3-common
     container_name: analytics-service
+    entrypoint: ["bash", "/app/scripts/docker-part3-entrypoint.sh"]
+    mem_limit: 6g
+    command:
+      [
+        "uvicorn",
+        "analytics_service:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8002",
+        "--timeout-keep-alive",
+        "3600",
+      ]
     ports:
       - "8002:8002"
     restart: unless-stopped
@@ -48,16 +62,16 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 20s
+      retries: 8
+      start_period: 45s
 
   # One-shot: export Iceberg → parquet + run all SQL workloads (optional manual run)
   semantic-export:
     <<: *part3-common
     profiles: ["tools"]
     container_name: semantic-export
-    entrypoint: ["python", "scripts/run_part3_pipeline.py"]
-    command: ["--skip-dbt"]
+    entrypoint: ["bash", "/app/scripts/docker-part3-entrypoint.sh"]
+    command: ["python", "scripts/run_part3_pipeline.py", "--skip-dbt"]
     depends_on:
       analytics-service:
         condition: service_healthy
@@ -67,8 +81,10 @@ services:
     <<: *part3-common
     profiles: ["tools"]
     container_name: semantic-dbt
-    entrypoint: ["bash", "-c"]
+    entrypoint: ["bash", "/app/scripts/docker-part3-entrypoint.sh"]
     command:
+      - bash
+      - -c
       - |
         cd /app && python -m semantic_plane.export_for_dbt &&
         cd /app/semantic_plane/dbt/supply_chain_semantic &&
@@ -92,6 +108,7 @@ services:
     depends_on:
       analytics-service:
         condition: service_healthy
+    # Prometheus is defined in docker-compose.yml (Part 1) on pipeline-net:9090 — start Part 1 first.
     networks:
       - pipeline-net
     restart: unless-stopped

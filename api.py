@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -817,8 +817,8 @@ def _aggregate_by_source(telemetry_records: List[Dict[str, Any]]) -> Dict[str, i
 def metrics_prometheus(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional)):
     """
     Export metrics in Prometheus exposition format for Grafana scraping.
+    Fast path only — no full /metrics(), no Iceberg, no large telemetry reads.
     """
-    # Prometheus scrapes without auth by default. If Authorization is sent, validate it.
     if credentials and credentials.credentials != API_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -827,35 +827,50 @@ def metrics_prometheus(credentials: Optional[HTTPAuthorizationCredentials] = Dep
         )
     from io import StringIO
 
-    metrics_data = metrics()  # Call the main /metrics endpoint
+    persisted_summary = JobTelemetry.load_summary()
+    session_running = sum(1 for j in jobs_db.values() if j.get("status") == "running")
+    session_completed = sum(1 for j in jobs_db.values() if j.get("status") == "completed")
+    session_failed = sum(1 for j in jobs_db.values() if j.get("status") == "failed")
+    historic_total = int(persisted_summary.get("jobs_completed", 0))
+    sess_ingested = sum((j.get("telemetry") or {}).get("records_ingested", 0) for j in jobs_db.values())
+    sess_quarantined = sum((j.get("telemetry") or {}).get("records_quarantined", 0) for j in jobs_db.values())
+    sess_failed_recs = sum((j.get("telemetry") or {}).get("records_failed", 0) for j in jobs_db.values())
+
+    total_jobs = session_running + session_failed + historic_total + session_completed
+    total_records_ingested = int(persisted_summary.get("records_ingested", 0)) + sess_ingested
+    total_records_quarantined = int(persisted_summary.get("records_quarantined", 0)) + sess_quarantined
+    total_records_failed = int(persisted_summary.get("records_failed", 0)) + sess_failed_recs
+    avg_throughput = float(persisted_summary.get("avg_throughput_rec_sec", 0.0) or 0.0)
 
     output = StringIO()
     output.write("# HELP ingest_total_jobs Total ingestion jobs\n")
     output.write("# TYPE ingest_total_jobs counter\n")
-    output.write(f"ingest_total_jobs {metrics_data['total_jobs']}\n\n")
+    output.write(f"ingest_total_jobs {total_jobs}\n\n")
 
     output.write("# HELP ingest_running_jobs Currently running jobs\n")
     output.write("# TYPE ingest_running_jobs gauge\n")
-    output.write(f"ingest_running_jobs {metrics_data['running_jobs']}\n\n")
+    output.write(f"ingest_running_jobs {session_running}\n\n")
 
     output.write("# HELP ingest_records_ingested Total records ingested\n")
     output.write("# TYPE ingest_records_ingested counter\n")
-    output.write(f"ingest_records_ingested {metrics_data['total_records_ingested']}\n\n")
+    output.write(f"ingest_records_ingested {total_records_ingested}\n\n")
 
     output.write("# HELP ingest_records_quarantined Total records quarantined\n")
     output.write("# TYPE ingest_records_quarantined counter\n")
-    output.write(f"ingest_records_quarantined {metrics_data['total_records_quarantined']}\n\n")
+    output.write(f"ingest_records_quarantined {total_records_quarantined}\n\n")
 
     output.write("# HELP ingest_records_failed Total records failed\n")
     output.write("# TYPE ingest_records_failed counter\n")
-    output.write(f"ingest_records_failed {metrics_data['total_records_failed']}\n\n")
+    output.write(f"ingest_records_failed {total_records_failed}\n\n")
 
     output.write("# HELP ingest_avg_throughput Average throughput\n")
     output.write("# TYPE ingest_avg_throughput gauge\n")
-    output.write(f"ingest_avg_throughput {metrics_data['avg_throughput_rec_sec']}\n\n")
-    output.write(layer_summaries_to_prometheus(build_layer_summaries(jobs_db)))
+    output.write(f"ingest_avg_throughput {avg_throughput}\n")
 
-    return output.getvalue()
+    return PlainTextResponse(
+        output.getvalue(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
 
 
 @app.get("/errors/summary")

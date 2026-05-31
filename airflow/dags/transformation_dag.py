@@ -13,6 +13,9 @@ import sys
 import os
 import traceback
 import requests
+from requests.exceptions import ConnectionError as RequestsConnectionError
+
+from pipeline_waits import ensure_ingestion_api, ensure_transform_service
 
 # Add project root to Python path
 sys.path.insert(0, '/opt/airflow/project')
@@ -158,7 +161,10 @@ def _post_transform_or_fail(url: str, *, what: str, timeout: int = 3600) -> dict
             traceback.format_exc(),
         )
         raise AirflowException(
-            f"{what}: connection/request error ({type(exc).__name__}: {exc})"
+            f"{what}: connection/request error ({type(exc).__name__}: {exc}). "
+            "transform-service may have OOM-killed or restarted — check: "
+            "docker compose -f docker-compose.airflow.yml logs transform-service --tail 80. "
+            "Silver tasks run sequentially; rebuild if the container keeps dying."
         ) from exc
 
     if not response.ok:
@@ -200,13 +206,15 @@ default_args = {
 
 # Gold replenishment joins warehouse + IoT shelf stock (+ sales + weather). Include all dependencies here
 # or Gold exits early with records_written=0 (see gold_aggregator gate on warehouse + iot).
+# Light sources first; CDC inventory last (largest Bronze table).
 SOURCES_FOR_SILVER = [
+    "src_weather_api",
     "src_warehouse_master",
     "src_sales_history",
     "src_manufacturing_logs",
     "src_legacy_trends",
     "src_iot_rfid_stream",
-    "src_weather_api",
+    "src_inventory_transactions",
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════════════
@@ -300,6 +308,15 @@ def assert_bronze_ready(source_id: str, min_records: int = 1) -> dict:
             )
         log.info(f"Bronze readiness OK for {source_id}: table={bronze_table} records={records}")
         return {"source_id": source_id, "bronze_table": bronze_table, "records": records}
+    except RequestsConnectionError as exc:
+        log.error(f"Bronze readiness check failed for {source_id}: {exc}", exc_info=True)
+        raise AirflowException(
+            f"Cannot reach ingestion-api at {ingestion_api} ({exc}). "
+            "Part 1 must be running: docker compose -f docker-compose.yml up -d ingestion-api. "
+            "Verify: curl http://localhost:8000/health"
+        ) from exc
+    except AirflowException:
+        raise
     except Exception as exc:
         log.error(f"Bronze readiness check failed for {source_id}: {exc}", exc_info=True)
         raise AirflowException(str(exc))
@@ -338,11 +355,21 @@ with DAG(
 ) as dag:
 
     # ─────────────────────────────────────────────────────────────
-    # WAIT FOR INGESTION (DB poll — avoids ExternalTaskSensor logical-date mismatch)
+    # WAIT FOR PART 1 + INGESTION DAG
     # ─────────────────────────────────────────────────────────────
+    wait_for_ingestion_api = PythonOperator(
+        task_id="wait_for_ingestion_api",
+        python_callable=ensure_ingestion_api,
+    )
+
     wait_for_ingestion = PythonOperator(
         task_id="wait_for_ingestion",
         python_callable=wait_for_ingestion_completed,
+    )
+
+    wait_for_transform_service = PythonOperator(
+        task_id="wait_for_transform_service",
+        python_callable=ensure_transform_service,
     )
 
     # ─────────────────────────────────────────────────────────────
@@ -353,7 +380,7 @@ with DAG(
         tooltip="Bronze → Silver"
     ) as silver_tasks:
 
-        silver_results = {}
+        previous_silver = None
 
         for source_id in SOURCES_FOR_SILVER:
             bronze_ready_task = PythonOperator(
@@ -368,7 +395,9 @@ with DAG(
                 op_kwargs={"source_id": source_id},
             )
             bronze_ready_task >> task
-            silver_results[source_id] = task
+            if previous_silver is not None:
+                previous_silver >> bronze_ready_task
+            previous_silver = task
 
     # ─────────────────────────────────────────────────────────────
     # GOLD TASK
@@ -390,5 +419,5 @@ with DAG(
     # ─────────────────────────────────────────────────────────────
     # DEPENDENCIES
     # ─────────────────────────────────────────────────────────────
-    wait_for_ingestion >> silver_tasks >> gold_task >> summary_task
+    wait_for_ingestion_api >> wait_for_ingestion >> wait_for_transform_service >> silver_tasks >> gold_task >> summary_task
     # """

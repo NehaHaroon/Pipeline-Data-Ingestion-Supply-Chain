@@ -1,8 +1,245 @@
-# Supply Chain Ingestion Architecture
+# Supply Chain Pipeline — End-to-End Architecture
 
-This document captures the full architecture of the Supply Chain Ingestion Pipeline, including the control plane, data plane, observability plane, storage, external interfaces, and runtime flow.
+**Use case (Parts 1–3):** Supply Chain Inventory Optimization — optimize stock levels, detect replenishment risk, and expose governed analytics for warehouse operations.
 
-## 1. System Architecture Overview
+This document describes the **full platform**: ingestion (Part 1) → Iceberg lakehouse transformation (Part 2) → semantic analytics & BI (Part 3).
+
+---
+
+## End-to-End Architecture Overview
+
+```mermaid
+flowchart TB
+    subgraph Sources["Data Sources (7)"]
+        S1[src_warehouse_master\nCSV batch]
+        S2[src_sales_history\nCSV batch]
+        S3[src_manufacturing_logs\nCSV batch]
+        S4[src_legacy_trends\nCSV batch]
+        S5[src_weather_api\nAPI pull]
+        S6[src_iot_rfid_stream\nKafka stream]
+        S7[src_inventory_transactions\nPostgres CDC]
+    end
+
+    subgraph CP["Control Plane"]
+        CP1[entities.py\nSources & datasets]
+        CP2[contracts.py\nIngestion contracts]
+        CP3[governance_policies.py\n12 policies]
+        CP4[enterprise_contract_builder.py\nStructural / semantic / freshness / lineage]
+        CP5[access_control.py\nX-Analytics-Role RBAC]
+    end
+
+    subgraph P1["Part 1 — Ingestion (docker-compose.yml)"]
+        API[ingestion-api :8000\napi.py]
+        KAFKA[Kafka + Zookeeper]
+        CDC[CDC consumer\nDebezium / strategies]
+        IOT[iot-consumer\nreal_time_iot_ingest]
+        BATCH[batch-runner\nrun_production.py]
+        UI1[Dashboard :8000/dashboard\nui_manager.py]
+    end
+
+    subgraph P2["Part 2 — Transformation (docker-compose.airflow.yml)"]
+        AF[Airflow :8080\ningestion / transformation /\ncompaction / semantic DAGs]
+        TX[transform-service :8001\nSilver + Gold HTTP]
+        BRONZE[BronzeWriter\nIceberg append]
+        SILVER[SilverTransformer\nvalidate + enrich]
+        GOLD[GoldAggregator\ngold.replenishment_signals]
+        COMPACT[Compaction DAG\nIceberg rewrite]
+    end
+
+    subgraph Lake["Iceberg Lakehouse (storage/)"]
+        IB[(Bronze tables\nper source)]
+        IS[(Silver tables\nper source)]
+        IG[(Gold\nreplenishment_signals)]
+        PQ[semantic/parquet\nexport for dbt]
+    end
+
+    subgraph P3["Part 3 — Analytics (docker-compose.part3.yml)"]
+        AN[analytics-service :8002\n8 SQL workloads + dbt API]
+        DBT[dbt semantic layer\nstaging → marts → metrics]
+        UI2[Analytics UI :8002/dashboard]
+        PROM[Prometheus]
+        GRAF[Grafana :3000\nExecutive BI +\nWorkload monitoring]
+    end
+
+    subgraph OBS["Observability Plane"]
+        TEL[telemetry.py\njob metrics]
+        TKPI[transformation_kpis]
+        AM[analytics_metrics.py\nquery + BI KPIs]
+    end
+
+    CP --> API
+    CP --> CDC
+    CP --> AN
+    CP4 --> AN
+
+    S1 & S2 & S3 & S4 & S5 --> API
+    S6 --> KAFKA --> IOT --> API
+    S7 --> CDC --> API
+
+    API --> BRONZE
+    BATCH --> API
+    AF --> API
+    AF --> TX
+
+    BRONZE --> IB
+    IB --> SILVER --> IS
+    IS --> GOLD --> IG
+    TX --> SILVER
+    TX --> GOLD
+    COMPACT --> IS
+    COMPACT --> IB
+
+    AF --> COMPACT
+    AF --> PQ
+    IG --> PQ
+    IS --> PQ
+
+    PQ --> DBT
+    AN --> DBT
+    IG --> AN
+    IS --> AN
+    IB --> AN
+
+    AN --> UI2
+    AN --> AM --> PROM --> GRAF
+    API --> TEL
+    TX --> TKPI
+    API --> UI1
+
+    style CP fill:#e8eaf6,stroke:#3949ab
+    style P1 fill:#e8f5e9,stroke:#2e7d32
+    style P2 fill:#fff3e0,stroke:#ef6c00
+    style P3 fill:#fce4ec,stroke:#c2185b
+    style Lake fill:#fffde7,stroke:#f9a825
+    style OBS fill:#e3f2fd,stroke:#1565c0
+```
+
+---
+
+## Data Flow (Medallion + Semantic)
+
+```mermaid
+flowchart LR
+    subgraph Ingest
+        RAW[raw / ingested parquet\n+ stream buffers]
+    end
+
+    subgraph Medallion["Apache Iceberg"]
+        B[Bronze\nraw + envelope]
+        S[Silver\ntyped + validated]
+        G[Gold\nreplenishment_signals]
+    end
+
+    subgraph Semantic["Semantic Plane"]
+        E[export_for_dbt.py]
+        STG[dbt staging]
+        INT[dbt intermediate]
+        MRT[dbt marts\nfct_replenishment_signals\nfct_daily_revenue\ndim_warehouse]
+        MET[metric_catalog\n5 business metrics]
+    end
+
+    subgraph Consume["Consumption"]
+        SQL[8 SQL workloads\nop / str / exec / adhoc]
+        BI[Grafana BI\nscorecards + trends]
+        MON[Workload dashboard\nlatency / dbt / resources]
+    end
+
+    RAW --> B --> S --> G
+    G --> E --> STG --> INT --> MRT --> MET
+    G --> SQL
+    MRT --> SQL
+    SQL --> BI
+    SQL --> MON
+```
+
+---
+
+## Four-Plane Model (Part 3)
+
+| Plane | Responsibility | Key paths |
+|-------|------------------|-----------|
+| **Control** | Governance, ingestion + enterprise contracts, RBAC | `control_plane/` |
+| **Data** | Ingestion, CDC, transformation, SQL analytics | `data_plane/`, `storage_plane/` |
+| **Semantic** | dbt models, metrics, lineage, parquet export | `semantic_plane/` |
+| **Observability** | Telemetry, transformation KPIs, query/BI metrics, Grafana | `observability_plane/`, `monitoring/` |
+
+**RBAC:** Part 3 analytics SQL workloads use `X-Analytics-Role` (`admin`, `analyst`, `finance`, `ops_streaming`). Full layer × persona matrix → [`docs/part3/RBAC_ACCESS_MATRIX.md`](docs/part3/RBAC_ACCESS_MATRIX.md).
+
+---
+
+## Docker Deployment Topology
+
+Three Compose stacks share the external network **`pipeline-net`** and bind-mount **`./storage`**.
+
+```mermaid
+flowchart TB
+    subgraph DC1["docker-compose.yml — Part 1"]
+        ZK[Zookeeper]
+        KF[Kafka]
+        ING[ingestion-api :8000]
+        PG1[postgres CDC source]
+        PR1[Prometheus]
+    end
+
+    subgraph DC2["docker-compose.airflow.yml — Part 2"]
+        PG2[airflow-postgres]
+        AFS[airflow-scheduler]
+        AFW[airflow-webserver :8080]
+        TR[transform-service :8001]
+        ITK[iceberg-toolkit venv\ncompaction + export]
+    end
+
+    subgraph DC3["docker-compose.part3.yml — Part 3"]
+        AN2[analytics-service :8002]
+        GF[Grafana :3000]
+    end
+
+    ST[(./storage bind mount\nIceberg + parquet + analytics)]
+
+    ING --> ST
+    TR --> ST
+    ITK --> ST
+    AN2 --> ST
+    AFS --> ING
+    AFS --> TR
+    AFS --> AN2
+    AN2 --> PR1
+    PR1 --> GF
+
+    DC1 --- pipeline-net
+    DC2 --- pipeline-net
+    DC3 --- pipeline-net
+```
+
+**Start order:** Part 1 → Part 2 → Part 3.
+
+---
+
+## Orchestration (Airflow DAGs)
+
+| DAG | Purpose |
+|-----|---------|
+| `supply_chain_ingestion` | Trigger batch / streaming ingestion via API |
+| `supply_chain_transformation` | Bronze → Silver → Gold via transform-service |
+| `supply_chain_iceberg_compaction` | Rewrite small Iceberg files (Silver/Bronze/Gold) |
+| `supply_chain_semantic` | Export parquet → dbt run/test → SQL workloads on analytics-service |
+
+---
+
+## User-Facing Interfaces
+
+| URL | Component | Scope |
+|-----|-----------|--------|
+| http://localhost:8000/dashboard | Ingestion dashboard | Part 1–2 pipeline health, charts |
+| http://localhost:8080 | Airflow UI | DAG runs, logs |
+| http://localhost:8001/docs | transform-service | Silver/Gold transform API |
+| http://localhost:8002/dashboard | Analytics UI | Part 3 KPIs, SQL catalog, run-all |
+| http://localhost:8002/docs | analytics-service | Governance, contracts, queries, dbt |
+| http://localhost:3000 | Grafana | Executive BI + workload monitoring |
+
+---
+
+## Part 1 — Ingestion Architecture (detail)
 
 ```mermaid
 flowchart TD
@@ -16,19 +253,19 @@ flowchart TD
     end
 
     subgraph ControlPlane[Control Plane]
-        CP1[DataSource Registry]\n(control_plane/entities.py)
-        CP2[Dataset Registry]\n(control_plane/entities.py)
-        CP3[Contracts / Policies]\n(control_plane/contracts.py)
+        CP1[DataSource Registry\ncontrol_plane/entities.py]
+        CP2[Dataset Registry\ncontrol_plane/entities.py]
+        CP3[Contracts / Policies\ncontrol_plane/contracts.py]
     end
 
     subgraph DataPlane[Data Plane]
-        DP1[Batch + Micro-batch Ingestion]\n(data_plane/ingestion)
-        DP2[Real-time IoT Ingestion]\n(data_plane/ingestion/real_time_iot_ingest.py)
-        DP3[CDC Trigger + Strategies]\n(data_plane/cdc)
-        DP4[Generators]\n(data_plane/generators)
+        DP1[Batch + Micro-batch Ingestion\ndata_plane/ingestion]
+        DP2[Real-time IoT Ingestion\ndata_plane/ingestion/real_time_iot_ingest.py]
+        DP3[CDC Trigger + Strategies\ndata_plane/cdc]
+        DP4[Generators\ndata_plane/generators]
     end
 
-    subgraph Storage[Storage Layer]
+    subgraph Storage[File Storage Layer]
         S1[raw/] --> S2[ingested/]
         S1 --> S3[quarantine/]
         S1 --> S4[micro_batch/]
@@ -38,8 +275,8 @@ flowchart TD
     end
 
     subgraph Observability[Observability Plane]
-        O1[Telemetry + Job Metrics]\n(observability_plane/telemetry.py)
-        O2[Logging / Health / Metrics]\n(api.py + run_all.py)
+        O1[Telemetry + Job Metrics\nobservability_plane/telemetry.py]
+        O2[Logging / Health / Metrics\napi.py + run_all.py]
     end
 
     DP1 -->|Good records| S2
@@ -54,8 +291,6 @@ flowchart TD
     CP3 --> DP1
     CP3 --> DP2
     CP3 --> DP3
-    CP1 --> DP3
-    CP2 --> DP3
 
     O1 --> DP1
     O1 --> DP2
@@ -65,10 +300,10 @@ flowchart TD
     O2 --> DP3
 
     subgraph API[API / Control Interface]
-        API1[FastAPI server]\n(api.py)
-        API2[Job orchestration]\n(background ingestion jobs)
-        API3[Source / Dataset metadata]\n(GET /sources, GET /datasets)
-        API4[Protected ingestion endpoint]\n(POST /ingest/{source_id})
+        API1[FastAPI server\napi.py]
+        API2[Job orchestration]
+        API3[Source / Dataset metadata]
+        API4[POST /ingest/source_id]
     end
 
     API1 --> API2
@@ -77,31 +312,22 @@ flowchart TD
     API1 -->|Triggers| DP1
     API1 -->|Job status| O1
     API1 -->|Health / metrics| O2
-
     API1 --> S2
     API1 --> S3
-
-    API1 -->|API Traffic| Clients["Operators / Orchestration / CI"]
+    API1 -->|API Traffic| Clients[Operators / Orchestration]
     Clients --> API1
     A6 -->|Kafka topic| Kafka[Kafka cluster]
-    Kafka --> A6
     Kafka --> DP2
-    API1 -->|Optional| Kafka
-
-    style Sources fill:#f9f,stroke:#333,stroke-width:1px
-    style ControlPlane fill:#ccf,stroke:#333,stroke-width:1px
-    style DataPlane fill:#cfc,stroke:#333,stroke-width:1px
-    style Storage fill:#ffc,stroke:#333,stroke-width:1px
-    style Observability fill:#eef,stroke:#333,stroke-width:1px
-    style API fill:#f2f2f2,stroke:#333,stroke-width:1px
 ```
 
-## 2. Runtime Flow
+---
+
+## Ingestion Runtime Sequence
 
 ```mermaid
 sequenceDiagram
     participant User as Operator / API Client
-    participant API as FastAPI
+    participant API as FastAPI :8000
     participant CP as Control Plane
     participant DP as Data Plane
     participant ST as Storage
@@ -126,31 +352,50 @@ sequenceDiagram
     DP->>OB: log real-time metrics
 ```
 
-## 3. Key Architecture Layers
+---
 
-- **Sources**: file-based CSV sources, external weather API, IoT Kafka stream.
-- **Control Plane**: central metadata registry for sources, datasets, jobs, event envelopes, and contract/policy enforcement.
-- **Data Plane**: ingestion logic for batch, micro-batch, CDC, and live streaming.
-- **Storage**: raw landing zone, ingested zone, quarantine zone, CDC logs, stream buffers, and checkpoint state.
-- **Observability Plane**: telemetry, file logs, health checks, metrics, and job-level reporting.
+## Part 3 — Analytics Request Path
 
-## 4. Deployment and Production Mode
+```mermaid
+sequenceDiagram
+    participant User as Analyst / Grafana
+    participant AN as analytics-service :8002
+    participant CP as access_control + governance
+    participant DDB as DuckDB engine
+    participant ICE as Iceberg / parquet views
+    participant MET as analytics_metrics
+    participant PR as Prometheus
 
-- `run_all.py` executes the full seven-phase pipeline in simulation mode.
-- `run_production.py` starts the API server and the IoT consumer in production-compatible mode.
-- `docker-compose.yml` configures containerized runtime with API, Kafka, and supporting services.
+    User->>AN: GET /semantic/bi-kpis
+    AN->>CP: optional role check
+    AN->>DDB: exec_001 + exec_002 SQL
+    DDB->>ICE: scan Gold / marts
+    AN->>MET: refresh BI KPIs
+    MET->>PR: scrape /metrics/prometheus
+    PR->>User: Grafana panels refresh
 
-## 5. Relevant Files
+    User->>AN: POST /analytics/run-all
+    AN->>DDB: 8 workload queries
+    DDB->>MET: record latency + audit log
+```
 
-- `control_plane/entities.py`
-- `control_plane/contracts.py`
-- `data_plane/generators/source_generators.py`
-- `data_plane/ingestion/batch_ingest.py`
-- `data_plane/ingestion/iot_stream_ingest.py`
-- `data_plane/ingestion/real_time_iot_ingest.py`
-- `data_plane/cdc/cdc_trigger.py`
-- `data_plane/cdc/cdc_strategies.py`
-- `observability_plane/telemetry.py`
-- `api.py`
-- `run_all.py`
-- `run_production.py`
+---
+
+## Key Files by Phase
+
+| Phase | Files |
+|-------|--------|
+| **Part 1** | `control_plane/entities.py`, `control_plane/contracts.py`, `data_plane/ingestion/`, `data_plane/cdc/`, `api.py`, `run_all.py` |
+| **Part 2** | `data_plane/transformation/`, `storage_plane/iceberg_catalog.py`, `airflow/dags/transformation_dag.py`, `transform_service.py` |
+| **Part 3** | `control_plane/governance_policies.py`, `control_plane/enterprise_contract_builder.py`, `data_plane/analytics/`, `semantic_plane/dbt/`, `analytics_service.py`, `observability_plane/analytics_metrics.py` |
+| **Docs** | `PROJECT_PART3_REPORT.md`, `PART3_EXECUTION_GUIDE.md`, `Data_Engineering_Project_Report.md` |
+
+---
+
+## Deployment Modes
+
+| Mode | Entry point |
+|------|-------------|
+| Local simulation | `python run_all.py` |
+| Production ingestion | `docker compose up` + `run_production.py` / batch-runner |
+| Full lakehouse + BI | Three compose files + Airflow DAGs (see `PART3_EXECUTION_GUIDE.md`) |

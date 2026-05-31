@@ -11,14 +11,12 @@ from typing import Any, Dict, List, Optional
 
 # HTTPException only when called from FastAPI path via access_control
 
-from data_plane.analytics.duckdb_engine import execute_sql
+from data_plane.analytics.duckdb_engine import execute_sql, lakehouse_connection
 from data_plane.analytics.query_catalog import QUERY_CATALOG, SqlWorkloadQuery, WorkloadType, get_query, load_sql
+from data_plane.analytics.storage_paths import ensure_analytics_storage_dir, query_audit_log_path
 from observability_plane.analytics_metrics import record_query_execution
 
-QUERY_AUDIT_PATH = os.getenv(
-    "QUERY_AUDIT_LOG_PATH",
-    "storage/analytics/query_audit.jsonl",
-)
+ensure_analytics_storage_dir()
 
 # Business hours cost policy (PKT UTC+5 → use env override)
 BUSINESS_HOUR_START = int(os.getenv("GOV_BUSINESS_HOUR_START", "4"))  # 09:00 PKT ≈ 04:00 UTC
@@ -45,12 +43,22 @@ def enforce_cost_policy(query: SqlWorkloadQuery, sql: str) -> Optional[str]:
 
 
 def _append_audit(entry: Dict[str, Any]) -> None:
-    os.makedirs(os.path.dirname(QUERY_AUDIT_PATH), exist_ok=True)
-    with open(QUERY_AUDIT_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, default=str) + "\n")
+    path = query_audit_log_path()
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, default=str) + "\n")
+    except OSError:
+        pass  # do not fail SQL execution if audit log is not writable
 
 
-def run_query(query_id: str, role: Optional[str] = None) -> Dict[str, Any]:
+def _run_query_impl(
+    query_id: str,
+    *,
+    role: Optional[str] = None,
+    con: Optional[Any] = None,
+    include_rows: bool = True,
+    row_limit: int = 200,
+) -> Dict[str, Any]:
     query = get_query(query_id)
     if not query:
         raise KeyError(f"Unknown query_id: {query_id}")
@@ -77,7 +85,7 @@ def run_query(query_id: str, role: Optional[str] = None) -> Dict[str, Any]:
         max_wall = 240.0
 
     try:
-        rows, stats = execute_sql(sql, max_wall_sec=max_wall)
+        rows, stats = execute_sql(sql, max_wall_sec=max_wall, con=con)
         status = "ok"
         error = None
     except Exception as exc:
@@ -96,9 +104,10 @@ def run_query(query_id: str, role: Optional[str] = None) -> Dict[str, Any]:
         "error": error,
         "stats": stats,
         "row_count": len(rows),
-        "rows": rows[:200],
-        "rows_truncated": len(rows) > 200,
     }
+    if include_rows:
+        result["rows"] = rows[:row_limit]
+        result["rows_truncated"] = len(rows) > row_limit
 
     _append_audit(
         {
@@ -116,8 +125,26 @@ def run_query(query_id: str, role: Optional[str] = None) -> Dict[str, Any]:
     return result
 
 
-def run_all_queries() -> List[Dict[str, Any]]:
-    return [run_query(q.query_id) for q in QUERY_CATALOG]
+def run_query(query_id: str, role: Optional[str] = None) -> Dict[str, Any]:
+    return _run_query_impl(query_id, role=role, include_rows=True)
+
+
+def run_all_queries(*, include_rows: bool = False) -> List[Dict[str, Any]]:
+    """
+    Run the full SQL catalog once with a single lakehouse load (avoids OOM on run-all).
+    """
+    results: List[Dict[str, Any]] = []
+    with lakehouse_connection() as con:
+        for q in QUERY_CATALOG:
+            results.append(
+                _run_query_impl(
+                    q.query_id,
+                    con=con,
+                    include_rows=include_rows,
+                    row_limit=50,
+                )
+            )
+    return results
 
 
 def catalog_response() -> Dict[str, Any]:

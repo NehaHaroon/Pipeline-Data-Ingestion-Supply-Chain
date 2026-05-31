@@ -2,90 +2,698 @@
   "annotations": { "list": [] },
   "editable": true,
   "graphTooltip": 1,
-  "links": [],
-  "panels": [
+  "links": [
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-      "id": 1,
-      "title": "SKUs Needing Replenishment",
-      "type": "stat",
-      "targets": [{ "expr": "analytics_bi_metric{metric=\"skus_needing_replenishment\"}", "refId": "A" }],
-      "description": "exec_001 / marts.fct_replenishment_signals"
+      "title": "📊 Executive Charts & Top-10 Tables (browser)",
+      "url": "http://localhost:8002/dashboard",
+      "type": "link",
+      "icon": "external link",
+      "targetBlank": true
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-      "id": 2,
-      "title": "Avg Urgency Score",
-      "type": "stat",
-      "targets": [{ "expr": "analytics_bi_metric{metric=\"avg_urgency_score\"}", "refId": "A" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-      "id": 3,
-      "title": "Weather Risk Active",
-      "type": "stat",
-      "targets": [{ "expr": "analytics_bi_metric{metric=\"weather_risk_active\"}", "refId": "A" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-      "id": 4,
-      "title": "Replenishment Value (PKR)",
-      "type": "stat",
-      "targets": [{ "expr": "analytics_bi_metric{metric=\"replenishment_value_pkr\"}", "refId": "A" }],
-      "description": "exec_002 profitability_dashboard"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-      "id": 5,
-      "title": "P95 Query Latency (Executive Path)",
-      "type": "timeseries",
-      "targets": [{ "expr": "analytics_query_metric{category=\"query_performance\",metric=\"p95_query_latency_sec\"}", "refId": "A" }]
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-      "id": 6,
-      "title": "Suggested Order Units",
-      "type": "timeseries",
-      "targets": [{ "expr": "analytics_bi_metric{metric=\"total_suggested_order_units\"}", "refId": "A" }],
-      "description": "exec_001 total_suggested_order_units"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
-      "id": 7,
-      "title": "Semantic Layer Health",
-      "type": "timeseries",
-      "targets": [
-        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"dbt_model_runtime_sec\"}", "legendFormat": "dbt_runtime", "refId": "A" },
-        { "expr": "analytics_query_metric{category=\"semantic_layer\",metric=\"failed_dbt_tests\"}", "legendFormat": "failed_tests", "refId": "B" }
-      ]
+      "title": "🔧 Workload Monitoring (technical)",
+      "url": "/d/analytical-workload-monitoring",
+      "type": "link",
+      "icon": "external link"
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": ["supply-chain", "bi", "part3", "semantic"],
+
   "templating": {
     "list": [
       {
-        "name": "region",
+        "name": "warehouse",
+        "label": "🏭 Warehouse",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(analytics_bi_metric{metric=\"warehouse_units_moved\"}, warehouse_location)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "sort": 1,
+        "hide": 0
+      },
+      {
+        "name": "urgency_tier",
+        "label": "⚡ Urgency Tier",
         "type": "custom",
+        "query": "critical,high,medium,low",
         "options": [
-          { "text": "All", "value": "All", "selected": true },
-          { "text": "Karachi", "value": "WAREHOUSE-KARACHI" },
-          { "text": "Dubai", "value": "WAREHOUSE-DUBAI" }
+          { "selected": true,  "text": "All",      "value": "$__all" },
+          { "selected": false, "text": "Critical (≥70%)", "value": "critical" },
+          { "selected": false, "text": "High (50–70%)",   "value": "high"     },
+          { "selected": false, "text": "Medium (30–50%)", "value": "medium"   },
+          { "selected": false, "text": "Low (<30%)",      "value": "low"      }
         ],
-        "query": "All,Karachi,Dubai"
+        "multi": false,
+        "includeAll": true,
+        "allValue": "all",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "hide": 0
+      },
+      {
+        "name": "weather_filter",
+        "label": "🌦 Weather Risk",
+        "type": "custom",
+        "query": ".*,active,inactive",
+        "options": [
+          { "selected": true,  "text": "All",          "value": ".*"       },
+          { "selected": false, "text": "Active risk",  "value": "active"   },
+          { "selected": false, "text": "No risk",      "value": "inactive" }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "current": { "selected": true, "text": "All", "value": ".*" },
+        "hide": 0
+      },
+      {
+        "name": "time_window",
+        "label": "📅 Demand Window",
+        "type": "custom",
+        "query": "7d,14d,30d",
+        "options": [
+          { "selected": true,  "text": "Last 7 days",  "value": "7d"  },
+          { "selected": false, "text": "Last 14 days", "value": "14d" },
+          { "selected": false, "text": "Last 30 days", "value": "30d" }
+        ],
+        "multi": false,
+        "includeAll": false,
+        "current": { "selected": true, "text": "Last 7 days", "value": "7d" },
+        "hide": 0
       }
     ]
   },
+
+  "panels": [
+
+    {
+      "id": 100,
+      "type": "text",
+      "title": "",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 0 },
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "## 🏭 Supply Chain Replenishment Command Centre\n**Who:** Strategy, finance & supply chain leaders &nbsp;|&nbsp; **Problem solved:** Instant visibility into *which* SKUs need replenishment, *where* stock is coming from, and *how much* PKR exposure exists before the next delivery cycle.\n\n> 🔍 Use filters above to slice by **warehouse**, **urgency tier**, **weather risk**, or **demand window**. &nbsp; Technical metrics live on [Workload Monitoring](/d/analytical-workload-monitoring). &nbsp; [📊 Open full charts & tables →](http://localhost:8002/dashboard)"
+      }
+    },
+
+    {
+      "id": 200,
+      "type": "text",
+      "title": "⚠️  PROBLEM — What is at risk right now?",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 3 },
+      "transparent": false,
+      "options": {
+        "mode": "markdown",
+        "content": "*Sourced from **FCT_REPLENISHMENT** (Gold) joined to **DIM_PRODUCT** via `product_id`. Refreshed every 30 s.*"
+      }
+    },
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "SKUs at Stockout Risk",
+      "description": "Products with shelf stock below their reorder threshold in DIM_PRODUCT. This is your buying workload size.",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"skus_needing_replenishment\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 500 },
+            { "color": "red", "value": 2000 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "textMode": "auto" }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "% of Catalog at Risk",
+      "description": "At-risk SKUs ÷ total DIM_PRODUCT catalog count. >30% = systemic gap — escalate procurement.",
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"stockout_risk_pct\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 15 },
+            { "color": "red", "value": 35 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Critical SKUs (Urgency ≥ 50%)",
+      "description": "urgency_score ≥ 0.5 in FCT_REPLENISHMENT. Approve POs for these first.",
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"critical_skus_count\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 100 },
+            { "color": "red", "value": 500 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Order Spend to Replenish (M PKR)",
+      "description": "suggested_order_qty × unit_cost (DIM_PRODUCT) for top-50 at-risk lines (exec_002). Finance budget approval input.",
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"replenishment_value_million_pkr\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 1, "displayName": "M PKR",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "red", "value": 200 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Units to Order",
+      "description": "Sum of suggested_order_qty across FCT_REPLENISHMENT where needs_replenishment = true. Drives warehouse inbound planning.",
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"total_suggested_order_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Weather Disruption",
+      "description": "weather_risk flag on FCT_REPLENISHMENT from src_weather_api. ACTIVE = add safety stock buffer.",
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"weather_risk_active\", warehouse_location=\"ALL\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "✅ No Risk", "color": "green", "index": 0 }, "1": { "text": "⚠️ ACTIVE", "color": "red", "index": 1 } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "justifyMode": "center" }
+    },
+
+    {
+      "id": 201,
+      "type": "text",
+      "title": "💡  SOLUTION — How much to order & from where? &nbsp; + &nbsp; 🚨 RISKS",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 10 },
+      "transparent": false,
+      "options": {
+        "mode": "markdown",
+        "content": "*Sourced from **FCT_REPLENISHMENT** (shelf stock, suggested qty) + **DIM_WAREHOUSE** (throughput, adjustments) + **FCT_INVENTORY** CDC events (late arrivals). Filter by **Warehouse** or **Urgency Tier** above.*"
+      }
+    },
+
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Late Deliveries %",
+      "description": "CDC inventory events (FCT_INVENTORY) flagged late_arriving (>2 min lag from DIM_TIME). High = contact logistics.",
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "avg without(warehouse_location) (analytics_bi_metric{metric=\"delivery_delay_pct\", warehouse_location=~\"WAREHOUSE-.*\", weather_state=\"any\"})", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 15 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Warehouse Bottlenecks",
+      "description": "DIM_WAREHOUSE lanes: high total_units_moved AND shelf stock < reorder_threshold. If >0: rebalance between sites.",
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"bottleneck_warehouse_count\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 1 },
+            { "color": "red", "value": 3 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Avg Urgency Score",
+      "description": "Mean urgency_score across FCT_REPLENISHMENT at-risk rows. >0.5 needs action. (current_stock_on_shelf ÷ max_capacity inverted).",
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"avg_urgency_score\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit", "decimals": 2, "min": 0, "max": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.3 },
+            { "color": "red", "value": 0.6 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Peak Urgency (Worst SKU)",
+      "description": "Max urgency_score in FCT_REPLENISHMENT. Near 1.0 = imminent stockout for that product_id — PO first regardless of cost.",
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "analytics_bi_metric{metric=\"max_urgency_score\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "refId": "A", "instant": true, "range": false }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit", "decimals": 2, "min": 0, "max": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 0.5 },
+            { "color": "red", "value": 0.7 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "justifyMode": "center" }
+    },
+
+    {
+      "id": 17,
+      "type": "gauge",
+      "title": "📦 Shelf Fill Rate — Stock vs Max Capacity (avg %)",
+      "description": "avg(current_stock_on_shelf) ÷ avg(max_capacity) from DIM_PRODUCT. Below 50% = systemic capacity shortfall across at-risk SKUs.",
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"shelf_fill_rate_pct\", warehouse_location=\"ALL\", urgency_tier=\"all\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "Fill Rate", "refId": "A", "instant": true, "range": false }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit", "min": 0, "max": 2, "decimals": 2,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0.5 },
+            { "color": "green", "value": 1.0 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": true, "showThresholdMarkers": true }
+    },
+
+    {
+      "id": 202,
+      "type": "text",
+      "title": "📍  WHERE IS IT COMING FROM? — Warehouse & Inventory Source Breakdown",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 17 },
+      "transparent": false,
+      "options": {
+        "mode": "markdown",
+        "content": "*Sourced from **DIM_WAREHOUSE** (transaction_count, total_units_moved, adjustment_rate_pct) joined to **FCT_INVENTORY** events via `warehouse_location`. Each bar = one warehouse location.*"
+      }
+    },
+
+    {
+      "id": 20,
+      "type": "bargauge",
+      "title": "🏭 Units Moved per Warehouse (last window)",
+      "description": "total_units_moved from DIM_WAREHOUSE — shows which locations are driving the most throughput. High bar + red SKU count = bottleneck candidate.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "analytics_bi_metric{metric=\"warehouse_units_moved\", warehouse_location=~\"WAREHOUSE-.*\"}",
+          "legendFormat": "{{warehouse_location}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5000 },
+            { "color": "red", "value": 15000 }
+          ]}
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color"
+      }
+    },
+
+    {
+      "id": 21,
+      "type": "bargauge",
+      "title": "⚙️ Adjustment Rate % per Warehouse",
+      "description": "adjustment_rate_pct from DIM_WAREHOUSE — high % means many stock corrections (shrinkage, returns, mis-picks). A rising rate signals a warehouse process problem.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "analytics_bi_metric{metric=\"warehouse_adjustment_rate_pct\", warehouse_location=~\"WAREHOUSE-.*\"}",
+          "legendFormat": "{{warehouse_location}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 10 }
+          ]}
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "showUnfilled": true,
+        "valueMode": "color"
+      }
+    },
+
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "📦 Transaction Count by Warehouse — Over Time",
+      "description": "transaction_count from DIM_WAREHOUSE tracked across time. Spikes = inbound delivery receipts. Gaps = supplier delays. Compares all warehouse_location lanes.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 27 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "analytics_bi_metric{metric=\"warehouse_transaction_count\", warehouse_location=~\"WAREHOUSE-.*\"}",
+          "legendFormat": "{{warehouse_location}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "gradientMode": "opacity", "spanNulls": true }
+        }
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+
+    {
+      "id": 203,
+      "type": "text",
+      "title": "📈  DETAILS — Trends & Urgency Breakdown",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 35 },
+      "transparent": false,
+      "options": {
+        "mode": "markdown",
+        "content": "*Time-series from Prometheus scrapes of exec_001 / exec_002. Urgency heatmap bands derived from urgency_score tiers in FCT_REPLENISHMENT.*"
+      }
+    },
+
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "📈 SKUs at Risk — Trend",
+      "description": "Rising = replenishment pressure building. Falling = buying is catching up.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"skus_needing_replenishment\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "SKUs at Risk", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "semi-dark-orange" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20, "gradientMode": "opacity", "spanNulls": true }
+        }
+      },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "📈 % Catalog at Risk — Trend (with 35% alert line)",
+      "description": "Sustained >30% requires procurement escalation.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"stockout_risk_pct\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "% Catalog at Risk", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 15 },
+            { "color": "red", "value": 35 }
+          ]},
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "gradientMode": "opacity", "spanNulls": true, "thresholdsStyle": { "mode": "line+area" } }
+        }
+      },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "💰 Replenishment Spend — M PKR Trend",
+      "description": "PKR exposure trend. Upward drift = backlog growing faster than orders placed.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 45 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"replenishment_value_million_pkr\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "M PKR", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "displayName": "M PKR",
+          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20, "gradientMode": "opacity", "spanNulls": true }
+        }
+      },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "⚡ Urgency Tiers Over Time — Critical / High / Medium / Low",
+      "description": "Four urgency bands from FCT_REPLENISHMENT urgency_score: Critical ≥0.7, High 0.5–0.7, Medium 0.3–0.5, Low <0.3. Watch Critical rise before stockout events.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 45 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"urgency_tier_critical_count\", warehouse_location=\"ALL\", urgency_tier=\"all\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "🔴 Critical (≥70%)", "refId": "A" },
+        { "expr": "analytics_bi_metric{metric=\"urgency_tier_high_count\", warehouse_location=\"ALL\", urgency_tier=\"all\", weather_state=\"any\", demand_window=\"any\"}",     "legendFormat": "🟠 High (50–70%)",   "refId": "B" },
+        { "expr": "analytics_bi_metric{metric=\"urgency_tier_medium_count\", warehouse_location=\"ALL\", urgency_tier=\"all\", weather_state=\"any\", demand_window=\"any\"}",   "legendFormat": "🟡 Medium (30–50%)", "refId": "C" },
+        { "expr": "analytics_bi_metric{metric=\"urgency_tier_low_count\", warehouse_location=\"ALL\", urgency_tier=\"all\", weather_state=\"any\", demand_window=\"any\"}",      "legendFormat": "🟢 Low (<30%)",      "refId": "D" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 8, "gradientMode": "none", "spanNulls": true } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "🔴 Critical (≥70%)" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+          { "matcher": { "id": "byName", "options": "🟠 High (50–70%)" },   "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }] },
+          { "matcher": { "id": "byName", "options": "🟡 Medium (30–50%)" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } }] },
+          { "matcher": { "id": "byName", "options": "🟢 Low (<30%)" },      "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull"] } }
+    },
+
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "📦 Shelf Stock vs Reorder Threshold vs Max Capacity — Trend",
+      "description": "Three lines from DIM_PRODUCT + FCT_REPLENISHMENT: avg current_stock_on_shelf, avg reorder_threshold, avg max_capacity. The gap between shelf and threshold = order gap. When shelf approaches threshold, urgency rises.",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 53 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"avg_shelf_stock_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}",      "legendFormat": "📦 Avg Shelf Stock",       "refId": "A" },
+        { "expr": "analytics_bi_metric{metric=\"avg_reorder_threshold_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "⚠️ Avg Reorder Threshold", "refId": "B" },
+        { "expr": "analytics_bi_metric{metric=\"avg_max_capacity_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}",      "legendFormat": "🏷️ Avg Max Capacity",      "refId": "C" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 5, "spanNulls": true } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "📦 Avg Shelf Stock" },       "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }, { "id": "custom.fillOpacity", "value": 20 }] },
+          { "matcher": { "id": "byName", "options": "⚠️ Avg Reorder Threshold" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }, { "id": "custom.lineStyle", "value": { "dash": [8, 4], "fill": "dash" } }] },
+          { "matcher": { "id": "byName", "options": "🏷️ Avg Max Capacity" },      "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }, { "id": "custom.lineStyle", "value": { "dash": [4, 4], "fill": "dash" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "mean"] } }
+    },
+
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "🛒 Units Sold (7-day) vs Suggested Order Qty — Demand Signal",
+      "description": "units_sold_7d from FCT_REPLENISHMENT (sourced from FCT_SALES via DIM_TIME) vs total suggested_order_qty. When sold > order qty: under-ordering. When order qty > sold: safety buffer being built.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 61 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"total_units_sold\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"$time_window\"}",          "legendFormat": "🛒 Units Sold (7d)",      "refId": "A" },
+        { "expr": "analytics_bi_metric{metric=\"total_suggested_order_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}",  "legendFormat": "📋 Suggested Order Qty", "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10, "spanNulls": true } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "🛒 Units Sold (7d)" },     "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "purple" } }] },
+          { "matcher": { "id": "byName", "options": "📋 Suggested Order Qty" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "light-blue" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "mean"] } }
+    },
+
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "🌦 Weather Risk Events vs Late Deliveries %",
+      "description": "Correlation between weather_risk flag on FCT_REPLENISHMENT (from src_weather_api) and delivery_delay_pct from CDC events. Overlap = weather-driven delays.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 61 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"weather_risk_active\", warehouse_location=\"ALL\", weather_state=\"any\", demand_window=\"any\"} * 100",   "legendFormat": "🌦 Weather Risk (0/100)", "refId": "A" },
+        { "expr": "avg without(warehouse_location) (analytics_bi_metric{metric=\"delivery_delay_pct\", warehouse_location=~\"WAREHOUSE-.*\", weather_state=\"any\"})",          "legendFormat": "🚚 Late Deliveries %",    "refId": "B" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "custom": { "lineWidth": 2, "fillOpacity": 15, "spanNulls": true } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "🌦 Weather Risk (0/100)" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "light-blue" } }, { "id": "custom.fillOpacity", "value": 30 }] },
+          { "matcher": { "id": "byName", "options": "🚚 Late Deliveries %" },    "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } }
+    },
+
+    {
+      "id": 26,
+      "type": "gauge",
+      "title": "📊 Shelf Stock vs Reorder Threshold (current snapshot)",
+      "description": "Instantaneous avg_shelf_stock vs avg_reorder_threshold. Red = shelves are below threshold. This gauge shows *right now* — the trend chart above shows the history.",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 69 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "analytics_bi_metric{metric=\"avg_shelf_stock_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}",      "legendFormat": "Avg Shelf Stock",      "refId": "A", "instant": true, "range": false },
+        { "expr": "analytics_bi_metric{metric=\"avg_reorder_threshold_units\", warehouse_location=\"ALL\", urgency_tier=~\"$urgency_tier\", weather_state=\"any\", demand_window=\"any\"}", "legendFormat": "Avg Reorder Threshold", "refId": "B", "instant": true, "range": false }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 50 },
+            { "color": "green", "value": 100 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": true, "showThresholdMarkers": true }
+    },
+
+    {
+      "id": 27,
+      "type": "text",
+      "title": "🗺️ Data Source Lineage — Where does each number come from?",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 69 },
+      "options": {
+        "mode": "markdown",
+        "content": "```\nSources (7 streams) ─────────────────────────────────────────\n  src_warehouse_master    → DIM_PRODUCT (product_id, unit_cost,\n                             reorder_threshold, max_capacity)\n  src_iot_rfid_stream     → Silver IoT → current_stock_on_shelf\n  src_inventory_txn (CDC) → FCT_INVENTORY (late_arriving flag)\n  src_sales_history       → FCT_SALES → units_sold_7d\n  src_weather_api         → weather_risk flag\n  src_manufacturing_logs  → defect signals (adhoc_002)\n  src_legacy_trends       → regional baseline (str_001)\n\nTransformation ──────────────────────────────────────────────\n  Silver Transformer  → cleans, partitions, adds late_arriving\n  Gold Aggregator     → FCT_REPLENISHMENT\n                         (urgency_score, suggested_order_qty,\n                          needs_replenishment, weather_risk)\n  dbt semantic layer  → fct_daily_revenue, fct_inventory_movements,\n                         dim_warehouse\n\nConsumption ─────────────────────────────────────────────────\n  analytics-service   → exec_001 (KPI scorecard)\n                      → exec_002 (PKR spend, top-50 priorities)\n  /metrics/prometheus → Grafana panels (this dashboard)\n  /dashboard          → Top-10 bar chart, priority SKU table\n```"
+      }
+    },
+
+    {
+      "id": 30,
+      "type": "text",
+      "title": "📋 Decision Guide — What to do when a KPI is red",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 77 },
+      "options": {
+        "mode": "markdown",
+        "content": "| KPI turns red | Data source | Immediate action |\n|---|---|---|\n| **% Catalog at Risk > 35%** | FCT_REPLENISHMENT ÷ DIM_PRODUCT count | Escalate to procurement — widespread understock |\n| **Critical SKUs > 500** | urgency_score ≥ 0.5 in FCT_REPLENISHMENT | Release purchase orders today for listed priorities |\n| **Order Spend > 200 M PKR** | suggested_order_qty × DIM_PRODUCT.unit_cost | Seek finance approval for replenishment budget |\n| **Late Deliveries > 15%** | FCT_INVENTORY CDC late_arriving flag | Call logistics team / escalate to suppliers |\n| **Warehouse Bottlenecks > 0** | DIM_WAREHOUSE high throughput + low shelf | Rebalance inbound stock between warehouse locations |\n| **Adjustment Rate > 10%** | DIM_WAREHOUSE.adjustment_rate_pct | Audit warehouse processes for shrinkage / mis-picks |\n| **Weather Disruption = ACTIVE** | FCT_REPLENISHMENT.weather_risk via src_weather_api | Add safety stock buffer; extend delivery promises |\n| **Peak Urgency > 70%** | max(urgency_score) in FCT_REPLENISHMENT | One SKU near imminent stockout — PO immediately |\n| **Sold > Order Qty (chart)** | FCT_SALES.units_sold_7d vs suggested_order_qty | Under-ordering — increase order quantities |\n\n**Full detail:** [📊 Top-10 bar chart, priority SKU table, monthly revenue trend →](http://localhost:8002/dashboard) — refreshes every 30 s."
+      }
+    }
+
+  ],
+
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["supply-chain", "bi", "part3", "executive", "replenishment"],
   "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
   "title": "Supply Chain Executive BI",
   "uid": "supply-chain-bi",
-  "version": 2
+  "version": 8
 }

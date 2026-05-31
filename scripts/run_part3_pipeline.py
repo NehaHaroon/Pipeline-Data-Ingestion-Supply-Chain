@@ -22,6 +22,27 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+def _try_build_inventory_silver() -> None:
+    """Create silver.inventory_transactions when Bronze exists but Silver was never run."""
+    import os
+
+    import requests
+
+    url = os.getenv("TRANSFORM_SERVICE_URL", "http://transform-service:8001").rstrip("/")
+    endpoint = f"{url}/transform/silver/src_inventory_transactions"
+    print(f"silver.inventory_transactions missing — calling {endpoint}")
+    try:
+        resp = requests.post(endpoint, timeout=600)
+        if resp.status_code >= 400:
+            print(f"  Silver transform failed ({resp.status_code}): {resp.text[:500]}")
+            print("  Ensure CDC ingestion populated bronze.inventory_transactions, then re-run transformation DAG.")
+        else:
+            print(f"  Silver transform ok: {resp.json()}")
+    except Exception as exc:
+        print(f"  Could not reach transform-service: {exc}")
+        print("  Start docker-compose.airflow.yml and run supply_chain_transformation for src_inventory_transactions.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Part 3 analytics + semantic pipeline")
     parser.add_argument("--skip-dbt", action="store_true")
@@ -32,6 +53,9 @@ def main() -> int:
     from semantic_plane.export_for_dbt import export_all
 
     counts = export_all()
+    if counts.get("silver.inventory_transactions", 0) == 0:
+        _try_build_inventory_silver()
+        counts = export_all()
     print(json.dumps(counts, indent=2))
 
     if not args.skip_sql:
